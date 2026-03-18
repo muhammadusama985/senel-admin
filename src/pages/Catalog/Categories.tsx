@@ -11,6 +11,7 @@ import {
   DialogTitle,
   FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
   Switch,
   TextField,
@@ -364,14 +365,15 @@ const Categories: React.FC = () => {
               value={formData.parentId}
               onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
               select
-              SelectProps={{ native: true }}
+              helperText="Optional"
+              InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             >
-              <option value="">None (Top Level)</option>
+              <MenuItem value="">None (Top Level)</MenuItem>
               {categories?.map((cat: Category) => (
-                <option key={cat._id} value={cat._id}>
+                <MenuItem key={cat._id} value={cat._id}>
                   {cat.name}
-                </option>
+                </MenuItem>
               ))}
             </TextField>
 

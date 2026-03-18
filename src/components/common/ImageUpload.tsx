@@ -3,6 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Box, Typography, Paper, IconButton } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { CloudUpload, Close } from '@mui/icons-material';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface ImageUploadProps {
     onImageUpload: (file: File) => void;
@@ -37,15 +38,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     const getImageSource = (imagePath: string): string => {
         if (!imagePath) return '';
-        if (imagePath.startsWith('blob:')) return imagePath;
-        if (imagePath.startsWith('http')) return imagePath;
-        
-        // For local server images
-        if (imagePath.startsWith('/uploads')) {
-            return `http://localhost:4000${imagePath}`;
-        }
-        
-        return imagePath;
+        return resolveMediaUrl(imagePath);
     };
 
     return (
@@ -96,18 +89,12 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                         onError={(e) => {
                             console.error('Image load error in uploader:', currentImage);
                             const target = e.target as HTMLImageElement;
-                            
-                            // Try alternative URL if current fails
-                            if (!currentImage.includes('localhost') && currentImage.startsWith('/uploads')) {
-                                target.src = `http://localhost:4000${currentImage}`;
-                            } else {
-                                target.style.display = 'none';
-                                target.parentElement!.innerHTML = `
-                                    <div style="padding: 20px; text-align: center; background: ${muiTheme.palette.background.paper}; border-radius: 8px;">
-                                        <span style="color: ${muiTheme.palette.text.secondary}; font-size: 14px;">Failed to load image</span>
-                                    </div>
-                                `;
-                            }
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = `
+                                <div style="padding: 20px; text-align: center; background: ${muiTheme.palette.background.paper}; border-radius: 8px;">
+                                    <span style="color: ${muiTheme.palette.text.secondary}; font-size: 14px;">Failed to load image</span>
+                                </div>
+                            `;
                         }}
                     />
                     {onImageRemove && (

@@ -38,6 +38,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import api from '../../api/client';
 import ImageUpload from '../../components/common/ImageUpload';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface BlogPost {
   _id: string;
@@ -131,10 +132,7 @@ const BlogPosts: React.FC = () => {
   };
 
   const getFullImageUrl = (imagePath: string | undefined): string => {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http') || imagePath.startsWith('blob:')) return imagePath;
-    const cleanPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    return `http://localhost:4000${cleanPath}`;
+    return resolveMediaUrl(imagePath);
   };
 
   const { data: posts, isLoading, error } = useQuery({

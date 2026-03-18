@@ -13,6 +13,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
@@ -21,6 +22,7 @@ import Brightness7Icon from '@mui/icons-material/Brightness7';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
+import api from '../../api/client';
 import Logo from '../common/Logo';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
 
@@ -35,6 +37,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const { data: notificationCount = 0 } = useQuery({
+    queryKey: ['admin', 'notification-campaigns', 'count'],
+    queryFn: async () => {
+      const response = await api.get('/admin/notification-campaigns');
+      return Array.isArray(response.data?.items) ? response.data.items.length : 0;
+    },
+    refetchInterval: 30000,
+  });
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -52,6 +63,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const handleMyAccount = () => {
     handleClose();
     navigate('/settings/tax');
+  };
+
+  const handleNotifications = () => {
+    navigate('/notifications');
   };
 
   const handleLogout = () => {
@@ -131,8 +146,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
         </IconButton>
 
-        <IconButton color="inherit" aria-label="notifications">
-          <Badge badgeContent={4} color="error">
+        <IconButton color="inherit" aria-label="notifications" onClick={handleNotifications}>
+          <Badge badgeContent={notificationCount} color="error" invisible={notificationCount === 0}>
             <NotificationsIcon />
           </Badge>
         </IconButton>
