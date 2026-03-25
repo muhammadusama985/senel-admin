@@ -30,6 +30,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
 import api from '../../api/client';
+import { formatMoney } from '../../utils/currency';
 
 const AdminProductOrderList: React.FC = () => {
   const navigate = useNavigate();
@@ -206,7 +207,7 @@ const AdminProductOrderList: React.FC = () => {
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>{getStatusChip(order.status)}</TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                       <Typography fontWeight={800} sx={{ color: accent }}>
-                        EUR {order.grandTotal?.toFixed(2)}
+                        {formatMoney(Number(order.grandTotal || 0), order.currency)}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>

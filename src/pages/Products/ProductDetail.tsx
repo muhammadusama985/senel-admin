@@ -41,6 +41,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import api from '../../api/client';
+import { formatMoney } from '../../utils/currency';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -306,7 +307,7 @@ const ProductDetail: React.FC = () => {
                         <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{tier.minQty}+</TableCell>
                         <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {tier.unitPrice}
+                            {formatMoney(Number(tier.unitPrice || 0), product.currency)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -356,7 +357,7 @@ const ProductDetail: React.FC = () => {
                           <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{variant.stockQty}</TableCell>
                           <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                             <Typography sx={{ color: accent }}>
-                              EUR {variant.price || product.priceTiers?.[0]?.unitPrice}
+                              {formatMoney(Number(variant.price || product.priceTiers?.[0]?.unitPrice || 0), product.currency)}
                             </Typography>
                           </TableCell>
                         </TableRow>

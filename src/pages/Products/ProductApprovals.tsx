@@ -43,6 +43,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import api from '../../api/client';
+import { formatMoney } from '../../utils/currency';
 
 const ProductApprovals: React.FC = () => {
   const muiTheme = useMuiTheme();
@@ -218,7 +219,7 @@ const ProductApprovals: React.FC = () => {
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{product.moq}</TableCell>
                 <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                   <Typography fontWeight={800} sx={{ color: accent }}>
-                    EUR {product.priceTiers?.[0]?.unitPrice || 0}
+                    {formatMoney(Number(product.priceTiers?.[0]?.unitPrice || 0), product.currency)}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
@@ -351,7 +352,7 @@ const ProductApprovals: React.FC = () => {
                               <TableRow key={index} sx={{ '&:hover': { backgroundColor: hover } }}>
                                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{tier.minQty}+</TableCell>
                                 <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
-                                  <Typography fontWeight={800} sx={{ color: accent }}>EUR {tier.unitPrice}</Typography>
+                                  <Typography fontWeight={800} sx={{ color: accent }}>{formatMoney(Number(tier.unitPrice || 0), selectedProduct.currency)}</Typography>
                                 </TableCell>
                               </TableRow>
                             ))}

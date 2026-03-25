@@ -20,6 +20,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../../api/client';
+import { formatMoney } from '../../../utils/currency';
 
 type StatusColor = 'info' | 'warning' | 'primary' | 'success' | 'error' | 'default';
 
@@ -72,8 +73,6 @@ const RecentOrders: React.FC = () => {
       return 'Invalid date';
     }
   };
-
-  const formatCurrency = (amount: number) => `EUR ${amount?.toFixed(2) || '0.00'}`;
 
   if (isLoading) {
     return (
@@ -134,7 +133,7 @@ const RecentOrders: React.FC = () => {
               )}
 
               <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                <Typography fontWeight={700}>{formatCurrency(order.grandTotal)}</Typography>
+                <Typography fontWeight={700}>{formatMoney(Number(order.grandTotal || 0), order.currency)}</Typography>
               </TableCell>
 
               <TableCell sx={{ borderBottom: `1px solid ${border}` }}>

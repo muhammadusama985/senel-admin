@@ -30,6 +30,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
 import api from '../../api/client';
+import { formatMoney } from '../../utils/currency';
 
 const OrderList: React.FC = () => {
   const navigate = useNavigate();
@@ -215,7 +216,7 @@ const OrderList: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                       <Typography fontWeight={800} sx={{ color: accent }}>
-                        EUR {Number(order.grandTotal || 0).toFixed(2)}
+                        {formatMoney(Number(order.grandTotal || 0), order.currency)}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>

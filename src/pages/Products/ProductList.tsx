@@ -46,6 +46,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { formatMoney } from '../../utils/currency';
 
 const ProductList: React.FC = () => {
   const navigate = useNavigate();
@@ -343,7 +344,7 @@ const ProductList: React.FC = () => {
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                   <Typography fontWeight={800} sx={{ color: accent }}>
-                    EUR {product.priceTiers?.[0]?.unitPrice || 0}
+                    {formatMoney(Number(product.priceTiers?.[0]?.unitPrice || 0), product.currency)}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
