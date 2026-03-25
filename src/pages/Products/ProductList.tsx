@@ -303,6 +303,13 @@ const ProductList: React.FC = () => {
           </TableHead>
           <TableBody>
             {products?.products?.map((product: any) => (
+              (() => {
+                const displaySku = product.sku || product.variants?.[0]?.sku || 'N/A';
+                const displayStock = product.hasVariants
+                  ? (product.variants || []).reduce((sum: number, variant: any) => sum + Number(variant.stockQty || 0), 0)
+                  : Number(product.stockQty || 0);
+
+                return (
               <TableRow key={product._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -323,7 +330,7 @@ const ProductList: React.FC = () => {
                         {product.title}
                       </Typography>
                       <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                        SKU: {product.sku || 'N/A'}
+                        SKU: {displaySku}
                       </Typography>
                     </Box>
                   </Box>
@@ -340,7 +347,7 @@ const ProductList: React.FC = () => {
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  <Chip label={product.stockQty || 0} size="small" color={product.stockQty > 0 ? 'success' : 'error'} />
+                  <Chip label={displayStock} size="small" color={displayStock > 0 ? 'success' : 'error'} />
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                   {getStatusChip(product.status)}
@@ -362,6 +369,8 @@ const ProductList: React.FC = () => {
                   </IconButton>
                 </TableCell>
               </TableRow>
+                );
+              })()
             ))}
           </TableBody>
         </Table>
