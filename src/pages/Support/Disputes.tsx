@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Paper, Stack, Typography, Alert, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Paper, Stack, Typography, Alert, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Box, MenuItem } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ const Disputes: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedDispute, setSelectedDispute] = useState<any | null>(null);
   const [reply, setReply] = useState('');
+  const [nextStatus, setNextStatus] = useState('');
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'disputes'],
     queryFn: async () => {
@@ -27,10 +28,28 @@ const Disputes: React.FC = () => {
     enabled: Boolean(selectedDispute?._id),
   });
 
+  useEffect(() => {
+    if (detailQuery.data?.dispute?.status) {
+      setNextStatus(detailQuery.data.dispute.status);
+    }
+  }, [detailQuery.data?.dispute?.status]);
+
   const replyMutation = useMutation({
     mutationFn: async () => api.post(`/disputes/${selectedDispute._id}/messages`, { message: reply.trim() }),
     onSuccess: async () => {
       setReply('');
+      await detailQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['admin', 'disputes'] });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async () =>
+      api.post(`/disputes/${selectedDispute._id}/status`, {
+        status: nextStatus,
+        note: reply.trim() || undefined,
+      }),
+    onSuccess: async () => {
       await detailQuery.refetch();
       queryClient.invalidateQueries({ queryKey: ['admin', 'disputes'] });
     },
@@ -122,13 +141,26 @@ const Disputes: React.FC = () => {
               </Stack>
 
               {detailQuery.data.dispute.status !== 'closed' ? (
-                <TextField
-                  label="Reply as Admin"
-                  multiline
-                  rows={4}
-                  value={reply}
-                  onChange={(event) => setReply(event.target.value)}
-                />
+                <Stack spacing={2}>
+                  <TextField
+                    select
+                    label="Change Status"
+                    value={nextStatus}
+                    onChange={(event) => setNextStatus(event.target.value)}
+                  >
+                    <MenuItem value="open">Open</MenuItem>
+                    <MenuItem value="in_progress">In Progress</MenuItem>
+                    <MenuItem value="resolved">Resolved</MenuItem>
+                    <MenuItem value="closed">Closed</MenuItem>
+                  </TextField>
+                  <TextField
+                    label="Reply as Admin"
+                    multiline
+                    rows={4}
+                    value={reply}
+                    onChange={(event) => setReply(event.target.value)}
+                  />
+                </Stack>
               ) : null}
             </Stack>
           ) : (
@@ -138,9 +170,18 @@ const Disputes: React.FC = () => {
         <DialogActions>
           <Button onClick={() => setSelectedDispute(null)}>Close</Button>
           {detailQuery.data?.dispute?.status !== 'closed' ? (
-            <Button variant="contained" onClick={() => replyMutation.mutate()} disabled={!reply.trim() || replyMutation.isPending}>
-              {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                onClick={() => statusMutation.mutate()}
+                disabled={!nextStatus || nextStatus === detailQuery.data?.dispute?.status || statusMutation.isPending}
+              >
+                {statusMutation.isPending ? 'Updating...' : 'Update Status'}
+              </Button>
+              <Button variant="contained" onClick={() => replyMutation.mutate()} disabled={!reply.trim() || replyMutation.isPending}>
+                {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
+              </Button>
+            </>
           ) : null}
         </DialogActions>
       </Dialog>
