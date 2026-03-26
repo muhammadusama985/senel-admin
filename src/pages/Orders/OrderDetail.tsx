@@ -57,6 +57,7 @@ import {
   Email,
   Print,
   Schedule,
+  ContentCopy,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -65,6 +66,7 @@ import api from '../../api/client';
 import OrderReceiptPrint from './OrderReceiptPrint';
 import SchedulePickupDialog from './components/SchedulePickupDialog';
 import AssignShippingDialog from './components/AssignShippingDialog';
+import { formatMoney } from '../../utils/currency';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -103,6 +105,8 @@ const OrderDetail: React.FC = () => {
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedVendorOrderForAction, setSelectedVendorOrderForAction] = useState<any>(null);
+  const [refundNote, setRefundNote] = useState('');
+  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Consistent styling for both themes
   const shellSx = {
@@ -202,6 +206,23 @@ const OrderDetail: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      setActionMessage({ type: 'success', text: 'Order cancelled successfully.' });
+    },
+    onError: (error: any) => {
+      setActionMessage({ type: 'error', text: error.response?.data?.message || 'Failed to cancel order.' });
+    },
+  });
+
+  const markRefundedMutation = useMutation({
+    mutationFn: async () => api.post(`/admin/orders/${id}/mark-refunded`, { note: refundNote.trim() || undefined }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+      setRefundNote('');
+      setActionMessage({ type: 'success', text: 'Order marked as refunded successfully.' });
+    },
+    onError: (error: any) => {
+      setActionMessage({ type: 'error', text: error.response?.data?.message || 'Failed to mark order refunded.' });
     },
   });
 
@@ -258,6 +279,16 @@ const OrderDetail: React.FC = () => {
   const handleAssignShipping = (vendorOrder: any) => {
     setSelectedVendorOrderForAction(vendorOrder);
     setAssignDialogOpen(true);
+  };
+
+  const copyToClipboard = async (value?: string, label?: string) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setActionMessage({ type: 'success', text: `${label || 'Value'} copied.` });
+    } catch {
+      setActionMessage({ type: 'error', text: `Could not copy ${label || 'value'}.` });
+    }
   };
 
   if (isLoading) return <LinearProgress sx={{ backgroundColor: BORDER, '& .MuiLinearProgress-bar': { backgroundColor: ACCENT } }} />;
@@ -332,6 +363,13 @@ const OrderDetail: React.FC = () => {
     }
   };
 
+  const orderCurrency = order.order?.currency || order.items?.[0]?.currency || 'EUR';
+  const refundRequest = order.order?.refundRequest;
+  const showMarkRefundedButton =
+    order.order?.status === 'cancelled' &&
+    order.order?.paymentStatus === 'paid' &&
+    refundRequest?.status === 'requested';
+
   return (
     <Box sx={shellSx}>
       {/* Header */}
@@ -382,7 +420,33 @@ const OrderDetail: React.FC = () => {
             {cancelOrderMutation.isPending ? 'Cancelling...' : 'Cancel Order'}
           </Button>
         )}
+        {showMarkRefundedButton && (
+          <Button
+            variant="contained"
+            color="success"
+            onClick={() => markRefundedMutation.mutate()}
+            disabled={markRefundedMutation.isPending}
+          >
+            {markRefundedMutation.isPending ? 'Marking Refunded...' : 'Mark Refunded'}
+          </Button>
+        )}
       </Box>
+
+      {actionMessage && (
+        <Alert
+          severity={actionMessage.type}
+          sx={{
+            mb: 3,
+            backgroundColor: DARK_BLUE,
+            color: TEXT_PRIMARY,
+            border: `1px solid ${BORDER}`,
+            '& .MuiAlert-icon': { color: actionMessage.type === 'success' ? '#4caf50' : '#f44336' },
+          }}
+          onClose={() => setActionMessage(null)}
+        >
+          {actionMessage.text}
+        </Alert>
+      )}
 
       {/* Order Summary Card */}
       <Paper sx={{ px: 3, mb: 3, ...paperSx }}>
@@ -401,7 +465,7 @@ const OrderDetail: React.FC = () => {
               Total Amount
             </Typography>
             <Typography variant="h6" sx={{ color: ACCENT, fontWeight: 800 }}>
-              €{order.order.grandTotal?.toFixed(2)}
+              {formatMoney(Number(order.order.grandTotal || 0), orderCurrency)}
             </Typography>
           </Grid>
 
@@ -431,6 +495,102 @@ const OrderDetail: React.FC = () => {
           </Grid>
         </Grid>
       </Paper>
+
+      {refundRequest?.status && refundRequest.status !== 'none' && (
+        <Paper sx={{ mb: 3, ...paperSx }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+            <Box>
+              <Typography variant="h6" sx={{ color: ACCENT, fontWeight: 800 }}>
+                Refund Request Details
+              </Typography>
+              <Typography variant="body2" sx={{ color: TEXT_SECONDARY }}>
+                Review the requested bank details before completing the refund for this cancelled order.
+              </Typography>
+            </Box>
+            <Chip
+              label={refundRequest.status}
+              color={refundRequest.status === 'refunded' ? 'success' : refundRequest.status === 'requested' ? 'warning' : 'default'}
+              sx={{ textTransform: 'capitalize' }}
+            />
+          </Box>
+
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" sx={{ color: TEXT_SECONDARY }}>Order Total</Typography>
+              <Typography variant="body1" sx={{ color: TEXT_PRIMARY, fontWeight: 700 }}>
+                {formatMoney(Number(order.order.grandTotal || 0), orderCurrency)}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" sx={{ color: TEXT_SECONDARY }}>Refund Requested At</Typography>
+              <Typography variant="body1" sx={{ color: TEXT_PRIMARY }}>
+                {refundRequest.requestedAt ? format(new Date(refundRequest.requestedAt), 'PPp') : '-'}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Typography variant="subtitle2" sx={{ color: TEXT_SECONDARY }}>Processed At</Typography>
+              <Typography variant="body1" sx={{ color: TEXT_PRIMARY }}>
+                {refundRequest.processedAt ? format(new Date(refundRequest.processedAt), 'PPp') : '-'}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            {[
+              ['Account Holder', refundRequest.accountHolderName, 'Account holder'],
+              ['Bank Name', refundRequest.bankName, 'Bank name'],
+              ['Account Number', refundRequest.accountNumber, 'Account number'],
+              ['IBAN', refundRequest.iban, 'IBAN'],
+              ['SWIFT / BIC', refundRequest.swiftCode, 'SWIFT / BIC'],
+              ['Country', refundRequest.country, 'Country'],
+            ].map(([label, value, copyLabel]) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={String(label)}>
+                <Card sx={cardSx}>
+                  <CardContent sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1.5 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography variant="subtitle2" sx={{ color: TEXT_SECONDARY, mb: 0.5 }}>{label}</Typography>
+                      <Typography variant="body1" sx={{ color: TEXT_PRIMARY, wordBreak: 'break-word' }}>
+                        {value || '-'}
+                      </Typography>
+                    </Box>
+                    {value ? (
+                      <IconButton
+                        size="small"
+                        onClick={() => void copyToClipboard(String(value), String(copyLabel))}
+                        sx={{ color: TEXT_PRIMARY, border: `1px solid ${BORDER}` }}
+                      >
+                        <ContentCopy fontSize="small" />
+                      </IconButton>
+                    ) : null}
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+            {refundRequest.notes ? (
+              <Grid size={{ xs: 12 }}>
+                <Card sx={cardSx}>
+                  <CardContent>
+                    <Typography variant="subtitle2" sx={{ color: TEXT_SECONDARY, mb: 0.5 }}>Customer Notes</Typography>
+                    <Typography variant="body1" sx={{ color: TEXT_PRIMARY }}>{refundRequest.notes}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ) : null}
+            {showMarkRefundedButton && (
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Admin refund note (optional)"
+                  value={refundNote}
+                  onChange={(e) => setRefundNote(e.target.value)}
+                  placeholder="Reference, transfer note, or internal remark"
+                  sx={fieldSx}
+                />
+              </Grid>
+            )}
+          </Grid>
+        </Paper>
+      )}
 
       {/* Tabs */}
       <Paper sx={{ width: '100%', mb: 3, ...paperSx }}>
