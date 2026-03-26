@@ -31,6 +31,7 @@ import Notifications from './pages/Marketing/Notifications';
 import BankTransfers from './pages/Payments/BankTransfers';
 import ReviewModeration from './pages/Reviews/ReviewModeration';
 import Disputes from './pages/Support/Disputes';
+import SupportTickets from './pages/Support/SupportTickets';
 import Announcements from './pages/CMS/Announcements';
 import BlogPosts from './pages/CMS/BlogPosts';
 import Banners from './pages/CMS/Banners';
@@ -82,6 +83,7 @@ function App() {
               <Route path="/coupons" element={<PrivateRoute><Coupons /></PrivateRoute>} />
               <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
               <Route path="/reviews" element={<PrivateRoute><ReviewModeration /></PrivateRoute>} />
+              <Route path="/support/tickets" element={<PrivateRoute><SupportTickets /></PrivateRoute>} />
               <Route path="/disputes" element={<PrivateRoute><Disputes /></PrivateRoute>} />
 
               <Route path="/cms/announcements" element={<PrivateRoute><Announcements /></PrivateRoute>} />

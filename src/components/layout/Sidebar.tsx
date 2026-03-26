@@ -73,6 +73,7 @@ const menuItems: MenuItem[] = [
   { text: 'Coupons', textKey: 'nav.coupons', icon: <DiscountIcon />, path: '/coupons' },
   { text: 'Notifications', textKey: 'nav.notifications', icon: <NotificationsActiveIcon />, path: '/notifications' },
   { text: 'Reviews', textKey: 'nav.reviews', icon: <RateReviewIcon />, path: '/reviews' },
+  { text: 'Support Tickets', icon: <MailOutlineIcon />, path: '/support/tickets' },
   { text: 'Disputes', textKey: 'nav.disputes', icon: <GavelIcon />, path: '/disputes' },
   { text: 'Email Templates', textKey: 'nav.emailTemplates', icon: <MailOutlineIcon />, path: '/settings/email-templates' },
   {
