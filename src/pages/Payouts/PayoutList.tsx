@@ -41,6 +41,7 @@ import {
   AttachMoney,
   CheckCircle,
   Close,
+  ContentCopy,
   Info,
   MoreVert,
   Payment,
@@ -58,6 +59,8 @@ interface Payout {
   vendorId: string;
   vendorName?: string;
   amount?: number;
+  walletBalance?: number;
+  walletCurrency?: string;
   payoutMethod: string;
   status: 'requested' | 'approved' | 'paid' | 'rejected';
   createdAt: string;
@@ -191,6 +194,7 @@ const PayoutList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'payouts'] });
       setApproveDialog(false);
+      setExternalRef('');
       handleMenuClose();
     },
   });
@@ -202,6 +206,7 @@ const PayoutList: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'payouts'] });
       setApproveDialog(false);
+      setExternalRef('');
       handleMenuClose();
     },
   });
@@ -239,6 +244,21 @@ const PayoutList: React.FC = () => {
   const getVendorName = (vendorId: string) => vendorNames[vendorId] || 'Loading...';
 
   const formatCurrency = (amount: number | undefined) => `EUR ${amount?.toFixed(2) || '0.00'}`;
+
+  const copyValue = async (value: unknown, label: string) => {
+    const text = String(value || '').trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const input = document.createElement('textarea');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -394,6 +414,9 @@ const PayoutList: React.FC = () => {
           <>
             {selectedPayout.status === 'requested' && (
               <>
+                <MenuItem onClick={() => { setViewDialog(true); handleMenuClose(); }}>
+                  <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+                </MenuItem>
                 <MenuItem onClick={() => setApproveDialog(true)}>
                   <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> Approve
                 </MenuItem>
@@ -429,22 +452,78 @@ const PayoutList: React.FC = () => {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             {selectedPayout?.status === 'approved' ? (
-              <TextField
-                autoFocus
-                label="External Reference"
-                fullWidth
-                value={externalRef}
-                onChange={(event) => setExternalRef(event.target.value)}
-                placeholder="Bank transaction ID / Reference"
-                helperText="Enter the bank transaction reference"
-                sx={fieldSx}
-                FormHelperTextProps={{ sx: { color: muiTheme.palette.text.secondary } }}
-              />
+              <Box>
+                <TextField
+                  autoFocus
+                  label="External Reference"
+                  fullWidth
+                  value={externalRef}
+                  onChange={(event) => setExternalRef(event.target.value)}
+                  placeholder="Bank transaction ID / Reference"
+                  helperText="Enter the bank transaction reference"
+                  sx={fieldSx}
+                  FormHelperTextProps={{ sx: { color: muiTheme.palette.text.secondary } }}
+                />
+                {selectedPayout?.payoutDetails && Object.keys(selectedPayout.payoutDetails).length > 0 && (
+                  <Card variant="outlined" sx={{ mt: 2, backgroundColor: surface, borderColor: border }}>
+                    <CardContent>
+                      <Typography variant="subtitle2" gutterBottom sx={{ color: muiTheme.palette.primary.main, fontWeight: 800 }}>
+                        Bank Details To Pay
+                      </Typography>
+                      <Grid container spacing={2}>
+                        {Object.entries(selectedPayout.payoutDetails).map(([key, value]) => (
+                          <Grid size={{ xs: 12, sm: 6 }} key={key}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
+                                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, (text) => text.toUpperCase())}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: muiTheme.palette.text.primary, wordBreak: 'break-word' }}>
+                                  {String(value || '-')}
+                                </Typography>
+                              </Box>
+                              {value ? (
+                                <IconButton size="small" onClick={() => copyValue(value, key)} sx={{ '&:hover': { backgroundColor: hover } }}>
+                                  <ContentCopy fontSize="small" />
+                                </IconButton>
+                              ) : null}
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </CardContent>
+                  </Card>
+                )}
+              </Box>
             ) : (
-              <Typography sx={{ color: muiTheme.palette.text.primary }}>
-                Are you sure you want to approve payout of {formatCurrency(selectedPayout?.amount)} for{' '}
-                <strong>{selectedPayout && getVendorName(selectedPayout.vendorId)}</strong>?
-              </Typography>
+              <Box>
+                <Typography sx={{ color: muiTheme.palette.text.primary, mb: 1.5 }}>
+                  Are you sure you want to approve payout of {formatCurrency(selectedPayout?.amount)} for{' '}
+                  <strong>{selectedPayout && getVendorName(selectedPayout.vendorId)}</strong>?
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Card variant="outlined" sx={{ backgroundColor: surface, borderColor: border }}>
+                      <CardContent>
+                        <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>Current Wallet Balance</Typography>
+                        <Typography variant="h6" fontWeight={800} sx={{ color: accent }}>
+                          {formatCurrency(selectedPayout?.walletBalance)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Card variant="outlined" sx={{ backgroundColor: surface, borderColor: border }}>
+                      <CardContent>
+                        <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>Requested Payout</Typography>
+                        <Typography variant="h6" fontWeight={800} sx={{ color: accent }}>
+                          {formatCurrency(selectedPayout?.amount)}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                </Grid>
+              </Box>
             )}
           </Box>
         </DialogContent>
@@ -569,8 +648,16 @@ const PayoutList: React.FC = () => {
                         <ListItem>
                           <ListItemIcon><AttachMoney sx={{ fontSize: 20, color: muiTheme.palette.text.secondary }} /></ListItemIcon>
                           <ListItemText
-                            primary="Amount"
+                            primary="Requested Amount"
                             secondary={<Typography fontWeight={800} sx={{ color: accent }}>{formatCurrency(selectedPayout.amount)}</Typography>}
+                            primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
+                          />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemIcon><AttachMoney sx={{ fontSize: 20, color: muiTheme.palette.text.secondary }} /></ListItemIcon>
+                          <ListItemText
+                            primary="Current Wallet Balance"
+                            secondary={<Typography fontWeight={800} sx={{ color: accent }}>{formatCurrency(selectedPayout.walletBalance)}</Typography>}
                             primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                           />
                         </ListItem>
@@ -593,12 +680,21 @@ const PayoutList: React.FC = () => {
                         <Grid container spacing={2}>
                           {Object.entries(selectedPayout.payoutDetails).map(([key, value]) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={key}>
-                              <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, (text) => text.toUpperCase())}
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: muiTheme.palette.text.primary }}>
-                                {String(value) || '-'}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ flex: 1 }}>
+                                  <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, (text) => text.toUpperCase())}
+                                  </Typography>
+                                  <Typography variant="body2" sx={{ color: muiTheme.palette.text.primary, wordBreak: 'break-word' }}>
+                                    {String(value) || '-'}
+                                  </Typography>
+                                </Box>
+                                {value ? (
+                                  <IconButton size="small" onClick={() => copyValue(value, key)} sx={{ '&:hover': { backgroundColor: hover } }}>
+                                    <ContentCopy fontSize="small" />
+                                  </IconButton>
+                                ) : null}
+                              </Box>
                             </Grid>
                           ))}
                         </Grid>
