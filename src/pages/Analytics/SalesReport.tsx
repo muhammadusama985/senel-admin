@@ -40,6 +40,17 @@ import api from '../../api/client';
 
 const CHART_COLORS = ['#f59e0b', '#ec4899', '#2563eb', '#16a34a', '#8b5cf6'];
 
+const buildRangeQuery = (
+  dateRange: 'today' | 'week' | 'month' | 'custom',
+  startDate: string,
+  endDate: string
+) => {
+  if (dateRange === 'today') return 'days=1';
+  if (dateRange === 'week') return 'days=7';
+  if (dateRange === 'month') return 'days=30';
+  return `start=${new Date(startDate).toISOString()}&end=${new Date(endDate).toISOString()}`;
+};
+
 const SalesReport: React.FC = () => {
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -88,12 +99,7 @@ const SalesReport: React.FC = () => {
   const { data: analytics, isLoading, error } = useQuery({
     queryKey: ['admin', 'analytics', dateRange, startDate, endDate],
     queryFn: async () => {
-      let url = '/admin/analytics/orders/overview';
-      if (dateRange === 'today') url += '?days=1';
-      else if (dateRange === 'week') url += '?days=7';
-      else if (dateRange === 'month') url += '?days=30';
-      else url += `?start=${new Date(startDate).toISOString()}&end=${new Date(endDate).toISOString()}`;
-      const response = await api.get(url);
+      const response = await api.get(`/admin/analytics/orders/overview?${buildRangeQuery(dateRange, startDate, endDate)}`);
       return response.data;
     },
   });
@@ -101,7 +107,7 @@ const SalesReport: React.FC = () => {
   const { data: topProducts } = useQuery({
     queryKey: ['admin', 'analytics', 'top-products', dateRange, startDate, endDate],
     queryFn: async () => {
-      const response = await api.get('/admin/analytics/products/top?limit=10');
+      const response = await api.get(`/admin/analytics/products/top?limit=10&metric=revenue&${buildRangeQuery(dateRange, startDate, endDate)}`);
       return response.data.items || [];
     },
   });
@@ -109,7 +115,7 @@ const SalesReport: React.FC = () => {
   const { data: topVendors } = useQuery({
     queryKey: ['admin', 'analytics', 'top-vendors', dateRange, startDate, endDate],
     queryFn: async () => {
-      const response = await api.get('/admin/analytics/vendors/top?limit=10&metric=gmv');
+      const response = await api.get(`/admin/analytics/vendors/top?limit=10&metric=delivered&${buildRangeQuery(dateRange, startDate, endDate)}`);
       return response.data.items || [];
     },
   });
@@ -173,9 +179,9 @@ const SalesReport: React.FC = () => {
     );
   }
 
-  const summary = analytics?.summary || { totalOrders: 0, totalRevenue: 0, averageOrderValue: 0 };
+  const summary = analytics?.summary || { totalOrders: 0, totalRevenue: 0, averageOrderValue: 0, activeVendors: 0, totalDeliveredOrders: 0 };
   const dailyData = analytics?.daily || [];
-  const ordersByStatus = analytics?.ordersByStatus || [];
+  const ordersByStatus = analytics?.vendorOrdersByStatus || analytics?.ordersByStatus || [];
 
   return (
     <Box className="page-shell">
@@ -238,28 +244,10 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Total Revenue
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: accent, fontWeight: 800 }}>
-                    EUR {summary.totalRevenue?.toFixed(2)}
-                  </Typography>
-                </Box>
-                <AttachMoney sx={{ fontSize: 40, color: accent, opacity: 0.75 }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Avg Order Value
+                    Delivered Orders
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
-                    EUR {summary.averageOrderValue?.toFixed(2)}
+                    {summary.totalDeliveredOrders || 0}
                   </Typography>
                 </Box>
                 <TrendingUp sx={{ fontSize: 40, color: muiTheme.palette.success.main, opacity: 0.75 }} />
@@ -274,10 +262,46 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
+                    Delivered Revenue
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: accent, fontWeight: 800 }}>
+                    {Number(summary.totalRevenue || 0).toFixed(2)}
+                  </Typography>
+                </Box>
+                <AttachMoney sx={{ fontSize: 40, color: accent, opacity: 0.75 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
+                    Avg Delivered Order Value
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: textPrimary }}>
+                    {Number(summary.averageOrderValue || 0).toFixed(2)}
+                  </Typography>
+                </Box>
+                <TrendingUp sx={{ fontSize: 40, color: muiTheme.palette.info.main, opacity: 0.75 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
                     Active Vendors
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
-                    {topVendors?.length || 0}
+                    {summary.activeVendors || 0}
                   </Typography>
                 </Box>
                 <Store sx={{ fontSize: 40, color: muiTheme.palette.warning.main, opacity: 0.75 }} />
@@ -407,13 +431,13 @@ const SalesReport: React.FC = () => {
                   <TableBody>
                     {topProducts?.map((product: any) => (
                       <TableRow key={product._id} sx={{ '&:hover': { backgroundColor: hover } }}>
-                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{product.title}</TableCell>
+                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{product.product?.title || 'Unknown product'}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {product.totalQty || 0}
+                          {product.qtySum || 0}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {(product.totalRevenue || 0).toFixed(2)}
+                            {Number(product.revenueSum || 0).toFixed(2)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -453,14 +477,14 @@ const SalesReport: React.FC = () => {
                     {topVendors?.map((vendor: any) => (
                       <TableRow key={vendor._id} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {vendor.storeName || 'Unknown'}
+                          {vendor.vendor?.storeName || 'Senel Admin'}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {vendor.vendorOrders || 0}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {(vendor.grandTotalSum || 0).toFixed(2)}
+                            {Number(vendor.grandTotalSum || 0).toFixed(2)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -493,7 +517,7 @@ const SalesReport: React.FC = () => {
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.country || 'Unknown'}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.orders}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          <Typography fontWeight={800} sx={{ color: accent }}>EUR {(item.revenue || 0).toFixed(2)}</Typography>
+                          <Typography fontWeight={800} sx={{ color: accent }}>{Number(item.revenue || 0).toFixed(2)}</Typography>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -530,7 +554,7 @@ const SalesReport: React.FC = () => {
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {(item.revenueSum || 0).toFixed(2)}
+                            {Number(item.revenueSum || 0).toFixed(2)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -561,7 +585,7 @@ const SalesReport: React.FC = () => {
                     {lowStockProducts?.map((item: any) => (
                       <TableRow key={item._id} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.title}</TableCell>
-                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.vendorId?.storeName || 'Unknown'}</TableCell>
+                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.vendorId?.storeName || 'Senel Admin'}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.stockQty}</TableCell>
                       </TableRow>
                     ))}
@@ -583,7 +607,7 @@ const SalesReport: React.FC = () => {
                   Total abandoned carts: <strong style={{ color: textPrimary }}>{abandonedCarts?.totalAbandonedCarts || 0}</strong>
                 </Typography>
                 <Typography sx={{ color: textSecondary }}>
-                  Potential revenue: <strong style={{ color: textPrimary }}>EUR {Number(abandonedCarts?.potentialRevenue || 0).toFixed(2)}</strong>
+                  Potential revenue: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.potentialRevenue || 0).toFixed(2)}</strong>
                 </Typography>
                 <Typography sx={{ color: textSecondary }}>
                   Recovery rate: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.recoveryRate || 0).toFixed(1)}%</strong>
@@ -622,7 +646,7 @@ const SalesReport: React.FC = () => {
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {Number(item.value || 0).toFixed(2)}
+                            {Number(item.value || 0).toFixed(2)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -671,7 +695,7 @@ const SalesReport: React.FC = () => {
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>
-                            EUR {Number(item.subtotal || 0).toFixed(2)}
+                            {Number(item.subtotal || 0).toFixed(2)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>

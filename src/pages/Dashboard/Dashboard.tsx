@@ -46,8 +46,8 @@ const Dashboard: React.FC = () => {
     queryKey: ['admin', 'dashboard'],
     queryFn: async () => {
       const ordersResponse = await api
-        .get('/admin/analytics/orders/overview?days=30')
-        .catch(() => ({ data: { summary: { totalOrders: 0 } } }));
+        .get('/admin/analytics/orders/overview')
+        .catch(() => ({ data: { summary: { totalDeliveredOrders: 0 } } }));
 
       const vendorsResponse = await api
         .get('/vendors/admin/vendors')
@@ -118,7 +118,7 @@ const Dashboard: React.FC = () => {
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Total Orders (30d)" value={stats?.orders?.summary?.totalOrders || 0} icon="orders" color={muiTheme.palette.primary.main} />
+          <StatsWidget title="Delivered Orders" value={stats?.orders?.summary?.totalDeliveredOrders || 0} icon="orders" color={muiTheme.palette.primary.main} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsWidget title="Pending Vendors" value={stats?.pendingVendors || 0} icon="vendors" color={muiTheme.palette.error.main} />
