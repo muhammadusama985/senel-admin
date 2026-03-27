@@ -130,6 +130,16 @@ const ProductList: React.FC = () => {
     },
   });
 
+  const rejectHotMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.post(`/products/admin/products/${id}/hot-request/reject`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+      handleMenuClose();
+    },
+  });
+
   const archiveMutation = useMutation({
     mutationFn: async (id: string) => {
       await api.patch(`/products/admin/products/${id}`, { status: 'archived' });
@@ -178,6 +188,13 @@ const ProductList: React.FC = () => {
     };
 
     return <Chip label={status} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
+  };
+
+  const getHotRequestChip = (product: any) => {
+    if (product.isFeatured) return <Chip label="Hot Product" size="small" color="warning" />;
+    if (product.hotRequestStatus === 'pending') return <Chip label="Pending Request" size="small" color="info" />;
+    if (product.hotRequestStatus === 'rejected') return <Chip label="Rejected" size="small" color="error" />;
+    return <Chip label="Not Requested" size="small" variant="outlined" />;
   };
 
   if (productsLoading) {
@@ -299,6 +316,7 @@ const ProductList: React.FC = () => {
               <TableCell>Stock</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Featured</TableCell>
+              <TableCell>Hot Request</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -364,6 +382,9 @@ const ProductList: React.FC = () => {
                     {product.isFeatured ? <Star /> : <StarBorder />}
                   </IconButton>
                 </TableCell>
+                <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
+                  {getHotRequestChip(product)}
+                </TableCell>
                 <TableCell align="center" sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                   <IconButton size="small" onClick={(e) => handleMenuOpen(e, product)} sx={{ '&:hover': { backgroundColor: hover } }}>
                     <MoreVert />
@@ -419,8 +440,23 @@ const ProductList: React.FC = () => {
           }}
         >
           {selectedProduct?.isFeatured ? <StarBorder sx={{ mr: 1, fontSize: 20 }} /> : <Star sx={{ mr: 1, fontSize: 20 }} />}
-          {selectedProduct?.isFeatured ? 'Remove Featured' : 'Mark Featured'}
+          {selectedProduct?.isFeatured ? 'Remove Hot Product' : 'Mark Hot Product'}
         </MenuItem>
+        {selectedProduct?.hotRequestStatus === 'pending' && !selectedProduct?.isFeatured ? (
+          <MenuItem
+            onClick={() => {
+              featuredMutation.mutate({ id: selectedProduct._id, featured: true });
+              handleMenuClose();
+            }}
+          >
+            <Star sx={{ mr: 1, fontSize: 20 }} /> Approve Hot Request
+          </MenuItem>
+        ) : null}
+        {selectedProduct?.hotRequestStatus === 'pending' ? (
+          <MenuItem onClick={() => selectedProduct && rejectHotMutation.mutate(selectedProduct._id)}>
+            <StarBorder sx={{ mr: 1, fontSize: 20 }} /> Reject Hot Request
+          </MenuItem>
+        ) : null}
         <MenuItem onClick={handleArchive}>
           <Archive sx={{ mr: 1, fontSize: 20 }} /> Archive
         </MenuItem>
