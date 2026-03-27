@@ -365,6 +365,9 @@ const OrderDetail: React.FC = () => {
 
   const orderCurrency = order.order?.currency || order.items?.[0]?.currency || 'EUR';
   const refundRequest = order.order?.refundRequest;
+  const allVendorOrdersDelivered =
+    order.vendorOrders?.length > 0 &&
+    order.vendorOrders.every((vendorOrder: any) => vendorOrder.status === 'delivered');
   const showMarkRefundedButton =
     order.order?.status === 'cancelled' &&
     order.order?.paymentStatus === 'paid' &&
@@ -415,7 +418,7 @@ const OrderDetail: React.FC = () => {
         >
           Print
         </Button>
-        {order.order?.status !== 'cancelled' && (
+        {order.order?.status !== 'cancelled' && !allVendorOrdersDelivered && (
           <Button variant="contained" color="error" onClick={() => cancelOrderMutation.mutate()} disabled={cancelOrderMutation.isPending}>
             {cancelOrderMutation.isPending ? 'Cancelling...' : 'Cancel Order'}
           </Button>

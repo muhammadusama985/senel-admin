@@ -230,7 +230,7 @@ const OrderList: React.FC = () => {
                           </IconButton>
                         </Tooltip>
 
-                        {order.status !== 'cancelled' && (
+                        {order.status !== 'cancelled' && !order.allVendorOrdersDelivered && (
                           <Tooltip title="Cancel Order">
                             <IconButton
                               size="small"
