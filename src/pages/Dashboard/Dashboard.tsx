@@ -63,6 +63,10 @@ const Dashboard: React.FC = () => {
         .get('/admin/payouts?status=requested')
         .catch(() => ({ data: { items: [] } }));
 
+      const lowStockResponse = await api
+        .get('/admin/analytics/products/low-stock?limit=10')
+        .catch(() => ({ data: { items: [] } }));
+
       const revenueResponse = await api
         .get('/admin/analytics/products/top?limit=7')
         .catch(() => ({ data: { items: [] } }));
@@ -72,6 +76,8 @@ const Dashboard: React.FC = () => {
         pendingVendors,
         pendingProducts: productsResponse.data.products?.length || 0,
         pendingPayouts: payoutsResponse.data.items?.length || 0,
+        lowStockProducts: lowStockResponse.data.items || [],
+        lowStockCount: lowStockResponse.data.total || lowStockResponse.data.items?.length || 0,
         revenue:
           revenueResponse.data.items?.map((item: any, index: number) => ({
             date: `Day ${index + 1}`,
@@ -122,6 +128,9 @@ const Dashboard: React.FC = () => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsWidget title="Pending Payouts" value={stats?.pendingPayouts || 0} icon="payouts" color={muiTheme.palette.success.main} />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <StatsWidget title="Low Stock Products" value={stats?.lowStockCount || 0} icon="inventory" color={muiTheme.palette.error.main} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
@@ -209,6 +218,69 @@ const Dashboard: React.FC = () => {
                 Recent Orders
               </Typography>
               <RecentOrders />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
+                Low Stock Products
+              </Typography>
+
+              {stats?.lowStockProducts?.length ? (
+                <Box sx={{ display: 'grid', gap: 1.25 }}>
+                  {stats.lowStockProducts.map((item: any) => (
+                    <Box
+                      key={item._id}
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : 'minmax(180px, 2fr) minmax(160px, 1.4fr) 110px 110px',
+                        gap: 1,
+                        alignItems: 'center',
+                        px: 1.5,
+                        py: 1.25,
+                        borderRadius: 2,
+                        border: `1px solid ${border}`,
+                        backgroundColor: alpha(muiTheme.palette.error.main, isLight ? 0.03 : 0.08),
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: textPrimary, fontWeight: 700 }}>
+                          {item.title}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: textSecondary }}>
+                          {item.categoryId?.name || 'Uncategorized'}
+                        </Typography>
+                      </Box>
+
+                      <Box>
+                        <Typography sx={{ color: textPrimary }}>
+                          {item.vendorId?.storeName || 'Senel Admin'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: textSecondary }}>
+                          {item.vendorId ? 'Vendor product' : 'Platform product'}
+                        </Typography>
+                      </Box>
+
+                      <Typography sx={{ color: textPrimary, fontWeight: 700 }}>
+                        Stock: {item.hasVariants
+                          ? (item.variants || []).reduce((sum: number, variant: any) => sum + Number(variant.stockQty || 0), 0)
+                          : Number(item.stockQty || 0)}
+                      </Typography>
+
+                      <Typography sx={{ color: muiTheme.palette.error.main, fontWeight: 700 }}>
+                        Threshold: {Number(item.lowStockThreshold || 0)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Typography sx={{ color: textSecondary }}>
+                  No low stock products right now.
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>

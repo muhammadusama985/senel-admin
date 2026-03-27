@@ -10,7 +10,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 interface StatsWidgetProps {
   title: string;
   value: number;
-  icon: 'orders' | 'vendors' | 'products' | 'payouts';
+  icon: 'orders' | 'vendors' | 'products' | 'payouts' | 'inventory';
   color: string;
 }
 
@@ -27,6 +27,8 @@ const StatsWidget: React.FC<StatsWidgetProps> = ({ title, value, icon, color }) 
       case 'vendors':
         return <StoreIcon {...iconProps} />;
       case 'products':
+        return <InventoryIcon {...iconProps} />;
+      case 'inventory':
         return <InventoryIcon {...iconProps} />;
       case 'payouts':
         return <PaymentsIcon {...iconProps} />;
