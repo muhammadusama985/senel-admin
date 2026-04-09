@@ -265,9 +265,7 @@ const Dashboard: React.FC = () => {
                       </Box>
 
                       <Typography sx={{ color: textPrimary, fontWeight: 700 }}>
-                        Stock: {item.hasVariants
-                          ? (item.variants || []).reduce((sum: number, variant: any) => sum + Number(variant.stockQty || 0), 0)
-                          : Number(item.stockQty || 0)}
+                        Stock: {Number(item.stockQty || 0)}
                       </Typography>
 
                       <Typography sx={{ color: muiTheme.palette.error.main, fontWeight: 700 }}>

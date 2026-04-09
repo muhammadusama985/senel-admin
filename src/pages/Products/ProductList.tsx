@@ -324,9 +324,7 @@ const ProductList: React.FC = () => {
             {products?.products?.map((product: any) => (
               (() => {
                 const displaySku = product.sku || product.variants?.[0]?.sku || 'N/A';
-                const displayStock = product.hasVariants
-                  ? (product.variants || []).reduce((sum: number, variant: any) => sum + Number(variant.stockQty || 0), 0)
-                  : Number(product.stockQty || 0);
+                const displayStock = Number(product.stockQty || 0);
 
                 return (
               <TableRow key={product._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
