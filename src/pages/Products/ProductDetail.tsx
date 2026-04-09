@@ -375,7 +375,6 @@ const ProductDetail: React.FC = () => {
                       >
                         <TableCell>SKU</TableCell>
                         <TableCell>Attributes</TableCell>
-                        <TableCell>Stock</TableCell>
                         <TableCell>Price</TableCell>
                       </TableRow>
                     </TableHead>
@@ -388,7 +387,6 @@ const ProductDetail: React.FC = () => {
                               <Chip key={key} label={`${key}: ${value}`} size="small" variant="outlined" sx={{ mr: 0.5, mb: 0.5 }} />
                             ))}
                           </TableCell>
-                          <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{variant.stockQty}</TableCell>
                           <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                             <Typography sx={{ color: accent }}>
                               {formatMoney(Number(variant.price || product.priceTiers?.[0]?.unitPrice || 0), product.currency)}
