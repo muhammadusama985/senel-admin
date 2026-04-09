@@ -52,9 +52,37 @@ const COLOR_NAME_BY_HEX: Record<string, string> = {
 };
 
 const isColorAttribute = (key: string) => key.trim().toLowerCase() === 'color';
+const hexToRgb = (hex: string) => {
+  const normalized = hex.replace('#', '');
+  return {
+    r: parseInt(normalized.slice(0, 2), 16),
+    g: parseInt(normalized.slice(2, 4), 16),
+    b: parseInt(normalized.slice(4, 6), 16),
+  };
+};
+const nearestColorNameFromHex = (hex: string) => {
+  const target = hexToRgb(hex);
+  let bestName = 'Black';
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  Object.entries(COLOR_NAME_BY_HEX).forEach(([candidateHex, candidateName]) => {
+    const candidate = hexToRgb(candidateHex);
+    const distance =
+      (target.r - candidate.r) ** 2 +
+      (target.g - candidate.g) ** 2 +
+      (target.b - candidate.b) ** 2;
+
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestName = candidateName;
+    }
+  });
+
+  return bestName;
+};
 const colorNameFromHex = (hex: string) => {
   const normalizedHex = hex.toUpperCase();
-  const generalName = COLOR_NAME_BY_HEX[hex.toLowerCase()] || 'Custom Color';
+  const generalName = COLOR_NAME_BY_HEX[hex.toLowerCase()] || nearestColorNameFromHex(hex.toLowerCase());
   return `${generalName} (${normalizedHex})`;
 };
 const colorHexFromValue = (value: string) => {
