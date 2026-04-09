@@ -167,9 +167,14 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
           <CardContent>
             <Stack spacing={2}>
               <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Variant {index + 1}
-                </Typography>
+                <Box>
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Variant {index + 1}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    One variant can represent a single value like Blue, or a combination like Blue + Large, with its own images.
+                  </Typography>
+                </Box>
                 <IconButton color="error" onClick={() => removeVariant(index)}>
                   <DeleteOutlineIcon />
                 </IconButton>
@@ -239,6 +244,19 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                             </Grid>
                             <Grid size={{ xs: 12, md: 4 }}>
                               <TextField fullWidth label="Value" value={String(value || '')} InputProps={{ readOnly: true }} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 1 }}>
+                              <Box
+                                title={String(value || '')}
+                                sx={{
+                                  width: 36,
+                                  height: 36,
+                                  borderRadius: '50%',
+                                  border: `1px solid ${border}`,
+                                  backgroundColor: colorHexFromValue(String(value || '')),
+                                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.35)',
+                                }}
+                              />
                             </Grid>
                           </>
                         ) : (
