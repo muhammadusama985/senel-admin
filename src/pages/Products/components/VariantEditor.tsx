@@ -52,10 +52,19 @@ const COLOR_NAME_BY_HEX: Record<string, string> = {
 };
 
 const isColorAttribute = (key: string) => key.trim().toLowerCase() === 'color';
-const colorNameFromHex = (hex: string) => COLOR_NAME_BY_HEX[hex.toLowerCase()] || hex.toUpperCase();
+const colorNameFromHex = (hex: string) => {
+  const normalizedHex = hex.toUpperCase();
+  const generalName = COLOR_NAME_BY_HEX[hex.toLowerCase()] || 'Custom Color';
+  return `${generalName} (${normalizedHex})`;
+};
 const colorHexFromValue = (value: string) => {
   const normalized = value.trim().toLowerCase();
-  const match = Object.entries(COLOR_NAME_BY_HEX).find(([, label]) => label.toLowerCase() === normalized);
+  const hexMatch = normalized.match(/#([0-9a-f]{6})/i);
+  if (hexMatch) {
+    return `#${hexMatch[1]}`.toLowerCase();
+  }
+  const plainName = normalized.replace(/\s*\(#?[0-9a-f]{6}\)\s*/i, '').trim();
+  const match = Object.entries(COLOR_NAME_BY_HEX).find(([, label]) => label.toLowerCase() === plainName);
   return match?.[0] || '#000000';
 };
 
