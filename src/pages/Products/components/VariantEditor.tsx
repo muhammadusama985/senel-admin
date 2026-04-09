@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Button,
@@ -60,6 +60,9 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
   const border = muiTheme.palette.divider;
   const surface = muiTheme.palette.background.paper;
   const accent = muiTheme.palette.secondary.main;
+  const [draftAttributeNames, setDraftAttributeNames] = useState<Record<string, string>>({});
+
+  const getDraftId = (variantIndex: number, key: string) => `${variantIndex}:${key}`;
 
   const updateVariant = (index: number, next: Partial<ProductVariant>) => {
     const nextVariants = [...variants];
@@ -99,6 +102,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
 
   const renameAttribute = (index: number, oldKey: string, nextKey: string) => {
     const cleanKey = nextKey.trim();
+    if (!cleanKey || cleanKey === oldKey) return;
     const nextVariants = [...variants];
     const currentAttributes = { ...(nextVariants[index].attributes || {}) };
     const currentValue = currentAttributes[oldKey] ?? '';
@@ -106,6 +110,20 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
     currentAttributes[cleanKey || oldKey] = currentValue;
     nextVariants[index].attributes = currentAttributes;
     onChange(nextVariants);
+  };
+
+  const syncDraftAttributeName = (index: number, oldKey: string, nextKey: string) => {
+    const oldDraftId = getDraftId(index, oldKey);
+    const newDraftId = getDraftId(index, nextKey);
+    setDraftAttributeNames((prev) => {
+      const next = { ...prev };
+      const currentDraft = next[oldDraftId];
+      delete next[oldDraftId];
+      if (currentDraft !== undefined) {
+        next[newDraftId] = currentDraft;
+      }
+      return next;
+    });
   };
 
   const updateAttributeValue = (index: number, key: string, value: string) => {
@@ -221,8 +239,19 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                           <TextField
                             fullWidth
                             label="Attribute Title"
-                            value={key}
-                            onChange={(event) => renameAttribute(index, key, event.target.value)}
+                            value={draftAttributeNames[getDraftId(index, key)] ?? key}
+                            placeholder="e.g. Color, Size"
+                            onChange={(event) =>
+                              setDraftAttributeNames((prev) => ({
+                                ...prev,
+                                [getDraftId(index, key)]: event.target.value,
+                              }))
+                            }
+                            onBlur={() => {
+                              const draftValue = draftAttributeNames[getDraftId(index, key)] ?? key;
+                              renameAttribute(index, key, draftValue);
+                              syncDraftAttributeName(index, key, draftValue.trim() || key);
+                            }}
                           />
                         </Grid>
                         {isColorAttribute(key) ? (
@@ -243,7 +272,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                               />
                             </Grid>
                             <Grid size={{ xs: 12, md: 4 }}>
-                              <TextField fullWidth label="Value" value={String(value || '')} InputProps={{ readOnly: true }} />
+                              <TextField fullWidth label="Option Name" value={String(value || '')} placeholder="Color name" InputProps={{ readOnly: true }} />
                             </Grid>
                             <Grid size={{ xs: 12, md: 1 }}>
                               <Box
@@ -263,9 +292,9 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                           <Grid size={{ xs: 12, md: 7 }}>
                             <TextField
                               fullWidth
-                              label="Option Value"
+                              label="Option Name"
                               value={String(value || '')}
-                              placeholder={key.trim().toLowerCase() === 'size' ? 'e.g. Small, Medium, Large' : 'Enter option value'}
+                              placeholder={key.trim().toLowerCase() === 'size' ? 'e.g. Small, Medium, Large' : 'e.g. Yellow, Blue'}
                               onChange={(event) => updateAttributeValue(index, key, event.target.value)}
                             />
                           </Grid>
