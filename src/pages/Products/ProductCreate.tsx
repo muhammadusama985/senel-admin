@@ -114,7 +114,13 @@ const ProductCreate: React.FC = () => {
         title: form.titleML.en || form.title,
         description: form.descriptionML.en || form.description,
         vendorId: form.vendorId || undefined,
-        stockQty: form.hasVariants ? 0 : form.stockQty,
+        stockQty: form.stockQty,
+        variants: form.hasVariants
+          ? form.variants.map((variant) => ({
+              ...variant,
+              stockQty: form.stockQty,
+            }))
+          : form.variants,
       };
       const response = await api.post('/products/admin/products', payload);
       return response.data;
@@ -166,7 +172,19 @@ const ProductCreate: React.FC = () => {
   }, [form, tierValidationError, variantValidationError]);
 
   const updateField = (field: string, value: any) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      if (field === 'stockQty' && prev.hasVariants) {
+        return {
+          ...prev,
+          stockQty: value,
+          variants: prev.variants.map((variant) => ({
+            ...variant,
+            stockQty: value,
+          })),
+        };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   const updateMOQ = (value: number) => {
@@ -437,7 +455,15 @@ const ProductCreate: React.FC = () => {
             {form.hasVariants ? (
               <VariantEditor
                 variants={form.variants}
-                onChange={(variants) => updateField('variants', variants)}
+                onChange={(variants) =>
+                  updateField(
+                    'variants',
+                    variants.map((variant) => ({
+                      ...variant,
+                      stockQty: form.stockQty,
+                    })),
+                  )
+                }
                 uploadImage={uploadVariantImage}
               />
             ) : null}

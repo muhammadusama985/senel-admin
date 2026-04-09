@@ -53,6 +53,7 @@ const ProductDetail: React.FC = () => {
 
   const [rejectDialog, setRejectDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [selectedImage, setSelectedImage] = useState(0);
 
   const surface = muiTheme.palette.background.paper;
   const border = muiTheme.palette.divider;
@@ -150,6 +151,16 @@ const ProductDetail: React.FC = () => {
     return colors[status] || 'default';
   };
 
+  const galleryImages = Array.from(
+    new Set(
+      [
+        ...(product.imageUrls || []),
+        ...((product.variants || []).flatMap((variant: any) => variant.imageUrls || [])),
+      ].filter(Boolean),
+    ),
+  );
+  const mainImage = galleryImages[selectedImage];
+
   return (
     <Box className="page-shell" sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
@@ -218,13 +229,36 @@ const ProductDetail: React.FC = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 6 }}>
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-            {product.imageUrls?.length > 0 ? (
-              <CardMedia component="img" height="300" image={product.imageUrls[0]} alt={product.title} sx={{ objectFit: 'contain', backgroundColor: alpha(muiTheme.palette.text.primary, isLight ? 0.04 : 0.08), p: 2 }} />
+            {mainImage ? (
+              <CardMedia component="img" height="300" image={mainImage} alt={product.title} sx={{ objectFit: 'contain', backgroundColor: alpha(muiTheme.palette.text.primary, isLight ? 0.04 : 0.08), p: 2 }} />
             ) : (
               <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: alpha(muiTheme.palette.text.primary, isLight ? 0.04 : 0.08) }}>
                 <Inventory sx={{ fontSize: 100, color: muiTheme.palette.text.secondary }} />
               </Box>
             )}
+            {galleryImages.length > 1 ? (
+              <Stack direction="row" spacing={1} sx={{ p: 2, pt: 0, overflowX: 'auto' }}>
+                {galleryImages.map((imageUrl, index) => (
+                  <Box
+                    key={`${imageUrl}-${index}`}
+                    component="img"
+                    src={imageUrl}
+                    alt={`${product.title} ${index + 1}`}
+                    onClick={() => setSelectedImage(index)}
+                    sx={{
+                      width: 72,
+                      height: 72,
+                      objectFit: 'cover',
+                      borderRadius: 2,
+                      cursor: 'pointer',
+                      border: `2px solid ${selectedImage === index ? accent : border}`,
+                      backgroundColor: alpha(muiTheme.palette.text.primary, isLight ? 0.04 : 0.08),
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
+              </Stack>
+            ) : null}
           </Card>
         </Grid>
 

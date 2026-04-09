@@ -228,7 +228,19 @@ const ProductEdit: React.FC = () => {
   }, [form.hasVariants, form.variants]);
 
   const updateField = <K extends keyof ProductForm>(field: K, value: ProductForm[K]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      if (field === 'stockQty' && prev.hasVariants) {
+        return {
+          ...prev,
+          stockQty: value as number,
+          variants: prev.variants.map((variant) => ({
+            ...variant,
+            stockQty: Number(value) || 0,
+          })),
+        };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   const updateML = (field: 'titleML' | 'descriptionML', lang: 'en' | 'de' | 'tr', value: string) => {
@@ -346,7 +358,12 @@ const ProductEdit: React.FC = () => {
         trackInventory: form.trackInventory,
         lowStockThreshold: Number(form.lowStockThreshold),
         hasVariants: form.hasVariants,
-        variants: form.variants,
+        variants: form.hasVariants
+          ? form.variants.map((variant) => ({
+              ...variant,
+              stockQty: Number(form.stockQty),
+            }))
+          : form.variants,
         lengthCm: Number(form.lengthCm),
         widthCm: Number(form.widthCm),
         heightCm: Number(form.heightCm),
@@ -675,7 +692,15 @@ const ProductEdit: React.FC = () => {
                 <Paper variant="outlined" sx={{ p: 2.5, backgroundColor: surface, borderColor: border }}>
                   <VariantEditor
                     variants={form.variants}
-                    onChange={(variants) => updateField('variants', variants)}
+                    onChange={(variants) =>
+                      updateField(
+                        'variants',
+                        variants.map((variant) => ({
+                          ...variant,
+                          stockQty: Number(form.stockQty) || 0,
+                        })),
+                      )
+                    }
                     uploadImage={uploadVariantImage}
                   />
                 </Paper>

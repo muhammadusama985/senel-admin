@@ -303,7 +303,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                                 </Grid>
                               )}
 
-                              <Grid size={{ xs: 12, md: colorMode ? 3 : 3 }}>
+                              <Grid size={{ xs: 12, md: colorMode ? 4 : 4 }}>
                                 <TextField
                                   fullWidth
                                   label="SKU"
@@ -311,22 +311,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                                   onChange={(event) => updateOption(variantIndex, (variant) => ({ ...variant, sku: event.target.value }))}
                                 />
                               </Grid>
-                              <Grid size={{ xs: 12, md: colorMode ? 2 : 2 }}>
-                                <TextField
-                                  fullWidth
-                                  type="number"
-                                  label="Stock"
-                                  value={option.stockQty}
-                                  inputProps={{ min: 0 }}
-                                  onChange={(event) =>
-                                    updateOption(variantIndex, (variant) => ({
-                                      ...variant,
-                                      stockQty: Math.max(0, Number(event.target.value) || 0),
-                                    }))
-                                  }
-                                />
-                              </Grid>
-                              <Grid size={{ xs: 12, md: colorMode ? 1 : 3 }}>
+                              <Grid size={{ xs: 12, md: colorMode ? 2 : 3 }}>
                                 <Button component="label" fullWidth size="small" variant="contained">
                                   Upload
                                   <input
