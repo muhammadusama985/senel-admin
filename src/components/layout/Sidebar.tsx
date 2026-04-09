@@ -51,7 +51,6 @@ const menuItems: MenuItem[] = [
       { text: 'Create Product', textKey: 'nav.productsCreate', icon: null, path: '/products/create' },
       { text: 'Approvals', textKey: 'nav.productsApprovals', icon: null, path: '/products/approvals' },
       { text: 'Categories', textKey: 'nav.categories', icon: null, path: '/categories' },
-      { text: 'Attributes', textKey: 'nav.attributes', icon: null, path: '/attributes' },
     ],
   },
   {
