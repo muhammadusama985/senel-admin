@@ -782,9 +782,23 @@ const OrderDetail: React.FC = () => {
                                         >
                                           <Inventory />
                                         </Avatar>
-                                        <Typography variant="body2" sx={{ color: TEXT_PRIMARY }}>
-                                          {item.title}
-                                        </Typography>
+                                        <Box>
+                                          <Typography variant="body2" sx={{ color: TEXT_PRIMARY, fontWeight: 700 }}>
+                                            {item.title}
+                                          </Typography>
+                                          {item.variantSku ? (
+                                            <Typography variant="caption" sx={{ display: 'block', color: TEXT_SECONDARY }}>
+                                              SKU: {item.variantSku}
+                                            </Typography>
+                                          ) : null}
+                                          {item.variantAttributes && Object.keys(item.variantAttributes).length > 0 ? (
+                                            <Typography variant="caption" sx={{ display: 'block', color: TEXT_SECONDARY }}>
+                                              {Object.entries(item.variantAttributes)
+                                                .map(([key, value]) => `${key}: ${value}`)
+                                                .join(' | ')}
+                                            </Typography>
+                                          ) : null}
+                                        </Box>
                                       </Box>
                                     </TableCell>
                                     <TableCell align="right" sx={bodyCellSx}>{item.qty}</TableCell>
