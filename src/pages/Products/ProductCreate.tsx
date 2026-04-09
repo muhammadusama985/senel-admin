@@ -432,7 +432,7 @@ const ProductCreate: React.FC = () => {
           <Stack spacing={2}>
             <FormControlLabel
               control={<Checkbox checked={form.hasVariants} onChange={(e) => updateField('hasVariants', e.target.checked)} />}
-              label="This product has variants"
+              label="This product has attributes and options"
             />
             {form.hasVariants ? (
               <VariantEditor

@@ -145,13 +145,13 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Box>
-          <Typography variant="h6">Variants & Attributes</Typography>
+          <Typography variant="h6">Attributes & Options</Typography>
           <Typography variant="body2" color="text.secondary">
-            Add variant attributes inline. Color values use a color palette, and each variant can have its own images.
+            Add attribute titles inline. Their option values can be things like Blue, Yellow, Small, or Large, and each option can have its own images.
           </Typography>
         </Box>
         <Button variant="outlined" startIcon={<AddIcon />} onClick={addVariant}>
-          Add Variant
+          Add Option
         </Button>
       </Stack>
 
@@ -169,10 +169,10 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Box>
                   <Typography variant="subtitle1" fontWeight={700}>
-                    Variant {index + 1}
+                    Option {index + 1}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    One variant can represent a single value like Blue, or a combination like Blue + Large, with its own images.
+                    One option can represent a single value like Blue, or a combination like Blue + Large, with its own images.
                   </Typography>
                 </Box>
                 <IconButton color="error" onClick={() => removeVariant(index)}>
@@ -203,7 +203,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
 
               <Stack spacing={1.5}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2">Attributes</Typography>
+                  <Typography variant="subtitle2">Attribute Titles & Option Values</Typography>
                   <Button size="small" variant="text" startIcon={<AddIcon />} onClick={() => addAttribute(index)}>
                     Add Attribute
                   </Button>
@@ -220,7 +220,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                         <Grid size={{ xs: 12, md: 4 }}>
                           <TextField
                             fullWidth
-                            label="Attribute Name"
+                            label="Attribute Title"
                             value={key}
                             onChange={(event) => renameAttribute(index, key, event.target.value)}
                           />
@@ -263,9 +263,9 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                           <Grid size={{ xs: 12, md: 7 }}>
                             <TextField
                               fullWidth
-                              label="Value"
+                              label="Option Value"
                               value={String(value || '')}
-                              placeholder={key.trim().toLowerCase() === 'size' ? 'e.g. Small, Medium, Large' : 'Enter value'}
+                              placeholder={key.trim().toLowerCase() === 'size' ? 'e.g. Small, Medium, Large' : 'Enter option value'}
                               onChange={(event) => updateAttributeValue(index, key, event.target.value)}
                             />
                           </Grid>
@@ -283,7 +283,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
 
               <Stack spacing={1.5}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2">Variant Images (Optional)</Typography>
+                  <Typography variant="subtitle2">Option Images (Optional)</Typography>
                   <Button component="label" size="small" variant="contained">
                     Upload Images
                     <input
@@ -301,7 +301,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
 
                 {(variant.imageUrls || []).length === 0 ? (
                   <Typography variant="body2" color="text.secondary">
-                    No variant images added.
+                    No option images added.
                   </Typography>
                 ) : (
                   <Grid container spacing={1.5}>
@@ -311,7 +311,7 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                           <Box
                             component="img"
                             src={imageUrl}
-                            alt={`${variant.sku} variant`}
+                            alt={`${variant.sku} option`}
                             sx={{
                               width: '100%',
                               height: 96,

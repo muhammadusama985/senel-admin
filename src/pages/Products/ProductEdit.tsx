@@ -598,7 +598,7 @@ const ProductEdit: React.FC = () => {
                   </Grid>
 
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                    <FormControlLabel control={<Checkbox checked={form.hasVariants} onChange={(event) => updateField('hasVariants', event.target.checked)} />} label="Has Variants" />
+                    <FormControlLabel control={<Checkbox checked={form.hasVariants} onChange={(event) => updateField('hasVariants', event.target.checked)} />} label="Has Attributes & Options" />
                     <FormControlLabel control={<Checkbox checked={form.isFeatured} onChange={(event) => updateField('isFeatured', event.target.checked)} />} label="Featured Product" />
                     <FormControlLabel
                       control={<Checkbox checked={form.trackInventory} onChange={(event) => updateField('trackInventory', event.target.checked)} />}
