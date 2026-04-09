@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import VariantEditor, { ProductVariant } from './components/VariantEditor';
 
 interface Category {
   _id: string;
@@ -72,6 +73,13 @@ const ProductCreate: React.FC = () => {
     currency: 'EUR',
     moq: 1,
     stockQty: 0,
+    hasVariants: false,
+    variants: [] as ProductVariant[],
+    trackInventory: true,
+    lowStockThreshold: 5,
+    lengthCm: 0,
+    widthCm: 0,
+    heightCm: 0,
     autoApprove: true,
     isFeatured: false,
     requiresManualShipping: false,
@@ -106,6 +114,7 @@ const ProductCreate: React.FC = () => {
         title: form.titleML.en || form.title,
         description: form.descriptionML.en || form.description,
         vendorId: form.vendorId || undefined,
+        stockQty: form.hasVariants ? 0 : form.stockQty,
       };
       const response = await api.post('/products/admin/products', payload);
       return response.data;
@@ -132,15 +141,29 @@ const ProductCreate: React.FC = () => {
     return '';
   }, [form.moq, form.priceTiers]);
 
+  const variantValidationError = useMemo(() => {
+    if (!form.hasVariants) return '';
+    if (!form.variants.length) return 'Please add at least one variant.';
+    const normalizedSkus = form.variants.map((variant) => String(variant.sku || '').trim().toUpperCase());
+    if (normalizedSkus.some((sku) => !sku)) return 'Each variant must include a SKU.';
+    if (new Set(normalizedSkus).size !== normalizedSkus.length) return 'Variant SKUs must be unique.';
+    const hasInvalidAttributes = form.variants.some((variant) =>
+      Object.entries(variant.attributes || {}).some(([key, value]) => !String(key || '').trim() || !String(value || '').trim())
+    );
+    if (hasInvalidAttributes) return 'Each variant attribute must include both a name and a value.';
+    return '';
+  }, [form.hasVariants, form.variants]);
+
   const canSubmit = useMemo(() => {
     return (
       form.title.trim().length >= 2 &&
       form.categoryId &&
       form.priceTiers.length > 0 &&
       form.priceTiers.every((tier) => tier.minQty > 0 && tier.unitPrice >= 0) &&
-      !tierValidationError
+      !tierValidationError &&
+      !variantValidationError
     );
-  }, [form, tierValidationError]);
+  }, [form, tierValidationError, variantValidationError]);
 
   const updateField = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -205,6 +228,18 @@ const ProductCreate: React.FC = () => {
     }
   };
 
+  const uploadVariantImage = async (file: File): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('productImage', file);
+      const response = await api.post('/products/admin/images', formData);
+      return response.data?.imageUrl || null;
+    } catch (uploadError: any) {
+      setError(uploadError.response?.data?.message || 'Failed to upload variant image');
+      return null;
+    }
+  };
+
   const removeImage = (imageUrl: string) => {
     setForm((prev) => ({
       ...prev,
@@ -226,6 +261,7 @@ const ProductCreate: React.FC = () => {
 
         {error && <Alert severity="error">{error}</Alert>}
         {tierValidationError && <Alert severity="warning">{tierValidationError}</Alert>}
+        {variantValidationError && <Alert severity="warning">{variantValidationError}</Alert>}
 
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>
@@ -309,6 +345,42 @@ const ProductCreate: React.FC = () => {
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField type="number" fullWidth label="Stock Qty" value={form.stockQty} onChange={(e) => updateField('stockQty', Number(e.target.value))} />
           </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              type="number"
+              fullWidth
+              label="Low Stock Threshold"
+              value={form.lowStockThreshold}
+              onChange={(e) => updateField('lowStockThreshold', Math.max(0, Number(e.target.value) || 0))}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              type="number"
+              fullWidth
+              label="Length (cm)"
+              value={form.lengthCm}
+              onChange={(e) => updateField('lengthCm', Math.max(0, Number(e.target.value) || 0))}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              type="number"
+              fullWidth
+              label="Width (cm)"
+              value={form.widthCm}
+              onChange={(e) => updateField('widthCm', Math.max(0, Number(e.target.value) || 0))}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TextField
+              type="number"
+              fullWidth
+              label="Height (cm)"
+              value={form.heightCm}
+              onChange={(e) => updateField('heightCm', Math.max(0, Number(e.target.value) || 0))}
+            />
+          </Grid>
         </Grid>
 
         <Paper variant="outlined" sx={{ p: 2 }}>
@@ -353,6 +425,22 @@ const ProductCreate: React.FC = () => {
             >
               Add Tier
             </Button>
+          </Stack>
+        </Paper>
+
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Stack spacing={2}>
+            <FormControlLabel
+              control={<Checkbox checked={form.hasVariants} onChange={(e) => updateField('hasVariants', e.target.checked)} />}
+              label="This product has variants"
+            />
+            {form.hasVariants ? (
+              <VariantEditor
+                variants={form.variants}
+                onChange={(variants) => updateField('variants', variants)}
+                uploadImage={uploadVariantImage}
+              />
+            ) : null}
           </Stack>
         </Paper>
 
@@ -416,6 +504,7 @@ const ProductCreate: React.FC = () => {
         </Paper>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+          <FormControlLabel control={<Checkbox checked={form.trackInventory} onChange={(e) => updateField('trackInventory', e.target.checked)} />} label="Track Inventory" />
           <FormControlLabel control={<Checkbox checked={form.autoApprove} onChange={(e) => updateField('autoApprove', e.target.checked)} />} label={t('products.autoApprove')} />
           <FormControlLabel control={<Checkbox checked={form.isFeatured} onChange={(e) => updateField('isFeatured', e.target.checked)} />} label={t('products.featureHomepage')} />
           <FormControlLabel

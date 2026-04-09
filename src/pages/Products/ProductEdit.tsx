@@ -29,6 +29,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
+import VariantEditor, { ProductVariant } from './components/VariantEditor';
 
 type PriceTier = {
   minQty: number;
@@ -45,10 +46,15 @@ type ProductForm = {
   currency: 'EUR' | 'TRY' | 'USD';
   moq: number;
   stockQty: number;
-  isFeatured: boolean;
-  requiresManualShipping: boolean;
+  hasVariants: boolean;
+  variants: ProductVariant[];
   trackInventory: boolean;
   lowStockThreshold: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+  isFeatured: boolean;
+  requiresManualShipping: boolean;
   imageUrls: string[];
   priceTiers: PriceTier[];
 };
@@ -65,10 +71,15 @@ const createInitialForm = (): ProductForm => ({
   currency: 'EUR',
   moq: 1,
   stockQty: 0,
-  isFeatured: false,
-  requiresManualShipping: false,
+  hasVariants: false,
+  variants: [],
   trackInventory: true,
   lowStockThreshold: 5,
+  lengthCm: 0,
+  widthCm: 0,
+  heightCm: 0,
+  isFeatured: false,
+  requiresManualShipping: false,
   imageUrls: [],
   priceTiers: [{ ...emptyTier }],
 });
@@ -94,10 +105,22 @@ const normalizeProductToForm = (product: any): ProductForm => ({
   currency: product?.currency || 'EUR',
   moq: Number(product?.moq) || 1,
   stockQty: Number(product?.stockQty) || 0,
-  isFeatured: Boolean(product?.isFeatured),
-  requiresManualShipping: Boolean(product?.requiresManualShipping),
+  hasVariants: Boolean(product?.hasVariants),
+  variants: Array.isArray(product?.variants)
+    ? product.variants.map((variant: any) => ({
+        sku: variant?.sku || '',
+        stockQty: Number(variant?.stockQty) || 0,
+        attributes: variant?.attributes || {},
+        imageUrls: Array.isArray(variant?.imageUrls) ? variant.imageUrls : [],
+      }))
+    : [],
   trackInventory: product?.trackInventory ?? true,
   lowStockThreshold: Number(product?.lowStockThreshold ?? 5),
+  lengthCm: Number(product?.lengthCm) || 0,
+  widthCm: Number(product?.widthCm) || 0,
+  heightCm: Number(product?.heightCm) || 0,
+  isFeatured: Boolean(product?.isFeatured),
+  requiresManualShipping: Boolean(product?.requiresManualShipping),
   imageUrls: Array.isArray(product?.imageUrls) ? product.imageUrls : [],
   priceTiers:
     Array.isArray(product?.priceTiers) && product.priceTiers.length > 0
@@ -191,6 +214,19 @@ const ProductEdit: React.FC = () => {
     return '';
   }, [form.moq, form.priceTiers]);
 
+  const variantValidationError = useMemo(() => {
+    if (!form.hasVariants) return '';
+    if (!form.variants.length) return 'Please add at least one variant.';
+    const normalizedSkus = form.variants.map((variant) => String(variant.sku || '').trim().toUpperCase());
+    if (normalizedSkus.some((sku) => !sku)) return 'Each variant must include a SKU.';
+    if (new Set(normalizedSkus).size !== normalizedSkus.length) return 'Variant SKUs must be unique.';
+    const hasInvalidAttributes = form.variants.some((variant) =>
+      Object.entries(variant.attributes || {}).some(([key, value]) => !String(key || '').trim() || !String(value || '').trim())
+    );
+    if (hasInvalidAttributes) return 'Each variant attribute must include both a name and a value.';
+    return '';
+  }, [form.hasVariants, form.variants]);
+
   const updateField = <K extends keyof ProductForm>(field: K, value: ProductForm[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -274,6 +310,18 @@ const ProductEdit: React.FC = () => {
     }
   };
 
+  const uploadVariantImage = async (file: File): Promise<string | null> => {
+    try {
+      const imageFormData = new FormData();
+      imageFormData.append('productImage', file);
+      const response = await api.post('/products/admin/images', imageFormData);
+      return response.data?.imageUrl || null;
+    } catch (error: any) {
+      setUploadError(error.response?.data?.message || 'Failed to upload variant image.');
+      return null;
+    }
+  };
+
   const removeImage = (imageUrl: string) => {
     setForm((prev) => ({
       ...prev,
@@ -297,6 +345,11 @@ const ProductEdit: React.FC = () => {
         requiresManualShipping: form.requiresManualShipping,
         trackInventory: form.trackInventory,
         lowStockThreshold: Number(form.lowStockThreshold),
+        hasVariants: form.hasVariants,
+        variants: form.variants,
+        lengthCm: Number(form.lengthCm),
+        widthCm: Number(form.widthCm),
+        heightCm: Number(form.heightCm),
         imageUrls: form.imageUrls,
         priceTiers: form.priceTiers.map((tier) => ({
           minQty: Number(tier.minQty),
@@ -332,6 +385,11 @@ const ProductEdit: React.FC = () => {
 
     if (tierValidationError) {
       setFormError(tierValidationError);
+      return;
+    }
+
+    if (variantValidationError) {
+      setFormError(variantValidationError);
       return;
     }
 
@@ -376,11 +434,12 @@ const ProductEdit: React.FC = () => {
           </Stack>
         </Box>
 
-        {(formError || uploadError || tierValidationError) && (
+        {(formError || uploadError || tierValidationError || variantValidationError) && (
           <Stack spacing={1}>
             {formError && <Alert severity="error">{formError}</Alert>}
             {uploadError && <Alert severity="error">{uploadError}</Alert>}
             {!formError && tierValidationError && <Alert severity="warning">{tierValidationError}</Alert>}
+            {!formError && variantValidationError && <Alert severity="warning">{variantValidationError}</Alert>}
           </Stack>
         )}
 
@@ -503,9 +562,43 @@ const ProductEdit: React.FC = () => {
                         sx={fieldSx}
                       />
                     </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Length (cm)"
+                        value={form.lengthCm}
+                        onChange={(event) => updateField('lengthCm', Math.max(0, Number(event.target.value) || 0))}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        sx={fieldSx}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Width (cm)"
+                        value={form.widthCm}
+                        onChange={(event) => updateField('widthCm', Math.max(0, Number(event.target.value) || 0))}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        sx={fieldSx}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        label="Height (cm)"
+                        value={form.heightCm}
+                        onChange={(event) => updateField('heightCm', Math.max(0, Number(event.target.value) || 0))}
+                        inputProps={{ min: 0, step: 0.01 }}
+                        sx={fieldSx}
+                      />
+                    </Grid>
                   </Grid>
 
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                    <FormControlLabel control={<Checkbox checked={form.hasVariants} onChange={(event) => updateField('hasVariants', event.target.checked)} />} label="Has Variants" />
                     <FormControlLabel control={<Checkbox checked={form.isFeatured} onChange={(event) => updateField('isFeatured', event.target.checked)} />} label="Featured Product" />
                     <FormControlLabel
                       control={<Checkbox checked={form.trackInventory} onChange={(event) => updateField('trackInventory', event.target.checked)} />}
@@ -577,6 +670,16 @@ const ProductEdit: React.FC = () => {
                   ))}
                 </Stack>
               </Paper>
+
+              {form.hasVariants ? (
+                <Paper variant="outlined" sx={{ p: 2.5, backgroundColor: surface, borderColor: border }}>
+                  <VariantEditor
+                    variants={form.variants}
+                    onChange={(variants) => updateField('variants', variants)}
+                    uploadImage={uploadVariantImage}
+                  />
+                </Paper>
+              ) : null}
             </Stack>
           </Grid>
 
