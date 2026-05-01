@@ -27,12 +27,12 @@ const PasswordResetManagement: React.FC = () => {
   });
 
   const columns: GridColDef[] = [
-    { field: 'email', headerName: 'Email', minWidth: 220, flex: 1.2 },
+    { field: 'email', headerName: t('common.email'), minWidth: 220, flex: 1.2 },
     { field: 'status', headerName: t('common.status'), minWidth: 120 },
-    { field: 'attempts', headerName: 'Attempts', minWidth: 100 },
-    { field: 'resendCount', headerName: 'Resends', minWidth: 100 },
-    { field: 'createdAt', headerName: 'Created At', minWidth: 180, flex: 1 },
-    { field: 'expiresAt', headerName: 'Expires At', minWidth: 180, flex: 1 },
+    { field: 'attempts', headerName: t('passwordReset.attempts'), minWidth: 100 },
+    { field: 'resendCount', headerName: t('passwordReset.resends'), minWidth: 100 },
+    { field: 'createdAt', headerName: t('passwordReset.createdAt'), minWidth: 180, flex: 1 },
+    { field: 'expiresAt', headerName: t('passwordReset.expiresAt'), minWidth: 180, flex: 1 },
     {
       field: 'actions',
       headerName: t('common.actions'),
@@ -41,13 +41,13 @@ const PasswordResetManagement: React.FC = () => {
       renderCell: (params) => (
         <Stack direction="row" spacing={1}>
           <Button size="small" onClick={() => updateMutation.mutate({ tokenId: params.row._id, status: 'expired' })}>
-            Expire
+            {t('passwordReset.expire')}
           </Button>
           <Button size="small" onClick={() => updateMutation.mutate({ tokenId: params.row._id, status: 'locked' })}>
-            Lock
+            {t('passwordReset.lock')}
           </Button>
           <Button size="small" onClick={() => updateMutation.mutate({ tokenId: params.row._id, status: 'active' })}>
-            Activate
+            {t('passwordReset.activate')}
           </Button>
         </Stack>
       ),
@@ -64,7 +64,7 @@ const PasswordResetManagement: React.FC = () => {
           </Typography>
         </Box>
 
-        {error && <Alert severity="error">Failed to load password reset tokens.</Alert>}
+        {error && <Alert severity="error">{t('passwordReset.failedLoad')}</Alert>}
 
         <Box sx={{ height: 620 }}>
           <DataGrid rows={data} columns={columns} loading={isLoading} getRowId={(row) => row._id} disableRowSelectionOnClick />

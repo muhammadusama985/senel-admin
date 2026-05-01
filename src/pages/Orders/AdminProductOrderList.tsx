@@ -29,11 +29,14 @@ import { Refresh, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const AdminProductOrderList: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -75,7 +78,7 @@ const AdminProductOrderList: React.FC = () => {
   };
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'admin-product-orders', page, rowsPerPage, search, statusFilter],
+    queryKey: ['admin', 'admin-product-orders', currentLanguage, page, rowsPerPage, search, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page + 1),
@@ -90,9 +93,9 @@ const AdminProductOrderList: React.FC = () => {
   });
 
   const formatOrderDate = (value: string | null | undefined) => {
-    if (!value) return 'N/A';
+    if (!value) return t('products.notAvailable');
     const parsed = new Date(value);
-    return isValid(parsed) ? format(parsed, 'MMM dd, yyyy') : 'N/A';
+    return isValid(parsed) ? format(parsed, 'MMM dd, yyyy') : t('products.notAvailable');
   };
 
   const getStatusChip = (status: string) => {
@@ -104,7 +107,15 @@ const AdminProductOrderList: React.FC = () => {
       delivered: 'success',
       cancelled: 'error',
     };
-    return <Chip label={status.replace('_', ' ')} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
+    const labels: Record<string, string> = {
+      placed: t('orders.placed'),
+      picking: t('orders.processing'),
+      packed: t('shipping.packed'),
+      shipped: t('shipping.markShipped'),
+      delivered: t('shipping.delivered'),
+      cancelled: t('orders.cancelled'),
+    };
+    return <Chip label={labels[status] || status.replace('_', ' ')} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
   };
 
   if (isLoading) {
@@ -122,13 +133,13 @@ const AdminProductOrderList: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ color: muiTheme.palette.text.primary, fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Admin Product Orders
+          {t('orders.adminProductOrders')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search orders..."
+            placeholder={t('orders.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             InputProps={{
@@ -141,7 +152,7 @@ const AdminProductOrderList: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 250, ...fieldSx }}
           />
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('orders.refresh')}>
             <IconButton onClick={() => refetch()} sx={{ color: muiTheme.palette.primary.main, '&:hover': { backgroundColor: hover } }}>
               <Refresh />
             </IconButton>
@@ -152,15 +163,15 @@ const AdminProductOrderList: React.FC = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Order Status</InputLabel>
-            <Select value={statusFilter} label="Order Status" onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
-              <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="placed">Placed</MenuItem>
-              <MenuItem value="picking">Picking</MenuItem>
-              <MenuItem value="packed">Packed</MenuItem>
-              <MenuItem value="shipped">Shipped</MenuItem>
-              <MenuItem value="delivered">Delivered</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+            <InputLabel>{t('orders.orderStatus')}</InputLabel>
+            <Select value={statusFilter} label={t('orders.orderStatus')} onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
+              <MenuItem value="all">{t('orders.allStatuses')}</MenuItem>
+              <MenuItem value="placed">{t('orders.placed')}</MenuItem>
+              <MenuItem value="picking">{t('orders.processing')}</MenuItem>
+              <MenuItem value="packed">{t('shipping.packed')}</MenuItem>
+              <MenuItem value="shipped">{t('shipping.markShipped')}</MenuItem>
+              <MenuItem value="delivered">{t('shipping.delivered')}</MenuItem>
+              <MenuItem value="cancelled">{t('orders.cancelled')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -168,7 +179,7 @@ const AdminProductOrderList: React.FC = () => {
 
       {data?.items?.length === 0 ? (
         <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-          No admin product orders found
+          {t('orders.noOrders')}
         </Alert>
       ) : (
         <>
@@ -185,12 +196,12 @@ const AdminProductOrderList: React.FC = () => {
                     },
                   }}
                 >
-                  <TableCell>Admin Order #</TableCell>
-                  <TableCell>Master Order #</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell>{t('orders.adminOrderNumber')}</TableCell>
+                  <TableCell>{t('orders.masterOrderNumber')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{t('orders.amount')}</TableCell>
+                  <TableCell>{t('common.date')}</TableCell>
+                  <TableCell align="center">{t('orders.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -202,7 +213,7 @@ const AdminProductOrderList: React.FC = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                      {order.orderId?.orderNumber || 'N/A'}
+                      {order.orderId?.orderNumber || t('products.notAvailable')}
                     </TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>{getStatusChip(order.status)}</TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
@@ -214,7 +225,7 @@ const AdminProductOrderList: React.FC = () => {
                       {formatOrderDate(order.createdAt)}
                     </TableCell>
                     <TableCell align="center" sx={{ borderBottom: `1px solid ${border}` }}>
-                      <Tooltip title="View Details">
+                      <Tooltip title={t('orders.viewDetails')}>
                         <IconButton size="small" onClick={() => navigate(`/orders/${order.orderId?._id}`)} sx={{ '&:hover': { backgroundColor: hover } }}>
                           <Visibility />
                         </IconButton>

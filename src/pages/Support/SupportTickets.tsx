@@ -16,9 +16,11 @@ import {
 } from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 const SupportTickets: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
   const [reply, setReply] = useState('');
@@ -70,27 +72,27 @@ const SupportTickets: React.FC = () => {
   });
 
   const columns: GridColDef[] = [
-    { field: 'ticketNumber', headerName: 'Ticket', minWidth: 160, flex: 1 },
-    { field: 'subject', headerName: 'Subject', minWidth: 220, flex: 1.5 },
-    { field: 'vendorLabel', headerName: 'Vendor', minWidth: 180, flex: 1 },
-    { field: 'category', headerName: 'Category', minWidth: 130, flex: 0.8 },
-    { field: 'priority', headerName: 'Priority', minWidth: 120, flex: 0.7 },
+    { field: 'ticketNumber', headerName: t('support.ticket'), minWidth: 160, flex: 1 },
+    { field: 'subject', headerName: t('support.subject'), minWidth: 220, flex: 1.5 },
+    { field: 'vendorLabel', headerName: t('common.vendor'), minWidth: 180, flex: 1 },
+    { field: 'category', headerName: t('support.category'), minWidth: 130, flex: 0.8 },
+    { field: 'priority', headerName: t('support.priority'), minWidth: 120, flex: 0.7 },
     {
       field: 'status',
-      headerName: 'Status',
+      headerName: t('common.status'),
       minWidth: 130,
       flex: 0.8,
       renderCell: (params) => <Chip label={String(params.value || '').replaceAll('_', ' ')} size="small" />,
     },
-    { field: 'messageCount', headerName: 'Messages', minWidth: 110, flex: 0.6 },
+    { field: 'messageCount', headerName: t('support.messages'), minWidth: 110, flex: 0.6 },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('common.actions'),
       minWidth: 160,
       sortable: false,
       renderCell: (params) => (
         <Button size="small" variant="outlined" onClick={() => setSelectedTicket(params.row)}>
-          View Ticket
+          {t('support.viewTicket')}
         </Button>
       ),
     },
@@ -99,12 +101,12 @@ const SupportTickets: React.FC = () => {
   return (
     <Paper className="page-shell" sx={{ p: 3 }}>
       <Stack spacing={2}>
-        <Typography variant="h4">Support Tickets</Typography>
+        <Typography variant="h4">{t('support.ticketsTitle')}</Typography>
         <Typography variant="body1" color="text.secondary">
-          Review vendor support tickets, reply as admin, and update ticket status.
+          {t('support.ticketsIntro')}
         </Typography>
 
-        {listQuery.error && <Alert severity="error">Failed to load support tickets.</Alert>}
+        {listQuery.error && <Alert severity="error">{t('support.failedLoadTickets')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid
@@ -119,10 +121,10 @@ const SupportTickets: React.FC = () => {
       </Stack>
 
       <Dialog open={Boolean(selectedTicket)} onClose={() => setSelectedTicket(null)} maxWidth="md" fullWidth>
-        <DialogTitle>Support Ticket</DialogTitle>
+        <DialogTitle>{t('support.ticketDialog')}</DialogTitle>
         <DialogContent dividers>
           {detailQuery.isLoading ? (
-            <Typography>Loading ticket...</Typography>
+            <Typography>{t('support.loadingTicket')}</Typography>
           ) : detailQuery.data ? (
             <Stack spacing={2}>
               <Box>
@@ -131,18 +133,18 @@ const SupportTickets: React.FC = () => {
                   {detailQuery.data.ticket.subject}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Vendor: {detailQuery.data.ticket.vendorLabel || '-'}
+                  {t('common.vendor')}: {detailQuery.data.ticket.vendorLabel || '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Created By: {detailQuery.data.ticket.createdByLabel || '-'}
+                  {t('support.createdBy')}: {detailQuery.data.ticket.createdByLabel || '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Status: {String(detailQuery.data.ticket.status || '').replaceAll('_', ' ')}
+                  {t('common.status')}: {String(detailQuery.data.ticket.status || '').replaceAll('_', ' ')}
                 </Typography>
               </Box>
 
               <Paper variant="outlined" sx={{ p: 2 }}>
-                <Typography variant="subtitle2">Description</Typography>
+                <Typography variant="subtitle2">{t('support.description')}</Typography>
                 <Typography sx={{ mt: 1 }}>{detailQuery.data.ticket.description}</Typography>
               </Paper>
 
@@ -165,20 +167,20 @@ const SupportTickets: React.FC = () => {
               </Stack>
 
               <TextField
-                select
-                label="Change Status"
-                value={nextStatus}
-                onChange={(event) => setNextStatus(event.target.value)}
-              >
-                <MenuItem value="open">Open</MenuItem>
-                <MenuItem value="in_progress">In Progress</MenuItem>
-                <MenuItem value="waiting">Waiting</MenuItem>
-                <MenuItem value="resolved">Resolved</MenuItem>
-                <MenuItem value="closed">Closed</MenuItem>
-              </TextField>
+                    select
+                    label={t('support.changeStatus')}
+                    value={nextStatus}
+                    onChange={(event) => setNextStatus(event.target.value)}
+                  >
+                    <MenuItem value="open">{t('disputes.open')}</MenuItem>
+                    <MenuItem value="in_progress">{t('disputes.inProgress')}</MenuItem>
+                    <MenuItem value="waiting">{t('support.waiting')}</MenuItem>
+                    <MenuItem value="resolved">{t('disputes.resolved')}</MenuItem>
+                    <MenuItem value="closed">{t('disputes.closed')}</MenuItem>
+                  </TextField>
 
-              <TextField
-                label="Reply as Admin"
+                  <TextField
+                label={t('support.replyAsAdmin')}
                 multiline
                 rows={4}
                 value={reply}
@@ -186,24 +188,24 @@ const SupportTickets: React.FC = () => {
               />
             </Stack>
           ) : (
-            <Alert severity="error">Failed to load ticket details.</Alert>
+            <Alert severity="error">{t('support.failedLoadTicketDetails')}</Alert>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedTicket(null)}>Close</Button>
+          <Button onClick={() => setSelectedTicket(null)}>{t('disputes.close')}</Button>
           <Button
             variant="outlined"
             onClick={() => statusMutation.mutate()}
             disabled={!nextStatus || nextStatus === detailQuery.data?.ticket?.status || statusMutation.isPending}
           >
-            {statusMutation.isPending ? 'Updating...' : 'Update Status'}
+            {statusMutation.isPending ? t('disputes.updating') : t('disputes.updateStatus')}
           </Button>
           <Button
             variant="contained"
             onClick={() => replyMutation.mutate()}
             disabled={!reply.trim() || replyMutation.isPending}
           >
-            {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
+            {replyMutation.isPending ? t('disputes.sending') : t('disputes.sendReply')}
           </Button>
         </DialogActions>
       </Dialog>

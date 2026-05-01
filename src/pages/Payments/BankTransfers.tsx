@@ -48,14 +48,36 @@ const BankTransfers: React.FC = () => {
     return `${origin}${rawUrl.startsWith('/') ? rawUrl : `/${rawUrl}`}`;
   };
 
+  const translateTransferStatus = (status?: string) => {
+    const map: Record<string, string> = {
+      under_review: t('payments.underReview'),
+      awaiting_transfer: t('payments.awaitingTransfer'),
+      rejected: t('reviews.rejected'),
+      paid: t('payments.paid'),
+    };
+    return status ? (map[status] || status) : '';
+  };
+
   const columns: GridColDef[] = [
     { field: 'orderNumber', headerName: t('common.orderNumber'), minWidth: 180, flex: 1 },
-    { field: 'paymentStatus', headerName: 'Payment Status', minWidth: 140, flex: 0.8 },
-    { field: 'grandTotal', headerName: 'Grand Total', minWidth: 130, flex: 0.7 },
-    { field: 'shippingStatus', headerName: 'Shipping Status', minWidth: 130, flex: 0.8 },
+    {
+      field: 'paymentStatus',
+      headerName: t('payments.paymentStatus'),
+      minWidth: 140,
+      flex: 0.8,
+      valueGetter: (_value, row) => translateTransferStatus(row.paymentStatus),
+    },
+    { field: 'grandTotal', headerName: t('payments.grandTotal'), minWidth: 130, flex: 0.7 },
+    {
+      field: 'shippingStatus',
+      headerName: t('payments.shippingStatus'),
+      minWidth: 130,
+      flex: 0.8,
+      valueGetter: (_value, row) => row.shippingStatus ? row.shippingStatus : '',
+    },
     {
       field: 'proof',
-      headerName: 'Proof',
+      headerName: t('payments.proof'),
       minWidth: 130,
       sortable: false,
       renderCell: (params) => {
@@ -70,7 +92,7 @@ const BankTransfers: React.FC = () => {
               if (proofUrl) window.open(proofUrl, '_blank', 'noopener,noreferrer');
             }}
           >
-            View Proof
+            {t('payments.viewProof')}
           </Button>
         );
       },
@@ -113,23 +135,23 @@ const BankTransfers: React.FC = () => {
         </Typography>
         <TextField
           select
-          label="Payment Status"
+          label={t('payments.paymentStatus')}
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as typeof statusFilter)}
           sx={{ maxWidth: 280 }}
         >
-          <MenuItem value="under_review">Under review</MenuItem>
-          <MenuItem value="awaiting_transfer">Awaiting transfer</MenuItem>
-          <MenuItem value="rejected">Rejected</MenuItem>
-          <MenuItem value="paid">Paid</MenuItem>
+          <MenuItem value="under_review">{t('payments.underReview')}</MenuItem>
+          <MenuItem value="awaiting_transfer">{t('payments.awaitingTransfer')}</MenuItem>
+          <MenuItem value="rejected">{t('reviews.rejected')}</MenuItem>
+          <MenuItem value="paid">{t('payments.paid')}</MenuItem>
         </TextField>
         {statusFilter !== 'under_review' && (
           <Alert severity="info">
-            Approve/Reject works only for orders in <strong>under_review</strong> status.
+            {t('payments.approveRejectOnlyUnderReview')}
           </Alert>
         )}
 
-        {error && <Alert severity="error">Failed to load bank transfer queue.</Alert>}
+        {error && <Alert severity="error">{t('payments.failedLoadQueue')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid rows={data} columns={columns} loading={isLoading} getRowId={(row) => row._id} disableRowSelectionOnClick />

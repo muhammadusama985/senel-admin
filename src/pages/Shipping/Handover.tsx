@@ -30,7 +30,8 @@ const nextStatusOptions: Record<HandoverStatus, HandoverStatus[]> = {
 };
 
 const Handover: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const queryClient = useQueryClient();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [pickupDialogOpen, setPickupDialogOpen] = useState(false);
@@ -49,7 +50,7 @@ const Handover: React.FC = () => {
   });
 
   const { data = [], isLoading, error } = useQuery({
-    queryKey: ['admin', 'handover', 'ready-for-pickup'],
+    queryKey: ['admin', 'handover', currentLanguage, 'ready-for-pickup'],
     queryFn: async () => {
       const response = await api.get('/admin/handover/ready-for-pickup');
       return response.data.items || [];
@@ -115,9 +116,16 @@ const Handover: React.FC = () => {
         headerName: t('common.status'),
         minWidth: 150,
         flex: 0.8,
-        renderCell: (params) => (
-          <Chip size="small" label={String(params.value || '').replace(/_/g, ' ')} />
-        ),
+        renderCell: (params) => {
+          const value = String(params.value || '');
+          const labels: Record<string, string> = {
+            ready_for_pickup: t('shipping.readyForPickup'),
+            picked_up: t('shipping.pickedUp'),
+            in_transit: t('shipping.inTransit'),
+            delivered: t('shipping.delivered'),
+          };
+          return <Chip size="small" label={labels[value] || value.replace(/_/g, ' ')} />;
+        },
       },
       {
         field: 'actions',
@@ -171,7 +179,7 @@ const Handover: React.FC = () => {
           </Typography>
         </Box>
 
-        {error && <Alert severity="error">Failed to load handover queue.</Alert>}
+        {error && <Alert severity="error">{t('shipping.failedLoadOrders')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid
@@ -239,7 +247,11 @@ const Handover: React.FC = () => {
               {selectedOrder &&
                 nextStatusOptions[(selectedOrder.handoverStatus || 'ready_for_pickup') as HandoverStatus].map((option) => (
                   <MenuItem key={option} value={option}>
-                    {option.replace(/_/g, ' ')}
+                    {{
+                      picked_up: t('shipping.pickedUp'),
+                      in_transit: t('shipping.inTransit'),
+                      delivered: t('shipping.delivered'),
+                    }[option] || option.replace(/_/g, ' ')}
                   </MenuItem>
                 ))}
             </TextField>
@@ -264,7 +276,7 @@ const Handover: React.FC = () => {
               fullWidth
             />
             <TextField
-              label="Tracking URL"
+              label={t('shipping.trackingUrl')}
               value={statusForm.trackingUrl}
               onChange={(e) => setStatusForm((prev) => ({ ...prev, trackingUrl: e.target.value }))}
               fullWidth

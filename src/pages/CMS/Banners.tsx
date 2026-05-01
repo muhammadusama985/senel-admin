@@ -32,8 +32,10 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, Delete, Edit, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import ImageUpload from '../../components/common/ImageUpload';
+import { pickLocalizedText } from '../../utils/localization';
 import { resolveMediaUrl } from '../../utils/media';
 
 interface Banner {
@@ -66,6 +68,8 @@ interface Banner {
 const Banners: React.FC = () => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
 
@@ -136,7 +140,7 @@ const Banners: React.FC = () => {
   };
 
   const { data: banners, isLoading, error } = useQuery({
-    queryKey: ['admin', 'banners', page, rowsPerPage, search],
+    queryKey: ['admin', 'banners', currentLanguage, page, rowsPerPage, search],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
@@ -179,7 +183,7 @@ const Banners: React.FC = () => {
       handleCloseDialog();
     },
     onError: (mutationError: any) => {
-      alert(mutationError.response?.data?.message || 'Failed to create banner');
+      alert(mutationError.response?.data?.message || t('banners.failedCreate'));
     },
   });
 
@@ -212,7 +216,7 @@ const Banners: React.FC = () => {
       handleCloseDialog();
     },
     onError: (mutationError: any) => {
-      alert(mutationError.response?.data?.message || 'Failed to update banner');
+      alert(mutationError.response?.data?.message || t('banners.failedUpdate'));
     },
   });
 
@@ -330,7 +334,7 @@ const Banners: React.FC = () => {
 
   const handleSubmit = () => {
     if (!editingBanner && !imageFile) {
-      alert('Please select an image');
+      alert(t('banners.selectImage'));
       return;
     }
 
@@ -353,7 +357,7 @@ const Banners: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
-        Error loading banners. Please try again.
+        {t('banners.failedLoad')}
       </Alert>
     );
   }
@@ -362,12 +366,12 @@ const Banners: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Banners
+          {t('banners.title')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search banners..."
+            placeholder={t('banners.search')}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -376,7 +380,7 @@ const Banners: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 220, ...fieldSx }}
           />
           <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-            New Banner
+            {t('banners.newBanner')}
           </Button>
         </Box>
       </Box>
@@ -395,19 +399,19 @@ const Banners: React.FC = () => {
                   },
                 }}
               >
-                <TableCell>Preview</TableCell>
-                <TableCell>Title (EN)</TableCell>
-                <TableCell>Priority</TableCell>
-                <TableCell>Schedule</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>{t('banners.preview')}</TableCell>
+                <TableCell>{t('banners.titleColumn')}</TableCell>
+                <TableCell>{t('banners.priority')}</TableCell>
+                <TableCell>{t('banners.schedule')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {banners?.items?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 5, color: muiTheme.palette.text.secondary }}>
-                    No banners found
+                    {t('banners.noBanners')}
                   </TableCell>
                 </TableRow>
               )}
@@ -433,7 +437,7 @@ const Banners: React.FC = () => {
                           <Box
                             component="img"
                             src={getFullImageUrl(banner.imageUrl)}
-                            alt={banner.titleML?.en || 'Banner'}
+                            alt={pickLocalizedText(banner.titleML, currentLanguage) || t('banners.title')}
                             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                             onError={(event: React.SyntheticEvent<HTMLImageElement>) => {
                               const target = event.currentTarget;
@@ -442,7 +446,7 @@ const Banners: React.FC = () => {
                           />
                         ) : (
                           <Typography variant="caption" color="text.secondary">
-                            No img
+                            {t('banners.noImage')}
                           </Typography>
                         )}
                       </Box>
@@ -450,7 +454,7 @@ const Banners: React.FC = () => {
                   </TableCell>
                   <TableCell sx={{ color: muiTheme.palette.text.primary }}>
                     <Typography noWrap sx={{ maxWidth: 160 }}>
-                      {banner.titleML?.en || 'No title'}
+                      {pickLocalizedText(banner.titleML, currentLanguage) || t('banners.noTitle')}
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ color: muiTheme.palette.text.primary }}>{banner.priority}</TableCell>
@@ -458,22 +462,22 @@ const Banners: React.FC = () => {
                     {banner.startAt ? (
                       <Box>
                         <Typography variant="caption" display="block" color="text.secondary">
-                          From: {format(new Date(banner.startAt), 'MMM dd, yyyy')}
+                          {t('banners.from')}: {format(new Date(banner.startAt), 'MMM dd, yyyy')}
                         </Typography>
                         {banner.endAt && (
                           <Typography variant="caption" display="block" color="text.secondary">
-                            To: {format(new Date(banner.endAt), 'MMM dd, yyyy')}
+                            {t('banners.to')}: {format(new Date(banner.endAt), 'MMM dd, yyyy')}
                           </Typography>
                         )}
                       </Box>
                     ) : (
                       <Typography variant="caption" color="text.secondary">
-                        No schedule
+                        {t('banners.noSchedule')}
                       </Typography>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Chip label={banner.isActive ? 'Active' : 'Inactive'} size="small" color={banner.isActive ? 'success' : 'default'} />
+                    <Chip label={banner.isActive ? t('catalog.active') : t('catalog.inactive')} size="small" color={banner.isActive ? 'success' : 'default'} />
                   </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => handleOpenEdit(banner)} sx={{ '&:hover': { backgroundColor: hover } }}>
@@ -495,7 +499,7 @@ const Banners: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this banner?')) {
+                        if (window.confirm(t('banners.deleteConfirm'))) {
                           deleteMutation.mutate(banner._id);
                         }
                       }}
@@ -537,19 +541,19 @@ const Banners: React.FC = () => {
         scroll="body"
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingBanner ? 'Edit Banner' : 'Create Banner'}</DialogTitle>
+        <DialogTitle>{editingBanner ? t('banners.editBanner') : t('banners.createBanner')}</DialogTitle>
         <DialogContent dividers sx={{ borderColor: border }}>
           <Tabs value={langTabValue} onChange={(_event, value) => setLangTabValue(value)} sx={tabsSx}>
-            <Tab label="English" />
-            <Tab label="Deutsch" />
-            <Tab label="Turkish" />
+            <Tab label={t('banners.english')} />
+            <Tab label={t('banners.german')} />
+            <Tab label={t('banners.turkish')} />
           </Tabs>
 
           {langTabValue === 0 && (
             <Grid container spacing={3} sx={{ pt: 3 }}>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Title (English)"
+                  label={t('banners.titleEn')}
                   fullWidth
                   value={formData.titleML.en}
                   onChange={(event) => handleLanguageChange('en', 'titleML', event.target.value)}
@@ -558,7 +562,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Subtitle (English)"
+                  label={t('banners.subtitleEn')}
                   fullWidth
                   value={formData.subtitleML.en}
                   onChange={(event) => handleLanguageChange('en', 'subtitleML', event.target.value)}
@@ -567,7 +571,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="CTA Text (English)"
+                  label={t('banners.ctaTextEn')}
                   fullWidth
                   value={formData.ctaTextML.en}
                   onChange={(event) => handleLanguageChange('en', 'ctaTextML', event.target.value)}
@@ -581,7 +585,7 @@ const Banners: React.FC = () => {
             <Grid container spacing={3} sx={{ pt: 3 }}>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Title (German)"
+                  label={t('banners.titleDe')}
                   fullWidth
                   value={formData.titleML.de}
                   onChange={(event) => handleLanguageChange('de', 'titleML', event.target.value)}
@@ -590,7 +594,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Subtitle (German)"
+                  label={t('banners.subtitleDe')}
                   fullWidth
                   value={formData.subtitleML.de}
                   onChange={(event) => handleLanguageChange('de', 'subtitleML', event.target.value)}
@@ -599,7 +603,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="CTA Text (German)"
+                  label={t('banners.ctaTextDe')}
                   fullWidth
                   value={formData.ctaTextML.de}
                   onChange={(event) => handleLanguageChange('de', 'ctaTextML', event.target.value)}
@@ -613,7 +617,7 @@ const Banners: React.FC = () => {
             <Grid container spacing={3} sx={{ pt: 3 }}>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Title (Turkish)"
+                  label={t('banners.titleTr')}
                   fullWidth
                   value={formData.titleML.tr}
                   onChange={(event) => handleLanguageChange('tr', 'titleML', event.target.value)}
@@ -622,7 +626,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Subtitle (Turkish)"
+                  label={t('banners.subtitleTr')}
                   fullWidth
                   value={formData.subtitleML.tr}
                   onChange={(event) => handleLanguageChange('tr', 'subtitleML', event.target.value)}
@@ -631,7 +635,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="CTA Text (Turkish)"
+                  label={t('banners.ctaTextTr')}
                   fullWidth
                   value={formData.ctaTextML.tr}
                   onChange={(event) => handleLanguageChange('tr', 'ctaTextML', event.target.value)}
@@ -643,56 +647,56 @@ const Banners: React.FC = () => {
 
           <Box sx={{ mt: 4 }}>
             <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-              Banner Settings
+              {t('banners.settings')}
             </Typography>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Priority"
+                  label={t('banners.priority')}
                   type="number"
                   fullWidth
                   value={formData.priority}
                   onChange={(event) => setFormData({ ...formData, priority: parseInt(event.target.value, 10) || 0 })}
-                  helperText="Lower numbers appear first"
+                  helperText={t('banners.priorityHelp')}
                   sx={fieldSx}
                   FormHelperTextProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom color="text.primary">
-                  Desktop Image
+                  {t('banners.desktopImage')}
                 </Typography>
                 <ImageUpload
                   onImageUpload={handleImageUpload}
                   onImageRemove={handleImageRemove}
                   currentImage={imagePreview}
-                  label="upload desktop image"
+                  label={t('banners.uploadDesktopImage')}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom color="text.primary">
-                  Mobile Image (Optional)
+                  {t('banners.mobileImageOptional')}
                 </Typography>
                 <ImageUpload
                   onImageUpload={handleImageMobileUpload}
                   onImageRemove={handleImageMobileRemove}
                   currentImage={imageMobilePreview}
-                  label="upload mobile image"
+                  label={t('banners.uploadMobileImage')}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="CTA URL"
+                  label={t('banners.ctaUrl')}
                   fullWidth
                   value={formData.ctaUrl}
                   onChange={(event) => setFormData({ ...formData, ctaUrl: event.target.value })}
-                  placeholder="/category/electronics or https://example.com"
+                  placeholder={t('banners.ctaUrlPlaceholder')}
                   sx={fieldSx}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Start Date"
+                  label={t('banners.startDate')}
                   type="date"
                   fullWidth
                   value={formData.startAt}
@@ -703,7 +707,7 @@ const Banners: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="End Date"
+                  label={t('banners.endDate')}
                   type="date"
                   fullWidth
                   value={formData.endAt}
@@ -715,16 +719,16 @@ const Banners: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={<Switch checked={formData.isActive} onChange={(event) => setFormData({ ...formData, isActive: event.target.checked })} />}
-                  label="Active"
+                  label={t('catalog.active')}
                 />
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={createMutation.isPending || updateMutation.isPending}>
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

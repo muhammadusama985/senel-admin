@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { DateTimePicker } from '@mui/x-date-pickers';
+import { useTranslation } from 'react-i18next';
 import api from '../../../api/client';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 
 const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess }) => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const isLight = muiTheme.palette.mode === 'light';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -59,7 +61,7 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
     try {
       const vendorOrderId = order?._id || order?.vendorOrderId || order?.id;
       if (!vendorOrderId) {
-        setError('Cannot schedule pickup: missing vendor order id');
+        setError(t('shipping.cannotScheduleMissingVendorOrder'));
         setLoading(false);
         return;
       }
@@ -70,7 +72,7 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
       });
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to schedule pickup');
+      setError(err.response?.data?.message || t('shipping.failedSchedulePickup'));
     } finally {
       setLoading(false);
     }
@@ -90,7 +92,7 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
         },
       }}
     >
-      <DialogTitle>Schedule Pickup</DialogTitle>
+      <DialogTitle>{t('shipping.schedulePickupTitle')}</DialogTitle>
 
       <form onSubmit={handleSubmit}>
         <DialogContent>
@@ -104,10 +106,10 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
               }}
             >
               <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }}>
-                Order: {order.vendorOrderNumber}
+                {t('shipping.orderLabel', { value: order.vendorOrderNumber })}
               </Typography>
               <Typography variant="body1" sx={{ color: accent, fontWeight: 700 }}>
-                Vendor: {order.vendorStoreName}
+                {t('shipping.vendorLabel', { value: order.vendorStoreName })}
               </Typography>
             </Box>
           )}
@@ -126,7 +128,7 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
           )}
 
           <DateTimePicker
-            label="Pickup Date & Time"
+            label={t('shipping.pickupDateTime')}
             value={formData.scheduledAt}
             onChange={(newValue) => setFormData({ ...formData, scheduledAt: newValue || new Date() })}
             sx={{ width: '100%', mb: 2, ...fieldSx }}
@@ -134,20 +136,20 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
 
           <TextField
             fullWidth
-            label="Pickup Window"
+            label={t('shipping.pickupWindow')}
             value={formData.pickupWindow}
             onChange={(event) => setFormData({ ...formData, pickupWindow: event.target.value })}
-            placeholder="e.g., 10:00-14:00"
+            placeholder={t('shipping.pickupWindowPlaceholder')}
             margin="normal"
             sx={fieldSx}
           />
 
           <TextField
             fullWidth
-            label="Notes"
+            label={t('shipping.notes')}
             value={formData.notes}
             onChange={(event) => setFormData({ ...formData, notes: event.target.value })}
-            placeholder="Call vendor 30 minutes before arrival..."
+            placeholder={t('shipping.notesPlaceholder')}
             multiline
             rows={3}
             margin="normal"
@@ -157,10 +159,10 @@ const SchedulePickupDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
 
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={onClose} sx={{ '&:hover': { backgroundColor: hover } }}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={20} color="inherit" /> : 'Schedule'}
+            {loading ? <CircularProgress size={20} color="inherit" /> : t('shipping.schedulePickup')}
           </Button>
         </DialogActions>
       </form>

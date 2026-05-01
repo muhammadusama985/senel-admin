@@ -20,6 +20,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthStore } from '../../store/authStore';
 import api from '../../api/client';
@@ -34,6 +35,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { mode, toggleTheme } = useTheme();
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -123,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
         {!isMobile && (
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
-            Admin Dashboard
+            {t('header.adminDashboard')}
           </Typography>
         )}
 
@@ -166,10 +168,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </IconButton>
 
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-          <MenuItem onClick={handleProfile}>Profile</MenuItem>
-          <MenuItem onClick={handleMyAccount}>My account</MenuItem>
+          <MenuItem onClick={handleProfile}>{t('header.profile')}</MenuItem>
+          <MenuItem onClick={handleMyAccount}>{t('header.myAccount')}</MenuItem>
           <Divider />
-          <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          <MenuItem onClick={handleLogout}>{t('header.logout')}</MenuItem>
         </Menu>
       </Toolbar>
     </AppBar>

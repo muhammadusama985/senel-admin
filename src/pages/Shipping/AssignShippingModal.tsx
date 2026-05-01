@@ -15,6 +15,7 @@ import {
   TextField,
 } from '@mui/material';
 import { useTheme as useMuiTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface Props {
@@ -28,6 +29,7 @@ const carriers = ['DHL', 'UPS', 'FedEx', 'DPD', 'GLS', 'Hermes', 'Other'];
 
 const AssignShippingModal: React.FC<Props> = ({ open, onClose, order, onSuccess }) => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     partnerName: '',
     trackingCode: '',
@@ -60,14 +62,14 @@ const AssignShippingModal: React.FC<Props> = ({ open, onClose, order, onSuccess 
     try {
       const vendorOrderId = order?._id || order?.vendorOrderId || order?.id;
       if (!vendorOrderId) {
-        setError('Cannot assign shipping: missing vendor order id');
+        setError(t('shipping.cannotAssignMissingVendorOrder'));
         setLoading(false);
         return;
       }
       await api.post(`/admin/vendor-orders/${vendorOrderId}/assign-shipping`, formData);
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to assign shipping');
+      setError(err.response?.data?.message || err.message || t('shipping.failedAssignShipping'));
     } finally {
       setLoading(false);
     }
@@ -88,23 +90,23 @@ const AssignShippingModal: React.FC<Props> = ({ open, onClose, order, onSuccess 
         },
       }}
     >
-      <DialogTitle sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>Assign Shipping</DialogTitle>
+      <DialogTitle sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{t('shipping.assignShippingTitle')}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           {order && (
             <Box sx={{ mb: 2, p: 2, bgcolor: muiTheme.palette.action.hover, borderRadius: 1 }}>
-              <Box sx={{ fontSize: '0.9rem', color: textSecondary }}>Order: {order.vendorOrderNumber}</Box>
-              <Box sx={{ fontSize: '0.9rem', color: textPrimary, fontWeight: 500 }}>Vendor: {order.vendorStoreName}</Box>
+              <Box sx={{ fontSize: '0.9rem', color: textSecondary }}>{t('shipping.orderLabel', { value: order.vendorOrderNumber })}</Box>
+              <Box sx={{ fontSize: '0.9rem', color: textPrimary, fontWeight: 500 }}>{t('shipping.vendorLabel', { value: order.vendorStoreName })}</Box>
             </Box>
           )}
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
           <FormControl fullWidth margin="normal" sx={fieldSx}>
-            <InputLabel>Carrier</InputLabel>
+            <InputLabel>{t('shipping.carrier')}</InputLabel>
             <Select
               value={formData.partnerName}
-              label="Carrier"
+              label={t('shipping.carrier')}
               onChange={(e) => setFormData({ ...formData, partnerName: e.target.value })}
               required
             >
@@ -118,18 +120,18 @@ const AssignShippingModal: React.FC<Props> = ({ open, onClose, order, onSuccess 
 
           <TextField
             fullWidth
-            label="Tracking Number"
+            label={t('shipping.trackingNumber')}
             value={formData.trackingCode}
             onChange={(e) => setFormData({ ...formData, trackingCode: e.target.value })}
-            placeholder="Enter tracking number"
+            placeholder={t('shipping.trackingPlaceholder')}
             margin="normal"
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions sx={{ borderTop: `1px solid ${border}`, p: 2 }}>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{t('common.cancel')}</Button>
           <Button type="submit" variant="contained" disabled={loading || !formData.partnerName}>
-            {loading ? <CircularProgress size={20} color="inherit" /> : 'Assign'}
+            {loading ? <CircularProgress size={20} color="inherit" /> : t('shipping.assign')}
           </Button>
         </DialogActions>
       </form>

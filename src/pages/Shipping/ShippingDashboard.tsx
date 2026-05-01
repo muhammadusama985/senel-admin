@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import PickupQueue from './PickupQueue';
 import ShippingList from './ShippingList';
@@ -25,6 +26,7 @@ const TabPanel: React.FC<{ children?: React.ReactNode; value: number; index: num
 
 const ShippingDashboard: React.FC = () => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const isMobile = useMediaQuery('(max-width:600px)');
   const [tabValue, setTabValue] = useState(0);
 
@@ -57,7 +59,7 @@ const ShippingDashboard: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }} action={<Button color="inherit" size="small" onClick={() => refetch()}>Retry</Button>}>
-        Error loading shipping data. Please try again.
+        {t('shipping.failedLoadShippingData')}
       </Alert>
     );
   }
@@ -66,7 +68,7 @@ const ShippingDashboard: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: textPrimary }}>
-          Shipping Management
+          {t('shipping.shippingManagement')}
         </Typography>
       </Box>
 
@@ -74,7 +76,7 @@ const ShippingDashboard: React.FC = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 2 }}>
             <Typography variant="subtitle2" sx={{ color: textSecondary, mb: 1 }}>
-              Ready for Pickup
+              {t('shipping.readyForPickup')}
             </Typography>
             <Typography variant="h3" sx={{ color: muiTheme.palette.secondary.main, fontWeight: 600 }}>
               {stats?.readyForPickup || 0}
@@ -84,7 +86,7 @@ const ShippingDashboard: React.FC = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 2 }}>
             <Typography variant="subtitle2" sx={{ color: textSecondary, mb: 1 }}>
-              In Transit
+              {t('shipping.inTransit')}
             </Typography>
             <Typography variant="h3" sx={{ color: textPrimary, fontWeight: 600 }}>
               {stats?.inTransit || 0}
@@ -94,7 +96,7 @@ const ShippingDashboard: React.FC = () => {
         <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 3, backgroundColor: surface, border: `1px solid ${border}`, borderRadius: 2 }}>
             <Typography variant="subtitle2" sx={{ color: textSecondary, mb: 1 }}>
-              Delivered
+              {t('shipping.delivered')}
             </Typography>
             <Typography variant="h3" sx={{ color: muiTheme.palette.success.main, fontWeight: 600 }}>
               {stats?.delivered || 0}
@@ -126,9 +128,9 @@ const ShippingDashboard: React.FC = () => {
             },
           }}
         >
-          <Tab label="Pickup Queue" />
-          <Tab label="In Transit" />
-          <Tab label="Delivered" />
+          <Tab label={t('shipping.pickupQueueTab')} />
+          <Tab label={t('shipping.inTransitTab')} />
+          <Tab label={t('shipping.deliveredTab')} />
         </Tabs>
 
         <TabPanel value={tabValue} index={0}>

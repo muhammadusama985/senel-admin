@@ -22,6 +22,7 @@ api.interceptors.request.use(
     // 🌐 ADD LANGUAGE HEADER FOR GOOGLE TRANSLATE
     const language = localStorage.getItem('language') || 'en';
     config.headers['Accept-Language'] = language;
+    config.headers['x-lang'] = language;
     
     // Don't set Content-Type for FormData - let browser set it with boundary
     if (config.data instanceof FormData) {

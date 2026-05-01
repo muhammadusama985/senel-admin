@@ -1,6 +1,7 @@
 import React from 'react';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Box, Grid, Paper, Skeleton, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle,
   LocalShipping,
@@ -28,17 +29,18 @@ interface Props {
 
 const OrderStatsCards: React.FC<Props> = ({ stats, loading }) => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const isLight = muiTheme.palette.mode === 'light';
 
   const statCards = [
-    { label: 'Total Orders', value: stats?.total || 0, icon: <ShoppingCart />, color: '#3b82f6' },
-    { label: 'Pending', value: stats?.pending || 0, icon: <Pending />, color: '#f59e0b' },
-    { label: 'Processing', value: stats?.processing || 0, icon: <Payment />, color: '#8b5cf6' },
-    { label: 'Shipped', value: stats?.shipped || 0, icon: <LocalShipping />, color: '#06b6d4' },
-    { label: 'Delivered', value: stats?.delivered || 0, icon: <CheckCircle />, color: '#10b981' },
-    { label: 'Cancelled', value: stats?.cancelled || 0, icon: <Warning />, color: '#ef4444' },
-    { label: 'Paid', value: stats?.paid || 0, icon: <Payment />, color: '#10b981' },
-    { label: 'Unpaid', value: stats?.unpaid || 0, icon: <Warning />, color: '#f59e0b' },
+    { label: t('orders.totalOrders'), value: stats?.total || 0, icon: <ShoppingCart />, color: '#3b82f6' },
+    { label: t('products.pending'), value: stats?.pending || 0, icon: <Pending />, color: '#f59e0b' },
+    { label: t('orders.processing'), value: stats?.processing || 0, icon: <Payment />, color: '#8b5cf6' },
+    { label: t('shipping.markShipped'), value: stats?.shipped || 0, icon: <LocalShipping />, color: '#06b6d4' },
+    { label: t('shipping.delivered'), value: stats?.delivered || 0, icon: <CheckCircle />, color: '#10b981' },
+    { label: t('orders.cancelled'), value: stats?.cancelled || 0, icon: <Warning />, color: '#ef4444' },
+    { label: t('payments.paid'), value: stats?.paid || 0, icon: <Payment />, color: '#10b981' },
+    { label: t('orders.unpaid'), value: stats?.unpaid || 0, icon: <Warning />, color: '#f59e0b' },
   ];
 
   const surface = muiTheme.palette.background.paper;

@@ -56,9 +56,9 @@ const Disputes: React.FC = () => {
   });
 
   const columns: GridColDef[] = [
-    { field: 'disputeNumber', headerName: 'Dispute', minWidth: 160, flex: 1 },
-    { field: 'subject', headerName: 'Subject', minWidth: 220, flex: 1.4 },
-    { field: 'reason', headerName: 'Reason', minWidth: 150, flex: 1 },
+    { field: 'disputeNumber', headerName: t('disputes.dispute'), minWidth: 160, flex: 1 },
+    { field: 'subject', headerName: t('disputes.subject'), minWidth: 220, flex: 1.4 },
+    { field: 'reason', headerName: t('disputes.reason'), minWidth: 150, flex: 1 },
     {
       field: 'status',
       headerName: t('common.status'),
@@ -70,12 +70,12 @@ const Disputes: React.FC = () => {
     { field: 'customerLabel', headerName: t('common.customer'), minWidth: 180, flex: 1 },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: t('disputes.actions'),
       minWidth: 140,
       sortable: false,
       renderCell: (params) => (
         <Button size="small" variant="outlined" onClick={() => setSelectedDispute(params.row)}>
-          View Conversation
+          {t('disputes.viewConversation')}
         </Button>
       ),
     },
@@ -89,7 +89,7 @@ const Disputes: React.FC = () => {
           {t('disputes.intro')}
         </Typography>
 
-        {error && <Alert severity="error">Failed to load disputes.</Alert>}
+        {error && <Alert severity="error">{t('disputes.failedToLoad')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid
@@ -104,10 +104,10 @@ const Disputes: React.FC = () => {
       </Stack>
 
       <Dialog open={Boolean(selectedDispute)} onClose={() => setSelectedDispute(null)} maxWidth="md" fullWidth>
-        <DialogTitle>Dispute Conversation</DialogTitle>
+        <DialogTitle>{t('disputes.conversationTitle')}</DialogTitle>
         <DialogContent dividers>
           {detailQuery.isLoading ? (
-            <Typography>Loading dispute...</Typography>
+            <Typography>{t('disputes.loading')}</Typography>
           ) : detailQuery.data ? (
             <Stack spacing={2}>
               <Box>
@@ -116,13 +116,13 @@ const Disputes: React.FC = () => {
                   {detailQuery.data.dispute.subject} • {(detailQuery.data.dispute.reason || 'other').replaceAll('_', ' ')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Status: {String(detailQuery.data.dispute.status || '').replaceAll('_', ' ')}
+                  {t('disputes.statusLabel')}: {String(detailQuery.data.dispute.status || '').replaceAll('_', ' ')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Customer: {detailQuery.data.dispute.customerLabel || '-'}
+                  {t('disputes.customerLabel')}: {detailQuery.data.dispute.customerLabel || '-'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Vendor: {detailQuery.data.dispute.vendorLabel || '-'}
+                  {t('disputes.vendorLabel')}: {detailQuery.data.dispute.vendorLabel || '-'}
                 </Typography>
               </Box>
 
@@ -130,7 +130,7 @@ const Disputes: React.FC = () => {
                 {(detailQuery.data.messages || []).map((message: any) => (
                   <Paper key={message._id} variant="outlined" sx={{ p: 1.5 }}>
                     <Typography variant="subtitle2">
-                      {message.senderRole === 'customer' ? 'Customer' : message.senderRole === 'vendor' ? 'Vendor' : 'Admin'}
+                      {message.senderRole === 'customer' ? t('disputes.roleCustomer') : message.senderRole === 'vendor' ? t('disputes.roleVendor') : t('disputes.roleAdmin')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {message.createdAt ? new Date(message.createdAt).toLocaleString() : '-'}
@@ -144,17 +144,17 @@ const Disputes: React.FC = () => {
                 <Stack spacing={2}>
                   <TextField
                     select
-                    label="Change Status"
+                    label={t('disputes.changeStatus')}
                     value={nextStatus}
                     onChange={(event) => setNextStatus(event.target.value)}
                   >
-                    <MenuItem value="open">Open</MenuItem>
-                    <MenuItem value="in_progress">In Progress</MenuItem>
-                    <MenuItem value="resolved">Resolved</MenuItem>
-                    <MenuItem value="closed">Closed</MenuItem>
+                    <MenuItem value="open">{t('disputes.open')}</MenuItem>
+                    <MenuItem value="in_progress">{t('disputes.inProgress')}</MenuItem>
+                    <MenuItem value="resolved">{t('disputes.resolved')}</MenuItem>
+                    <MenuItem value="closed">{t('disputes.closed')}</MenuItem>
                   </TextField>
                   <TextField
-                    label="Reply as Admin"
+                    label={t('disputes.replyAsAdmin')}
                     multiline
                     rows={4}
                     value={reply}
@@ -164,11 +164,11 @@ const Disputes: React.FC = () => {
               ) : null}
             </Stack>
           ) : (
-            <Alert severity="error">Failed to load dispute details.</Alert>
+            <Alert severity="error">{t('disputes.failedToLoadDetails')}</Alert>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelectedDispute(null)}>Close</Button>
+          <Button onClick={() => setSelectedDispute(null)}>{t('disputes.close')}</Button>
           {detailQuery.data?.dispute?.status !== 'closed' ? (
             <>
               <Button
@@ -176,10 +176,10 @@ const Disputes: React.FC = () => {
                 onClick={() => statusMutation.mutate()}
                 disabled={!nextStatus || nextStatus === detailQuery.data?.dispute?.status || statusMutation.isPending}
               >
-                {statusMutation.isPending ? 'Updating...' : 'Update Status'}
+                {statusMutation.isPending ? t('disputes.updating') : t('disputes.updateStatus')}
               </Button>
               <Button variant="contained" onClick={() => replyMutation.mutate()} disabled={!reply.trim() || replyMutation.isPending}>
-                {replyMutation.isPending ? 'Sending...' : 'Send Reply'}
+                {replyMutation.isPending ? t('disputes.sending') : t('disputes.sendReply')}
               </Button>
             </>
           ) : null}

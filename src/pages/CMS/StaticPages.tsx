@@ -33,7 +33,9 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, Delete, Edit, Publish, VisibilityOff } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import { pickLocalizedText } from '../../utils/localization';
 
 interface StaticPage {
   _id: string;
@@ -54,20 +56,22 @@ interface StaticPage {
 }
 
 const STATIC_PAGE_OPTIONS = [
-  { slug: 'about', label: 'About Page', defaultTitle: 'About Us' },
-  { slug: 'contact', label: 'Contact Page', defaultTitle: 'Contact' },
-  { slug: 'faq', label: 'FAQ Page', defaultTitle: 'FAQ' },
-  { slug: 'help', label: 'Help Center', defaultTitle: 'Help Center' },
-  { slug: 'shipping', label: 'Shipping Page', defaultTitle: 'Shipping Information' },
-  { slug: 'returns', label: 'Returns Page', defaultTitle: 'Returns' },
-  { slug: 'terms', label: 'Terms Page', defaultTitle: 'Terms & Conditions' },
-  { slug: 'privacy', label: 'Privacy Page', defaultTitle: 'Privacy Policy' },
-  { slug: 'custom', label: 'Custom Page', defaultTitle: '' },
+  { slug: 'about', labelKey: 'staticPages.pageTypeAbout', defaultTitleKey: 'staticPages.defaultAbout' },
+  { slug: 'contact', labelKey: 'staticPages.pageTypeContact', defaultTitleKey: 'staticPages.defaultContact' },
+  { slug: 'faq', labelKey: 'staticPages.pageTypeFaq', defaultTitleKey: 'staticPages.defaultFaq' },
+  { slug: 'help', labelKey: 'staticPages.pageTypeHelp', defaultTitleKey: 'staticPages.defaultHelp' },
+  { slug: 'shipping', labelKey: 'staticPages.pageTypeShipping', defaultTitleKey: 'staticPages.defaultShipping' },
+  { slug: 'returns', labelKey: 'staticPages.pageTypeReturns', defaultTitleKey: 'staticPages.defaultReturns' },
+  { slug: 'terms', labelKey: 'staticPages.pageTypeTerms', defaultTitleKey: 'staticPages.defaultTerms' },
+  { slug: 'privacy', labelKey: 'staticPages.pageTypePrivacy', defaultTitleKey: 'staticPages.defaultPrivacy' },
+  { slug: 'custom', labelKey: 'staticPages.pageTypeCustom', defaultTitleKey: '' },
 ] as const;
 
 const StaticPages: React.FC = () => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
 
@@ -114,7 +118,7 @@ const StaticPages: React.FC = () => {
   };
 
   const { data: pages, isLoading, error } = useQuery({
-    queryKey: ['admin', 'pages', page, rowsPerPage, search, statusFilter],
+    queryKey: ['admin', 'pages', currentLanguage, page, rowsPerPage, search, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
@@ -127,8 +131,8 @@ const StaticPages: React.FC = () => {
         ...response.data,
         items: response.data.items?.map((item: any) => ({
           ...item,
-          title: item.titleML?.en || item.title || '',
-          content: item.contentML?.en || item.content || '',
+          title: pickLocalizedText(item.titleML, currentLanguage) || item.title || '',
+          content: pickLocalizedText(item.contentML, currentLanguage) || item.content || '',
         })),
       };
     },
@@ -190,7 +194,7 @@ const StaticPages: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'pages'] });
     },
     onError: (mutationError: any) => {
-      alert(mutationError.response?.data?.message || 'Failed to delete page');
+      alert(mutationError.response?.data?.message || t('staticPages.failedDelete'));
     },
   });
 
@@ -221,8 +225,8 @@ const StaticPages: React.FC = () => {
     setFormData({
       pageSlot: matchedPreset ? matchedPreset.slug : 'custom',
       slug: currentPage.slug,
-      title: currentPage.titleML?.en || '',
-      content: currentPage.contentML?.en || '',
+      title: pickLocalizedText(currentPage.titleML, currentLanguage),
+      content: pickLocalizedText(currentPage.contentML, currentLanguage),
       isPublished: currentPage.isPublished,
     });
     setDialogOpen(true);
@@ -235,15 +239,15 @@ const StaticPages: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.slug.trim()) {
-      alert('Slug is required');
+      alert(t('staticPages.slugRequired'));
       return;
     }
     if (!formData.title.trim()) {
-      alert('Title is required');
+      alert(t('staticPages.titleRequired'));
       return;
     }
     if (!formData.content.trim()) {
-      alert('Content is required');
+      alert(t('staticPages.contentRequired'));
       return;
     }
 
@@ -263,7 +267,7 @@ const StaticPages: React.FC = () => {
   };
 
   const getStatusChip = (isPublished: boolean) =>
-    isPublished ? <Chip label="Published" size="small" color="success" /> : <Chip label="Draft" size="small" variant="outlined" />;
+    isPublished ? <Chip label={t('announcements.published')} size="small" color="success" /> : <Chip label={t('announcements.drafts')} size="small" variant="outlined" />;
 
   if (isLoading) {
     return (
@@ -276,7 +280,7 @@ const StaticPages: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
-        Error loading static pages. Please try again.
+        {t('staticPages.failedLoad')}
       </Alert>
     );
   }
@@ -285,12 +289,12 @@ const StaticPages: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Static Pages
+          {t('staticPages.title')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search pages..."
+            placeholder={t('staticPages.search')}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -299,23 +303,23 @@ const StaticPages: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 220, ...fieldSx }}
           />
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('common.status')}
               onChange={(event) => {
                 setStatusFilter(event.target.value);
                 setPage(0);
               }}
               sx={selectSx}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="published">Published</MenuItem>
-              <MenuItem value="draft">Draft</MenuItem>
+              <MenuItem value="all">{t('announcements.all')}</MenuItem>
+              <MenuItem value="published">{t('announcements.published')}</MenuItem>
+              <MenuItem value="draft">{t('announcements.drafts')}</MenuItem>
             </Select>
           </FormControl>
           <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-            New Page
+            {t('staticPages.newPage')}
           </Button>
         </Box>
       </Box>
@@ -334,18 +338,18 @@ const StaticPages: React.FC = () => {
                   },
                 }}
               >
-                <TableCell>Title</TableCell>
-                <TableCell>Slug</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Published Date</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>{t('staticPages.titleColumn')}</TableCell>
+                <TableCell>{t('blog.slug')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('staticPages.publishedDate')}</TableCell>
+                <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {pages?.items?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 5, color: muiTheme.palette.text.secondary }}>
-                    No static pages found
+                    {t('staticPages.noPages')}
                   </TableCell>
                 </TableRow>
               )}
@@ -353,7 +357,7 @@ const StaticPages: React.FC = () => {
                 <TableRow key={currentPage._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
                   <TableCell sx={{ color: muiTheme.palette.text.primary }}>
                     <Typography noWrap sx={{ maxWidth: 250 }}>
-                      {currentPage.titleML?.en || 'No title'}
+                      {pickLocalizedText(currentPage.titleML, currentLanguage) || t('staticPages.noTitle')}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -387,7 +391,7 @@ const StaticPages: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this page?')) {
+                        if (window.confirm(t('staticPages.deleteConfirm'))) {
                           deleteMutation.mutate(currentPage._id);
                         }
                       }}
@@ -425,15 +429,15 @@ const StaticPages: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingPage ? 'Edit Static Page' : 'Create Static Page'}</DialogTitle>
+        <DialogTitle>{editingPage ? t('staticPages.editPage') : t('staticPages.createPage')}</DialogTitle>
         <DialogContent dividers sx={{ borderColor: border }}>
           <Grid container spacing={3} sx={{ pt: 1 }}>
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth sx={fieldSx}>
-                <InputLabel>Page Type</InputLabel>
+                <InputLabel>{t('staticPages.pageType')}</InputLabel>
                 <Select
                   value={formData.pageSlot}
-                  label="Page Type"
+                  label={t('staticPages.pageType')}
                   onChange={(event) => {
                     const selectedSlot = event.target.value;
                     const selectedOption = STATIC_PAGE_OPTIONS.find((option) => option.slug === selectedSlot);
@@ -444,13 +448,13 @@ const StaticPages: React.FC = () => {
                       title:
                         selectedSlot === 'custom'
                           ? prev.title
-                          : (prev.title.trim() ? prev.title : selectedOption?.defaultTitle || prev.title),
+                          : (prev.title.trim() ? prev.title : (selectedOption?.defaultTitleKey ? t(selectedOption.defaultTitleKey) : prev.title)),
                     }));
                   }}
                 >
                   {STATIC_PAGE_OPTIONS.map((option) => (
                     <MenuItem key={option.slug} value={option.slug}>
-                      {option.label}
+                      {t(option.labelKey)}
                     </MenuItem>
                   ))}
                 </Select>
@@ -458,7 +462,7 @@ const StaticPages: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
-                label="Title"
+                label={t('staticPages.titleColumn')}
                 fullWidth
                 value={formData.title}
                 onChange={(event) => setFormData({ ...formData, title: event.target.value })}
@@ -468,7 +472,7 @@ const StaticPages: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
-                label="Slug"
+                label={t('blog.slug')}
                 fullWidth
                 value={formData.slug}
                 onChange={(event) => setFormData({ ...formData, slug: event.target.value })}
@@ -476,8 +480,8 @@ const StaticPages: React.FC = () => {
                 required
                 helperText={
                   formData.pageSlot !== 'custom'
-                    ? 'Slug is fixed for selected page type'
-                    : 'URL-friendly name (for example: about-us)'
+                    ? t('staticPages.slugFixed')
+                    : t('staticPages.slugHelp')
                 }
                 sx={fieldSx}
                 FormHelperTextProps={{ sx: { color: muiTheme.palette.text.secondary } }}
@@ -485,29 +489,29 @@ const StaticPages: React.FC = () => {
             </Grid>
             <Grid size={{ xs: 12 }}>
               <TextField
-                label="Content"
+                label={t('staticPages.content')}
                 fullWidth
                 multiline
                 rows={10}
                 value={formData.content}
                 onChange={(event) => setFormData({ ...formData, content: event.target.value })}
                 required
-                placeholder="HTML content supported"
+                placeholder={t('staticPages.htmlSupported')}
                 sx={fieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={<Switch checked={formData.isPublished} onChange={(event) => setFormData({ ...formData, isPublished: event.target.checked })} />}
-                label="Publish immediately"
+                label={t('staticPages.publishImmediately')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={createMutation.isPending || updateMutation.isPending}>
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

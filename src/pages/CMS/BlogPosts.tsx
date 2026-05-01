@@ -36,8 +36,10 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, Delete, Edit, Publish, VisibilityOff } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import ImageUpload from '../../components/common/ImageUpload';
+import { pickLocalizedText } from '../../utils/localization';
 import { resolveMediaUrl } from '../../utils/media';
 
 interface BlogPost {
@@ -62,6 +64,8 @@ interface BlogPost {
 const BlogPosts: React.FC = () => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
 
@@ -136,7 +140,7 @@ const BlogPosts: React.FC = () => {
   };
 
   const { data: posts, isLoading, error } = useQuery({
-    queryKey: ['admin', 'blog', page, rowsPerPage, search, statusFilter],
+    queryKey: ['admin', 'blog', currentLanguage, page, rowsPerPage, search, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.append('search', search);
@@ -177,7 +181,7 @@ const BlogPosts: React.FC = () => {
       handleCloseDialog();
     },
     onError: (mutationError: any) => {
-      alert(mutationError.response?.data?.message || 'Failed to create blog post');
+      alert(mutationError.response?.data?.message || t('blog.failedCreate'));
     },
   });
 
@@ -211,7 +215,7 @@ const BlogPosts: React.FC = () => {
       handleCloseDialog();
     },
     onError: (mutationError: any) => {
-      alert(mutationError.response?.data?.message || 'Failed to update blog post');
+      alert(mutationError.response?.data?.message || t('blog.failedUpdate'));
     },
   });
 
@@ -360,19 +364,19 @@ const BlogPosts: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.titleML.en.trim()) {
-      alert('English title is required');
+      alert(t('blog.englishTitleRequired'));
       return;
     }
     if (!formData.contentML.en.trim()) {
-      alert('English content is required');
+      alert(t('blog.englishContentRequired'));
       return;
     }
     if (!formData.slug.trim()) {
-      alert('Slug is required');
+      alert(t('blog.slugRequired'));
       return;
     }
     if (!editingPost && !coverImageFile) {
-      alert('Cover image is required');
+      alert(t('blog.coverImageRequired'));
       return;
     }
 
@@ -389,7 +393,7 @@ const BlogPosts: React.FC = () => {
   };
 
   const getStatusChip = (isPublished: boolean) =>
-    isPublished ? <Chip label="Published" size="small" color="success" /> : <Chip label="Draft" size="small" variant="outlined" />;
+    isPublished ? <Chip label={t('announcements.published')} size="small" color="success" /> : <Chip label={t('announcements.drafts')} size="small" variant="outlined" />;
 
   if (isLoading) {
     return (
@@ -402,7 +406,7 @@ const BlogPosts: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
-        Error loading blog posts. Please try again.
+        {t('blog.failedLoad')}
       </Alert>
     );
   }
@@ -411,12 +415,12 @@ const BlogPosts: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Blog Posts
+          {t('blog.title')}
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search posts..."
+            placeholder={t('blog.searchPosts')}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -425,23 +429,23 @@ const BlogPosts: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 220, ...fieldSx }}
           />
           <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('common.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('common.status')}
               onChange={(event) => {
                 setStatusFilter(event.target.value);
                 setPage(0);
               }}
               sx={selectSx}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="published">Published</MenuItem>
-              <MenuItem value="draft">Draft</MenuItem>
+              <MenuItem value="all">{t('announcements.all')}</MenuItem>
+              <MenuItem value="published">{t('announcements.published')}</MenuItem>
+              <MenuItem value="draft">{t('announcements.drafts')}</MenuItem>
             </Select>
           </FormControl>
           <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-            New Post
+            {t('blog.newPost')}
           </Button>
         </Box>
       </Box>
@@ -460,21 +464,21 @@ const BlogPosts: React.FC = () => {
                   },
                 }}
               >
-                <TableCell>Cover</TableCell>
-                <TableCell>Title (EN)</TableCell>
-                <TableCell>Slug</TableCell>
-                <TableCell>Tags</TableCell>
-                <TableCell>Author</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Published</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>{t('blog.cover')}</TableCell>
+                <TableCell>{t('blog.titleColumn')}</TableCell>
+                <TableCell>{t('blog.slug')}</TableCell>
+                <TableCell>{t('blog.tags')}</TableCell>
+                <TableCell>{t('blog.author')}</TableCell>
+                <TableCell>{t('common.status')}</TableCell>
+                <TableCell>{t('blog.publishedDate')}</TableCell>
+                <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {posts?.items?.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 5, color: muiTheme.palette.text.secondary }}>
-                    No blog posts found
+                    {t('blog.noPosts')}
                   </TableCell>
                 </TableRow>
               )}
@@ -499,12 +503,12 @@ const BlogPosts: React.FC = () => {
                           <Box
                             component="img"
                             src={getFullImageUrl(post.coverImageUrl)}
-                            alt={post.titleML?.en || 'Blog post'}
+                            alt={post.titleML?.en || t('blog.title')}
                             sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                           />
                         ) : (
                           <Typography variant="caption" color="text.secondary">
-                            No img
+                            {t('blog.noImage')}
                           </Typography>
                         )}
                       </Box>
@@ -512,7 +516,7 @@ const BlogPosts: React.FC = () => {
                   </TableCell>
                   <TableCell sx={{ color: muiTheme.palette.text.primary }}>
                     <Typography noWrap sx={{ maxWidth: 220 }}>
-                      {post.titleML?.en || 'No title'}
+                      {pickLocalizedText(post.titleML, currentLanguage) || t('blog.noTitle')}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -552,7 +556,7 @@ const BlogPosts: React.FC = () => {
                     <IconButton
                       size="small"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this post?')) {
+                        if (window.confirm(t('blog.deleteConfirm'))) {
                           deleteMutation.mutate(post._id);
                         }
                       }}
@@ -594,19 +598,19 @@ const BlogPosts: React.FC = () => {
         scroll="body"
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingPost ? 'Edit Blog Post' : 'Create Blog Post'}</DialogTitle>
+        <DialogTitle>{editingPost ? t('blog.editPost') : t('blog.createPost')}</DialogTitle>
         <DialogContent dividers sx={{ borderColor: border }}>
           <Tabs value={langTabValue} onChange={(_event, value) => setLangTabValue(value)} sx={tabsSx}>
-            <Tab label="English" />
-            <Tab label="Deutsch" />
-            <Tab label="Turkish" />
+            <Tab label={t('blog.english')} />
+            <Tab label={t('blog.german')} />
+            <Tab label={t('blog.turkish')} />
           </Tabs>
 
           {langTabValue === 0 && (
             <Grid container spacing={3} sx={{ pt: 3 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Title (English)"
+                  label={t('blog.titleEn')}
                   fullWidth
                   value={formData.titleML.en}
                   onChange={(event) => handleLanguageChange('en', 'titleML', event.target.value)}
@@ -615,18 +619,18 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Slug"
+                  label={t('blog.slug')}
                   fullWidth
                   value={formData.slug}
                   onChange={(event) => setFormData((prev) => ({ ...prev, slug: event.target.value }))}
-                  helperText="URL-friendly name"
+                  helperText={t('blog.urlFriendly')}
                   sx={fieldSx}
                   FormHelperTextProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Summary (English)"
+                  label={t('blog.summaryEn')}
                   fullWidth
                   multiline
                   rows={2}
@@ -637,7 +641,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Content (English)"
+                  label={t('blog.contentEn')}
                   fullWidth
                   multiline
                   rows={6}
@@ -653,7 +657,7 @@ const BlogPosts: React.FC = () => {
             <Grid container spacing={3} sx={{ pt: 3 }}>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Title (German)"
+                  label={t('blog.titleDe')}
                   fullWidth
                   value={formData.titleML.de}
                   onChange={(event) => handleLanguageChange('de', 'titleML', event.target.value)}
@@ -662,7 +666,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Summary (German)"
+                  label={t('blog.summaryDe')}
                   fullWidth
                   multiline
                   rows={2}
@@ -673,7 +677,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Content (German)"
+                  label={t('blog.contentDe')}
                   fullWidth
                   multiline
                   rows={6}
@@ -698,7 +702,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Summary (Turkish)"
+                  label={t('blog.summaryTr')}
                   fullWidth
                   multiline
                   rows={2}
@@ -709,7 +713,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Content (Turkish)"
+                  label={t('blog.contentTr')}
                   fullWidth
                   multiline
                   rows={6}
@@ -723,23 +727,23 @@ const BlogPosts: React.FC = () => {
 
           <Box sx={{ mt: 4 }}>
             <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-              Post Settings
+              {t('blog.postSettings')}
             </Typography>
             <Grid container spacing={3}>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom color="text.primary">
-                  Cover Image
+                  {t('blog.coverImage')}
                 </Typography>
                 <ImageUpload
                   onImageUpload={handleCoverImageUpload}
                   onImageRemove={handleCoverImageRemove}
                   currentImage={coverImagePreview}
-                  label="upload cover image"
+                  label={t('blog.uploadCoverImage')}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Author Name"
+                  label={t('blog.authorName')}
                   fullWidth
                   value={formData.authorName}
                   onChange={(event) => setFormData((prev) => ({ ...prev, authorName: event.target.value }))}
@@ -748,12 +752,12 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom color="text.primary">
-                  Tags
+                  {t('blog.tags')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                   <TextField
                     size="small"
-                    label="Add Tag"
+                    label={t('blog.addTag')}
                     value={tagInput}
                     onChange={(event) => setTagInput(event.target.value)}
                     onKeyDown={(event) => {
@@ -765,7 +769,7 @@ const BlogPosts: React.FC = () => {
                     sx={{ flex: 1, ...fieldSx }}
                   />
                   <Button variant="outlined" onClick={handleAddTag}>
-                    Add
+                    {t('blog.add')}
                   </Button>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -782,12 +786,12 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-                  SEO Settings
+                  {t('blog.seoSettings')}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Meta Title (English)"
+                  label={t('blog.metaTitleEn')}
                   fullWidth
                   value={formData.seo.metaTitleML.en}
                   onChange={(event) => handleLanguageChange('en', 'metaTitleML', event.target.value)}
@@ -796,7 +800,7 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
-                  label="Meta Description (English)"
+                  label={t('blog.metaDescriptionEn')}
                   fullWidth
                   value={formData.seo.metaDescriptionML.en}
                   onChange={(event) => handleLanguageChange('en', 'metaDescriptionML', event.target.value)}
@@ -805,12 +809,12 @@ const BlogPosts: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" gutterBottom color="text.primary">
-                  SEO Keywords
+                  {t('blog.seoKeywords')}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                   <TextField
                     size="small"
-                    label="Add Keyword"
+                    label={t('blog.addKeyword')}
                     value={keywordInput}
                     onChange={(event) => setKeywordInput(event.target.value)}
                     onKeyDown={(event) => {
@@ -822,7 +826,7 @@ const BlogPosts: React.FC = () => {
                     sx={{ flex: 1, ...fieldSx }}
                   />
                   <Button variant="outlined" onClick={handleAddKeyword}>
-                    Add
+                    {t('blog.add')}
                   </Button>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -848,16 +852,16 @@ const BlogPosts: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={<Switch checked={formData.isPublished} onChange={(event) => setFormData((prev) => ({ ...prev, isPublished: event.target.checked }))} />}
-                  label="Publish immediately"
+                  label={t('blog.publishImmediately')}
                 />
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={createMutation.isPending || updateMutation.isPending}>
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

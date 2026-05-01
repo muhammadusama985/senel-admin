@@ -36,6 +36,7 @@ import {
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { format, subDays } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 const CHART_COLORS = ['#f59e0b', '#ec4899', '#2563eb', '#16a34a', '#8b5cf6'];
@@ -53,6 +54,7 @@ const buildRangeQuery = (
 
 const SalesReport: React.FC = () => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const isMobile = useMediaQuery('(max-width:600px)');
 
   const [dateRange, setDateRange] = useState<'today' | 'week' | 'month' | 'custom'>('week');
@@ -167,6 +169,26 @@ const SalesReport: React.FC = () => {
     window.open(`/admin/analytics/export/orders?format=${fileFormat}`, '_blank');
   };
 
+  const translateStatusLabel = (status?: string) => {
+    if (!status) return t('products.unknown');
+
+    const normalized = String(status).toLowerCase().replace(/[\s-]+/g, '_');
+    const orderStatusKeyMap: Record<string, string> = {
+      placed: 'orders.placed',
+      pending: 'products.pending',
+      approved: 'products.approved',
+      rejected: 'products.rejected',
+      cancelled: 'orders.cancelled',
+      shipped: 'shipping.markShipped',
+      delivered: 'shipping.delivered',
+      ready_pickup: 'shipping.readyPickup',
+      in_transit: 'shipping.inTransit',
+    };
+
+    const translationKey = orderStatusKeyMap[normalized];
+    return translationKey ? t(translationKey) : status;
+  };
+
   if (isLoading) {
     return <CircularProgress sx={{ color: muiTheme.palette.primary.main }} />;
   }
@@ -174,7 +196,7 @@ const SalesReport: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, color: textPrimary, border: `1px solid ${border}` }}>
-        Error loading analytics data.
+        {t('analytics.errorLoading')}
       </Alert>
     );
   }
@@ -187,22 +209,22 @@ const SalesReport: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: textPrimary }}>
-          Sales Analytics
+          {t('analytics.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <ButtonGroup size="small" variant="outlined" sx={toggleGroupSx}>
             <Button variant={dateRange === 'today' ? 'contained' : 'outlined'} onClick={() => setDateRange('today')}>
-              Today
+              {t('analytics.today')}
             </Button>
             <Button variant={dateRange === 'week' ? 'contained' : 'outlined'} onClick={() => setDateRange('week')}>
-              Week
+              {t('analytics.week')}
             </Button>
             <Button variant={dateRange === 'month' ? 'contained' : 'outlined'} onClick={() => setDateRange('month')}>
-              Month
+              {t('analytics.month')}
             </Button>
             <Button variant={dateRange === 'custom' ? 'contained' : 'outlined'} onClick={() => setDateRange('custom')}>
-              Custom
+              {t('analytics.custom')}
             </Button>
           </ButtonGroup>
 
@@ -214,7 +236,7 @@ const SalesReport: React.FC = () => {
           )}
 
           <Button variant="outlined" startIcon={<Download />} onClick={() => handleExport('csv')} sx={{ color: textPrimary, borderColor: border }}>
-            Export
+            {t('analytics.export')}
           </Button>
         </Box>
       </Box>
@@ -226,7 +248,7 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Total Orders
+                    {t('analytics.totalOrders')}
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
                     {summary.totalOrders}
@@ -244,7 +266,7 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Delivered Orders
+                    {t('analytics.deliveredOrders')}
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
                     {summary.totalDeliveredOrders || 0}
@@ -262,7 +284,7 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Delivered Revenue
+                    {t('analytics.deliveredRevenue')}
                   </Typography>
                   <Typography variant="h4" sx={{ color: accent, fontWeight: 800 }}>
                     {Number(summary.totalRevenue || 0).toFixed(2)}
@@ -280,7 +302,7 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Avg Delivered Order Value
+                    {t('analytics.avgDeliveredValue')}
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
                     {Number(summary.averageOrderValue || 0).toFixed(2)}
@@ -298,7 +320,7 @@ const SalesReport: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography gutterBottom variant="body2" sx={{ color: textSecondary }}>
-                    Active Vendors
+                    {t('analytics.activeVendors')}
                   </Typography>
                   <Typography variant="h4" sx={{ color: textPrimary }}>
                     {summary.activeVendors || 0}
@@ -317,14 +339,14 @@ const SalesReport: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, gap: 2, flexWrap: 'wrap' }}>
                 <Typography variant="h6" sx={{ color: textPrimary }}>
-                  Revenue Trend
+                  {t('analytics.revenueTrend')}
                 </Typography>
                 <ButtonGroup size="small" variant="outlined" sx={toggleGroupSx}>
                   <Button variant={viewType === 'revenue' ? 'contained' : 'outlined'} onClick={() => setViewType('revenue')}>
-                    Revenue
+                    {t('analytics.revenue')}
                   </Button>
                   <Button variant={viewType === 'orders' ? 'contained' : 'outlined'} onClick={() => setViewType('orders')}>
-                    Orders
+                    {t('analytics.orders')}
                   </Button>
                 </ButtonGroup>
               </Box>
@@ -362,7 +384,7 @@ const SalesReport: React.FC = () => {
           <Card sx={{ height: '100%', backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Orders by Status
+                {t('analytics.ordersByStatus')}
               </Typography>
               <Box sx={{ height: 400 }}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -378,7 +400,7 @@ const SalesReport: React.FC = () => {
                         const { x, y, name, value } = props;
                         return (
                           <text x={x} y={y} fill={textPrimary} textAnchor="middle" dominantBaseline="central">
-                            {`${name}: ${value}`}
+                            {`${translateStatusLabel(name)}: ${value}`}
                           </text>
                         );
                       }}
@@ -408,7 +430,7 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Top Products
+                {t('analytics.topProducts')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
@@ -423,15 +445,15 @@ const SalesReport: React.FC = () => {
                         },
                       }}
                     >
-                      <TableCell>Product</TableCell>
-                      <TableCell align="right">Quantity</TableCell>
-                      <TableCell align="right">Revenue</TableCell>
+                      <TableCell>{t('products.product')}</TableCell>
+                      <TableCell align="right">{t('analytics.quantity')}</TableCell>
+                      <TableCell align="right">{t('analytics.revenue')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {topProducts?.map((product: any) => (
                       <TableRow key={product._id} sx={{ '&:hover': { backgroundColor: hover } }}>
-                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{product.product?.title || 'Unknown product'}</TableCell>
+                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{product.product?.title || t('analytics.unknownProduct')}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {product.qtySum || 0}
                         </TableCell>
@@ -453,7 +475,7 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Top Vendors
+                {t('analytics.topVendors')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
@@ -468,16 +490,16 @@ const SalesReport: React.FC = () => {
                         },
                       }}
                     >
-                      <TableCell>Vendor</TableCell>
-                      <TableCell align="right">Orders</TableCell>
-                      <TableCell align="right">Revenue</TableCell>
+                      <TableCell>{t('common.vendor')}</TableCell>
+                      <TableCell align="right">{t('analytics.orders')}</TableCell>
+                      <TableCell align="right">{t('analytics.revenue')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {topVendors?.map((vendor: any) => (
                       <TableRow key={vendor._id} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {vendor.vendor?.storeName || 'Senel Admin'}
+                          {vendor.vendor?.storeName || t('dashboard.senelAdmin')}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {vendor.vendorOrders || 0}
@@ -500,21 +522,21 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Country Demand
+                {t('analytics.countryDemand')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: alpha(textPrimary, isLight ? 0.04 : 0.08) }}>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Country</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Orders</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Revenue</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.country')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.orders')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.revenue')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {countryDemand?.map((item: any) => (
                       <TableRow key={item.country} sx={{ '&:hover': { backgroundColor: hover } }}>
-                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.country || 'Unknown'}</TableCell>
+                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.country || t('products.unknown')}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.orders}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           <Typography fontWeight={800} sx={{ color: accent }}>{Number(item.revenue || 0).toFixed(2)}</Typography>
@@ -532,22 +554,22 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Top Categories
+                {t('analytics.topCategories')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: alpha(textPrimary, isLight ? 0.04 : 0.08) }}>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Category</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Units</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Revenue</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.category')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.units')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.revenue')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {topCategories?.map((item: any) => (
                       <TableRow key={item.categoryId || item.category?.slug || item.category?.name} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {item.category?.name || 'Uncategorized'}
+                          {item.category?.name || t('dashboard.uncategorized')}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {item.qtySum || 0}
@@ -570,22 +592,22 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Low Inventory Alerts
+                {t('analytics.lowInventoryAlerts')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: alpha(textPrimary, isLight ? 0.04 : 0.08) }}>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Product</TableCell>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Vendor</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Stock</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('products.product')}</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('common.vendor')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.stock')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {lowStockProducts?.map((item: any) => (
                       <TableRow key={item._id} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.title}</TableCell>
-                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.vendorId?.storeName || 'Senel Admin'}</TableCell>
+                        <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.vendorId?.storeName || t('dashboard.senelAdmin')}</TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{item.stockQty}</TableCell>
                       </TableRow>
                     ))}
@@ -600,20 +622,20 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Abandoned Carts
+                {t('analytics.abandonedCarts')}
               </Typography>
               <Stack spacing={1}>
                 <Typography sx={{ color: textSecondary }}>
-                  Total abandoned carts: <strong style={{ color: textPrimary }}>{abandonedCarts?.totalAbandonedCarts || 0}</strong>
+                  {t('analytics.totalAbandoned')}: <strong style={{ color: textPrimary }}>{abandonedCarts?.totalAbandonedCarts || 0}</strong>
                 </Typography>
                 <Typography sx={{ color: textSecondary }}>
-                  Potential revenue: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.potentialRevenue || 0).toFixed(2)}</strong>
+                  {t('analytics.potentialRevenue')}: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.potentialRevenue || 0).toFixed(2)}</strong>
                 </Typography>
                 <Typography sx={{ color: textSecondary }}>
-                  Recovery rate: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.recoveryRate || 0).toFixed(1)}%</strong>
+                  {t('analytics.recoveryRate')}: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.recoveryRate || 0).toFixed(1)}%</strong>
                 </Typography>
                 <Typography sx={{ color: textSecondary }}>
-                  Avg items per cart: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.avgItems || 0).toFixed(1)}</strong>
+                  {t('analytics.avgItemsPerCart')}: <strong style={{ color: textPrimary }}>{Number(abandonedCarts?.avgItems || 0).toFixed(1)}</strong>
                 </Typography>
               </Stack>
             </CardContent>
@@ -624,22 +646,22 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Top Abandoned Products
+                {t('analytics.topAbandonedProducts')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: alpha(textPrimary, isLight ? 0.04 : 0.08) }}>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Product</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Qty</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Value</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('products.product')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.quantity')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.value')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {abandonedCarts?.topProducts?.map((item: any) => (
                       <TableRow key={item.productId} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {item.product?.title || 'Unknown product'}
+                          {item.product?.title || t('analytics.unknownProduct')}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {item.abandonedCount || 0}
@@ -662,30 +684,30 @@ const SalesReport: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Recent Abandoned Carts
+                {t('analytics.recentAbandonedCarts')}
               </Typography>
               <TableContainer sx={{ background: surface, borderRadius: 2, border: `1px solid ${border}` }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ backgroundColor: alpha(textPrimary, isLight ? 0.04 : 0.08) }}>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Customer</TableCell>
-                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>Preview</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Items</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Vendors</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Subtotal</TableCell>
-                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>Updated</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.customer')}</TableCell>
+                      <TableCell sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.preview')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.items')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.vendors')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.subtotal')}</TableCell>
+                      <TableCell align="right" sx={{ color: textPrimary, fontWeight: 700 }}>{t('analytics.updated')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {abandonedCarts?.items?.map((item: any) => (
                       <TableRow key={item.cartId} sx={{ '&:hover': { backgroundColor: hover } }}>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {item.customer?.email || item.customer?.phone || 'Unknown customer'}
+                          {item.customer?.email || item.customer?.phone || t('analytics.unknownCustomer')}
                         </TableCell>
                         <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {(item.itemsPreview || [])
                             .map((preview: any) => `${preview.title} x${preview.qty}`)
-                            .join(', ') || 'No items'}
+                            .join(', ') || t('analytics.noItems')}
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                           {item.totalItems || 0}
@@ -699,7 +721,7 @@ const SalesReport: React.FC = () => {
                           </Typography>
                         </TableCell>
                         <TableCell align="right" sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                          {item.updatedAt ? format(new Date(item.updatedAt), 'MMM dd, yyyy') : 'N/A'}
+                          {item.updatedAt ? format(new Date(item.updatedAt), 'MMM dd, yyyy') : t('products.notAvailable')}
                         </TableCell>
                       </TableRow>
                     ))}

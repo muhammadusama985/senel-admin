@@ -29,11 +29,14 @@ import { Cancel, Refresh, Search, Visibility } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const OrderList: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -74,7 +77,7 @@ const OrderList: React.FC = () => {
   };
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'orders', page, rowsPerPage, search, statusFilter],
+    queryKey: ['admin', 'orders', currentLanguage, page, rowsPerPage, search, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page + 1),
@@ -131,13 +134,13 @@ const OrderList: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ color: textPrimary, fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Orders
+          {t('orders.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search by order number..."
+            placeholder={t('orders.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             InputProps={{
@@ -150,7 +153,7 @@ const OrderList: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 260, ...fieldSx }}
           />
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('orders.refresh')}>
             <IconButton onClick={() => refetch()} sx={{ color: muiTheme.palette.primary.main, '&:hover': { backgroundColor: hover } }}>
               <Refresh />
             </IconButton>
@@ -161,11 +164,11 @@ const OrderList: React.FC = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Order Status</InputLabel>
-            <Select value={statusFilter} label="Order Status" onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
-              <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="placed">Placed</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+            <InputLabel>{t('orders.orderStatus')}</InputLabel>
+            <Select value={statusFilter} label={t('orders.orderStatus')} onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
+              <MenuItem value="all">{t('orders.allStatuses')}</MenuItem>
+              <MenuItem value="placed">{t('orders.placed')}</MenuItem>
+              <MenuItem value="cancelled">{t('orders.cancelled')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
@@ -173,7 +176,7 @@ const OrderList: React.FC = () => {
 
       {data?.items?.length === 0 ? (
         <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-          No orders found
+          {t('orders.noOrders')}
         </Alert>
       ) : (
         <>
@@ -190,13 +193,13 @@ const OrderList: React.FC = () => {
                     },
                   }}
                 >
-                  <TableCell>Order #</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Payment</TableCell>
-                  <TableCell>Shipping</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell>{t('orders.order')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{t('orders.payment')}</TableCell>
+                  <TableCell>{t('orders.shipping')}</TableCell>
+                  <TableCell>{t('orders.amount')}</TableCell>
+                  <TableCell>{t('common.date')}</TableCell>
+                  <TableCell align="center">{t('orders.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -209,10 +212,10 @@ const OrderList: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>{getStatusChip(order.status)}</TableCell>
                     <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                      {order.paymentStatus || 'N/A'}
+                      {order.paymentStatus || t('products.notAvailable')}
                     </TableCell>
                     <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                      {order.shippingStatus || 'N/A'}
+                      {order.shippingStatus || t('products.notAvailable')}
                     </TableCell>
                     <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
                       <Typography fontWeight={800} sx={{ color: accent }}>
@@ -224,14 +227,14 @@ const OrderList: React.FC = () => {
                     </TableCell>
                     <TableCell align="center" sx={{ borderBottom: `1px solid ${border}` }}>
                       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                        <Tooltip title="View Details">
+                        <Tooltip title={t('orders.viewDetails')}>
                           <IconButton size="small" onClick={() => navigate(`/orders/${order._id}`)} sx={{ '&:hover': { backgroundColor: hover } }}>
                             <Visibility />
                           </IconButton>
                         </Tooltip>
 
                         {order.status !== 'cancelled' && !order.allVendorOrdersDelivered && (
-                          <Tooltip title="Cancel Order">
+                          <Tooltip title={t('orders.cancelOrder')}>
                             <IconButton
                               size="small"
                               color="error"

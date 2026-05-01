@@ -20,6 +20,7 @@ import {
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { CheckCircle, Search } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface Props {
@@ -29,6 +30,7 @@ interface Props {
 const ShippingList: React.FC<Props> = ({ status }) => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -88,6 +90,8 @@ const ShippingList: React.FC<Props> = ({ status }) => {
     });
   };
 
+  const currentStatusLabel = status === 'shipped' ? t('shipping.inTransit') : t('shipping.delivered');
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -99,7 +103,7 @@ const ShippingList: React.FC<Props> = ({ status }) => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }} action={<Button color="inherit" size="small" onClick={() => refetch()}>Retry</Button>}>
-        Error loading orders. Please try again.
+        {t('shipping.failedLoadOrders')}
       </Alert>
     );
   }
@@ -109,7 +113,7 @@ const ShippingList: React.FC<Props> = ({ status }) => {
       <Box sx={{ mb: 3 }}>
         <TextField
           size="small"
-          placeholder="Search orders..."
+          placeholder={t('shipping.searchOrders')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -147,12 +151,12 @@ const ShippingList: React.FC<Props> = ({ status }) => {
                 },
               }}
             >
-              <TableCell>Order Number</TableCell>
-              <TableCell>Vendor</TableCell>
-              <TableCell>Carrier</TableCell>
-              <TableCell>Tracking Number</TableCell>
-              <TableCell>{status === 'shipped' ? 'Shipped At' : 'Delivered At'}</TableCell>
-              {status === 'shipped' && <TableCell align="center">Actions</TableCell>}
+              <TableCell>{t('shipping.orderNumber')}</TableCell>
+              <TableCell>{t('shipping.vendor')}</TableCell>
+              <TableCell>{t('shipping.carrier')}</TableCell>
+              <TableCell>{t('shipping.trackingNumber')}</TableCell>
+              <TableCell>{status === 'shipped' ? t('shipping.shippedAt') : t('shipping.deliveredAtLabel')}</TableCell>
+              {status === 'shipped' && <TableCell align="center">{t('common.actions')}</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -163,7 +167,7 @@ const ShippingList: React.FC<Props> = ({ status }) => {
                 </TableCell>
                 <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>{order.vendorStoreName}</TableCell>
                 <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                  {order.shipping?.partnerName || <Typography variant="caption" sx={{ color: textSecondary }}>Not assigned</Typography>}
+                  {order.shipping?.partnerName || <Typography variant="caption" sx={{ color: textSecondary }}>{t('shipping.notAssigned')}</Typography>}
                 </TableCell>
                 <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
                   {order.shipping?.trackingCode || '-'}
@@ -180,7 +184,7 @@ const ShippingList: React.FC<Props> = ({ status }) => {
                         refetch();
                       }}
                       sx={{ color: muiTheme.palette.success.main }}
-                      title="Mark as Delivered"
+                      title={t('shipping.markAsDelivered')}
                     >
                       <CheckCircle />
                     </IconButton>
@@ -191,7 +195,7 @@ const ShippingList: React.FC<Props> = ({ status }) => {
             {paginatedOrders.length === 0 && (
               <TableRow>
                 <TableCell colSpan={status === 'shipped' ? 6 : 5} align="center" sx={{ py: 4, color: textSecondary }}>
-                  No {status} orders found
+                  {t('shipping.noStatusOrders', { status: currentStatusLabel })}
                 </TableCell>
               </TableRow>
             )}

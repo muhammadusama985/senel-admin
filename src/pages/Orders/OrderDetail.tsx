@@ -62,6 +62,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import OrderReceiptPrint from './OrderReceiptPrint';
 import SchedulePickupDialog from './components/SchedulePickupDialog';
@@ -84,6 +85,8 @@ const OrderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const muiTheme = useMuiTheme();
   const isLight = muiTheme.palette.mode === 'light';
@@ -107,6 +110,22 @@ const OrderDetail: React.FC = () => {
   const [selectedVendorOrderForAction, setSelectedVendorOrderForAction] = useState<any>(null);
   const [refundNote, setRefundNote] = useState('');
   const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const translateOrderStatus = (status?: string) => {
+    if (!status) return t('products.unknown');
+    const normalized = String(status).toLowerCase().replace(/[\s-]+/g, '_');
+    const keyMap: Record<string, string> = {
+      placed: 'orders.placed',
+      cancelled: 'orders.cancelled',
+      delivered: 'shipping.delivered',
+      shipped: 'shipping.markShipped',
+      ready_pickup: 'shipping.readyPickup',
+      in_transit: 'shipping.inTransit',
+      approved: 'products.approved',
+      pending: 'products.pending',
+    };
+    return keyMap[normalized] ? t(keyMap[normalized]) : status;
+  };
 
   // Consistent styling for both themes
   const shellSx = {
@@ -173,7 +192,7 @@ const OrderDetail: React.FC = () => {
   };
 
   const { data: order, isLoading, error, refetch } = useQuery({
-    queryKey: ['admin', 'orders', id],
+    queryKey: ['admin', 'orders', currentLanguage, id],
     queryFn: async () => {
       const response = await api.get(`/admin/orders/${id}`);
       return response.data;
@@ -194,7 +213,7 @@ const OrderDetail: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', currentLanguage, id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
       setStatusDialog(false);
       setShippingDialog(false);
@@ -204,25 +223,25 @@ const OrderDetail: React.FC = () => {
   const cancelOrderMutation = useMutation({
     mutationFn: async () => api.post(`/admin/orders/${id}/cancel`, { note: 'Cancelled by admin' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', currentLanguage, id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
-      setActionMessage({ type: 'success', text: 'Order cancelled successfully.' });
+      setActionMessage({ type: 'success', text: t('orders.cancelSuccess') });
     },
     onError: (error: any) => {
-      setActionMessage({ type: 'error', text: error.response?.data?.message || 'Failed to cancel order.' });
+      setActionMessage({ type: 'error', text: error.response?.data?.message || t('orders.cancelFailed') });
     },
   });
 
   const markRefundedMutation = useMutation({
     mutationFn: async () => api.post(`/admin/orders/${id}/mark-refunded`, { note: refundNote.trim() || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders', currentLanguage, id] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
       setRefundNote('');
-      setActionMessage({ type: 'success', text: 'Order marked as refunded successfully.' });
+      setActionMessage({ type: 'success', text: t('orders.refundMarkedSuccess') });
     },
     onError: (error: any) => {
-      setActionMessage({ type: 'error', text: error.response?.data?.message || 'Failed to mark order refunded.' });
+      setActionMessage({ type: 'error', text: error.response?.data?.message || t('orders.refundMarkFailed') });
     },
   });
 
@@ -285,9 +304,9 @@ const OrderDetail: React.FC = () => {
     if (!value) return;
     try {
       await navigator.clipboard.writeText(value);
-      setActionMessage({ type: 'success', text: `${label || 'Value'} copied.` });
+      setActionMessage({ type: 'success', text: t('common.copiedValue', { label: label || t('common.value') }) });
     } catch {
-      setActionMessage({ type: 'error', text: `Could not copy ${label || 'value'}.` });
+      setActionMessage({ type: 'error', text: t('common.copyFailedValue', { label: label || t('common.value') }) });
     }
   };
 
@@ -305,7 +324,7 @@ const OrderDetail: React.FC = () => {
           '& .MuiAlert-icon': { color: TEXT_PRIMARY }
         }}
       >
-        Order not found or error loading data.
+        {t('orders.orderNotFound')}
       </Alert>
     );
   }
@@ -885,7 +904,7 @@ const OrderDetail: React.FC = () => {
               <Card sx={cardSx}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ color: ACCENT, fontWeight: 800 }}>
-                    Customer Information
+                    {t('orders.customerInformation')}
                   </Typography>
                   <List
                     sx={{
@@ -899,8 +918,8 @@ const OrderDetail: React.FC = () => {
                         <Person />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Name"
-                        secondary={order.order.shippingAddress?.contactPerson || 'N/A'}
+                        primary={t('common.name')}
+                        secondary={order.order.shippingAddress?.contactPerson || t('products.notAvailable')}
                       />
                     </ListItem>
                     <ListItem>
@@ -908,8 +927,8 @@ const OrderDetail: React.FC = () => {
                         <Email />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Email"
-                        secondary={order.order.customerUserId?.email || 'N/A'}
+                        primary={t('common.email')}
+                        secondary={order.order.customerUserId?.email || t('products.notAvailable')}
                       />
                     </ListItem>
                     <ListItem>
@@ -917,8 +936,8 @@ const OrderDetail: React.FC = () => {
                         <Phone />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Phone"
-                        secondary={order.order.shippingAddress?.mobileNumber || 'N/A'}
+                        primary={t('common.phone')}
+                        secondary={order.order.shippingAddress?.mobileNumber || t('products.notAvailable')}
                       />
                     </ListItem>
                   </List>
@@ -930,7 +949,7 @@ const OrderDetail: React.FC = () => {
               <Card sx={cardSx}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ color: ACCENT, fontWeight: 800 }}>
-                    Shipping Address
+                    {t('orders.shippingAddressTitle')}
                   </Typography>
                   <List
                     sx={{
@@ -944,7 +963,7 @@ const OrderDetail: React.FC = () => {
                         <LocationOn />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Address"
+                        primary={t('common.address')}
                         secondary={
                           <>
                             {order.order.shippingAddress?.companyName && (
@@ -983,8 +1002,8 @@ const OrderDetail: React.FC = () => {
                 <TimelineConnector />
               </TimelineSeparator>
               <TimelineContent>
-                <Typography variant="h6">Order Placed</Typography>
-                <Typography>Order #{order.order.orderNumber} was created</Typography>
+                <Typography variant="h6">{t('orders.orderPlaced')}</Typography>
+                <Typography>{t('orders.orderCreatedMessage', { orderNumber: order.order.orderNumber })}</Typography>
               </TimelineContent>
             </TimelineItem>
 
@@ -1000,8 +1019,8 @@ const OrderDetail: React.FC = () => {
                   <TimelineConnector />
                 </TimelineSeparator>
                 <TimelineContent>
-                  <Typography variant="h6">Payment Received</Typography>
-                  <Typography>Payment confirmed via {order.order.paymentMethod}</Typography>
+                  <Typography variant="h6">{t('orders.paymentReceived')}</Typography>
+                  <Typography>{t('orders.paymentConfirmedVia', { method: order.order.paymentMethod })}</Typography>
                 </TimelineContent>
               </TimelineItem>
             )}
@@ -1020,7 +1039,7 @@ const OrderDetail: React.FC = () => {
                       {index < order.vendorOrders.length - 1 && <TimelineConnector />}
                     </TimelineSeparator>
                     <TimelineContent>
-                      <Typography variant="h6">Order Shipped</Typography>
+                      <Typography variant="h6">{t('orders.orderShipped')}</Typography>
                       <Typography>
                         {vendorOrder.vendorStoreName} - {vendorOrder.shipping?.partnerName}
                       </Typography>
@@ -1039,7 +1058,7 @@ const OrderDetail: React.FC = () => {
                       </TimelineDot>
                     </TimelineSeparator>
                     <TimelineContent>
-                      <Typography variant="h6">Order Delivered</Typography>
+                      <Typography variant="h6">{t('orders.orderDelivered')}</Typography>
                       <Typography>{vendorOrder.vendorStoreName}</Typography>
                     </TimelineContent>
                   </TimelineItem>
@@ -1053,12 +1072,12 @@ const OrderDetail: React.FC = () => {
       {/* Shipping Dialog */}
       <Dialog open={shippingDialog} onClose={() => setShippingDialog(false)} maxWidth="sm" fullWidth sx={dialogSx}>
         <DialogTitle sx={{ color: TEXT_PRIMARY }}>
-          Mark as Shipped
+          {t('orders.markAsShipped')}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Carrier"
+              label={t('shipping.carrier')}
               fullWidth
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
@@ -1066,11 +1085,11 @@ const OrderDetail: React.FC = () => {
               sx={fieldSx}
             />
             <TextField
-              label="Tracking Number"
+              label={t('shipping.trackingNumber')}
               fullWidth
               value={trackingNumber}
               onChange={(e) => setTrackingNumber(e.target.value)}
-              placeholder="Enter tracking number"
+              placeholder={t('shipping.trackingPlaceholder')}
               sx={fieldSx}
             />
           </Box>
@@ -1080,7 +1099,7 @@ const OrderDetail: React.FC = () => {
             onClick={() => setShippingDialog(false)}
             sx={{ color: TEXT_PRIMARY, '&:hover': { backgroundColor: HOVER } }}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={confirmStatusUpdate}
@@ -1092,7 +1111,7 @@ const OrderDetail: React.FC = () => {
               '&:hover': { backgroundColor: '#e6b92e' },
             }}
           >
-            {updateStatusMutation.isPending ? <CircularProgress size={24} sx={{ color: DARK_BLUE }} /> : 'Confirm Shipment'}
+            {updateStatusMutation.isPending ? <CircularProgress size={24} sx={{ color: DARK_BLUE }} /> : t('orders.confirmShipment')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1100,11 +1119,11 @@ const OrderDetail: React.FC = () => {
       {/* Status Confirmation Dialog */}
       <Dialog open={statusDialog} onClose={() => setStatusDialog(false)} sx={dialogSx}>
         <DialogTitle sx={{ color: TEXT_PRIMARY }}>
-          Confirm Status Update
+          {t('orders.confirmStatusUpdate')}
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ color: TEXT_PRIMARY }}>
-            Are you sure you want to mark this order as {newStatus}?
+            {t('orders.confirmStatusMessage', { status: translateOrderStatus(newStatus) })}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -1112,7 +1131,7 @@ const OrderDetail: React.FC = () => {
             onClick={() => setStatusDialog(false)}
             sx={{ color: TEXT_PRIMARY, '&:hover': { backgroundColor: HOVER } }}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             onClick={confirmStatusUpdate}
@@ -1121,7 +1140,7 @@ const OrderDetail: React.FC = () => {
             disabled={updateStatusMutation.isPending}
             sx={{ color: '#ffffff' }}
           >
-            {updateStatusMutation.isPending ? <CircularProgress size={24} sx={{ color: '#ffffff' }} /> : 'Confirm'}
+            {updateStatusMutation.isPending ? <CircularProgress size={24} sx={{ color: '#ffffff' }} /> : t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

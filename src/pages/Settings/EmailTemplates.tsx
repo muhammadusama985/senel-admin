@@ -69,14 +69,14 @@ const EmailTemplates: React.FC = () => {
 
   const columns = useMemo<GridColDef[]>(
     () => [
-      { field: 'key', headerName: 'Key', minWidth: 180, flex: 1 },
-      { field: 'subject', headerName: 'Subject', minWidth: 220, flex: 1.4 },
-      { field: 'description', headerName: 'Description', minWidth: 220, flex: 1.4 },
+      { field: 'key', headerName: t('emails.key'), minWidth: 180, flex: 1 },
+      { field: 'subject', headerName: t('emails.subject'), minWidth: 220, flex: 1.4 },
+      { field: 'description', headerName: t('emails.description'), minWidth: 220, flex: 1.4 },
       {
         field: 'isActive',
-        headerName: 'Active',
+        headerName: t('emails.active'),
         minWidth: 100,
-        renderCell: (params) => (params.value ? 'Yes' : 'No'),
+        renderCell: (params) => (params.value ? t('products.yes') : t('products.no')),
       },
       {
         field: 'actions',
@@ -100,10 +100,10 @@ const EmailTemplates: React.FC = () => {
                 setOpen(true);
               }}
             >
-              Edit
+              {t('common.edit')}
             </Button>
             <Button size="small" color="error" onClick={() => deleteMutation.mutate(params.row._id)}>
-              Delete
+              {t('common.delete')}
             </Button>
           </Stack>
         ),
@@ -134,7 +134,7 @@ const EmailTemplates: React.FC = () => {
           </Button>
         </Stack>
 
-        {error && <Alert severity="error">Failed to load email templates.</Alert>}
+        {error && <Alert severity="error">{t('emails.failedLoad')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid rows={data} columns={columns} loading={isLoading} getRowId={(row) => row._id} disableRowSelectionOnClick />
@@ -145,11 +145,11 @@ const EmailTemplates: React.FC = () => {
         <DialogTitle>{editing ? `${t('common.edit')} ${t('emails.title')}` : `${t('common.create')} ${t('emails.title')}`}</DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
           <Stack spacing={2}>
-            <TextField label="Key" value={form.key} onChange={(e) => setForm((prev) => ({ ...prev, key: e.target.value }))} fullWidth />
-            <TextField label="Subject" value={form.subject} onChange={(e) => setForm((prev) => ({ ...prev, subject: e.target.value }))} fullWidth />
-            <TextField label="Description" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} fullWidth />
+            <TextField label={t('emails.key')} value={form.key} onChange={(e) => setForm((prev) => ({ ...prev, key: e.target.value }))} fullWidth />
+            <TextField label={t('emails.subject')} value={form.subject} onChange={(e) => setForm((prev) => ({ ...prev, subject: e.target.value }))} fullWidth />
+            <TextField label={t('emails.description')} value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} fullWidth />
             <TextField
-              label="HTML Body"
+              label={t('emails.htmlBody')}
               value={form.htmlBody}
               onChange={(e) => setForm((prev) => ({ ...prev, htmlBody: e.target.value }))}
               multiline
@@ -157,7 +157,7 @@ const EmailTemplates: React.FC = () => {
               fullWidth
             />
             <TextField
-              label="Text Body"
+              label={t('emails.textBody')}
               value={form.textBody}
               onChange={(e) => setForm((prev) => ({ ...prev, textBody: e.target.value }))}
               multiline

@@ -45,11 +45,13 @@ import {
 } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const ProductList: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -166,7 +168,7 @@ const ProductList: React.FC = () => {
   };
 
   const handleArchive = () => {
-    if (selectedProduct && window.confirm('Are you sure you want to archive this product?')) {
+    if (selectedProduct && window.confirm(t('products.archiveConfirm'))) {
       archiveMutation.mutate(selectedProduct._id);
     }
   };
@@ -191,10 +193,10 @@ const ProductList: React.FC = () => {
   };
 
   const getHotRequestChip = (product: any) => {
-    if (product.isFeatured) return <Chip label="Hot Product" size="small" color="warning" />;
-    if (product.hotRequestStatus === 'pending') return <Chip label="Pending Request" size="small" color="info" />;
-    if (product.hotRequestStatus === 'rejected') return <Chip label="Rejected" size="small" color="error" />;
-    return <Chip label="Not Requested" size="small" variant="outlined" />;
+    if (product.isFeatured) return <Chip label={t('products.hotProduct')} size="small" color="warning" />;
+    if (product.hotRequestStatus === 'pending') return <Chip label={t('products.pendingRequest')} size="small" color="info" />;
+    if (product.hotRequestStatus === 'rejected') return <Chip label={t('products.rejected')} size="small" color="error" />;
+    return <Chip label={t('products.notRequested')} size="small" variant="outlined" />;
   };
 
   if (productsLoading) {
@@ -208,11 +210,11 @@ const ProductList: React.FC = () => {
         sx={{ m: 2, backgroundColor: surface, color: muiTheme.palette.text.primary, border: `1px solid ${border}` }}
         action={
           <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            {t('common.retry')}
           </Button>
         }
       >
-        Error loading products. Please check API connection.
+        {t('products.errorLoading')}
       </Alert>
     );
   }
@@ -221,17 +223,17 @@ const ProductList: React.FC = () => {
     <Box sx={shellSx}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Products
+          {t('products.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/products/create')}>
-            Create Product
+            {t('products.createAction')}
           </Button>
 
           <TextField
             size="small"
-            placeholder="Search products..."
+            placeholder={t('products.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -250,12 +252,12 @@ const ProductList: React.FC = () => {
             onClick={() => setShowFilters(!showFilters)}
             sx={{ borderColor: border, color: muiTheme.palette.text.primary, '&:hover': { backgroundColor: hover } }}
           >
-            Filters
+            {t('products.filters')}
           </Button>
 
           {(search || statusFilter !== 'all' || vendorFilter !== 'all') && (
             <Button variant="text" startIcon={<Clear />} onClick={clearFilters} sx={{ '&:hover': { backgroundColor: hover } }}>
-              Clear
+              {t('products.clear')}
             </Button>
           )}
         </Box>
@@ -267,22 +269,22 @@ const ProductList: React.FC = () => {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>Status</InputLabel>
-                  <Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)} sx={selectSx}>
-                    <MenuItem value="all">All Statuses</MenuItem>
-                    <MenuItem value="approved">Approved</MenuItem>
-                    <MenuItem value="submitted">Pending</MenuItem>
-                    <MenuItem value="draft">Draft</MenuItem>
-                    <MenuItem value="rejected">Rejected</MenuItem>
-                    <MenuItem value="archived">Archived</MenuItem>
+                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>{t('products.status')}</InputLabel>
+                  <Select value={statusFilter} label={t('products.status')} onChange={(e) => setStatusFilter(e.target.value)} sx={selectSx}>
+                    <MenuItem value="all">{t('products.allStatuses')}</MenuItem>
+                    <MenuItem value="approved">{t('products.approved')}</MenuItem>
+                    <MenuItem value="submitted">{t('products.pending')}</MenuItem>
+                    <MenuItem value="draft">{t('products.draft')}</MenuItem>
+                    <MenuItem value="rejected">{t('products.rejected')}</MenuItem>
+                    <MenuItem value="archived">{t('products.archived')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <FormControl fullWidth size="small">
-                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>Vendor</InputLabel>
-                  <Select value={vendorFilter} label="Vendor" onChange={(e) => setVendorFilter(e.target.value)} sx={selectSx}>
-                    <MenuItem value="all">All Vendors</MenuItem>
+                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>{t('products.vendor')}</InputLabel>
+                  <Select value={vendorFilter} label={t('products.vendor')} onChange={(e) => setVendorFilter(e.target.value)} sx={selectSx}>
+                    <MenuItem value="all">{t('products.allVendors')}</MenuItem>
                     {vendors?.map((vendor: any) => (
                       <MenuItem key={vendor._id} value={vendor._id}>
                         {vendor.storeName}
@@ -309,21 +311,21 @@ const ProductList: React.FC = () => {
                 },
               }}
             >
-              <TableCell>Product</TableCell>
-              <TableCell>Vendor</TableCell>
-              <TableCell>Category</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Stock</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Featured</TableCell>
-              <TableCell>Hot Request</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('products.product')}</TableCell>
+              <TableCell>{t('products.vendor')}</TableCell>
+              <TableCell>{t('products.category')}</TableCell>
+              <TableCell>{t('products.price')}</TableCell>
+              <TableCell>{t('products.stock')}</TableCell>
+              <TableCell>{t('products.status')}</TableCell>
+              <TableCell>{t('products.featured')}</TableCell>
+              <TableCell>{t('products.hotRequest')}</TableCell>
+              <TableCell align="center">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {products?.products?.map((product: any) => (
               (() => {
-                const displaySku = product.sku || product.variants?.[0]?.sku || 'N/A';
+                const displaySku = product.sku || product.variants?.[0]?.sku || t('products.notAvailable');
                 const displayStock = Number(product.stockQty || 0);
 
                 return (
@@ -353,10 +355,10 @@ const ProductList: React.FC = () => {
                   </Box>
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  {product.vendorName || 'Unknown'}
+                  {product.vendorName || t('products.unknown')}
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  {product.categoryName || 'N/A'}
+                  {product.categoryName || t('products.notAvailable')}
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                   <Typography fontWeight={800} sx={{ color: accent }}>
@@ -424,10 +426,10 @@ const ProductList: React.FC = () => {
         }}
       >
         <MenuItem onClick={() => { navigate(`/products/${selectedProduct?._id}`); handleMenuClose(); }}>
-          <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+          <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('products.viewDetails')}
         </MenuItem>
         <MenuItem onClick={() => { navigate(`/products/edit/${selectedProduct?._id}`); handleMenuClose(); }}>
-          <Edit sx={{ mr: 1, fontSize: 20 }} /> Edit
+          <Edit sx={{ mr: 1, fontSize: 20 }} /> {t('common.edit')}
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -438,7 +440,7 @@ const ProductList: React.FC = () => {
           }}
         >
           {selectedProduct?.isFeatured ? <StarBorder sx={{ mr: 1, fontSize: 20 }} /> : <Star sx={{ mr: 1, fontSize: 20 }} />}
-          {selectedProduct?.isFeatured ? 'Remove Hot Product' : 'Mark Hot Product'}
+          {selectedProduct?.isFeatured ? t('products.removeHotProduct') : t('products.markHotProduct')}
         </MenuItem>
         {selectedProduct?.hotRequestStatus === 'pending' && !selectedProduct?.isFeatured ? (
           <MenuItem
@@ -447,16 +449,16 @@ const ProductList: React.FC = () => {
               handleMenuClose();
             }}
           >
-            <Star sx={{ mr: 1, fontSize: 20 }} /> Approve Hot Request
+            <Star sx={{ mr: 1, fontSize: 20 }} /> {t('products.approveHotRequest')}
           </MenuItem>
         ) : null}
         {selectedProduct?.hotRequestStatus === 'pending' ? (
           <MenuItem onClick={() => selectedProduct && rejectHotMutation.mutate(selectedProduct._id)}>
-            <StarBorder sx={{ mr: 1, fontSize: 20 }} /> Reject Hot Request
+            <StarBorder sx={{ mr: 1, fontSize: 20 }} /> {t('products.rejectHotRequest')}
           </MenuItem>
         ) : null}
         <MenuItem onClick={handleArchive}>
-          <Archive sx={{ mr: 1, fontSize: 20 }} /> Archive
+          <Archive sx={{ mr: 1, fontSize: 20 }} /> {t('products.archive')}
         </MenuItem>
       </Menu>
     </Box>

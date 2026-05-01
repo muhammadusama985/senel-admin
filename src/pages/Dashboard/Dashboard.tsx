@@ -24,6 +24,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import RecentOrders from './widgets/RecentOrders';
 import StatsWidget from './widgets/StatsWidget';
@@ -32,6 +33,8 @@ const CHART_COLORS = ['#f59e0b', '#ec4899', '#f97316', '#8b5cf6', '#22c55e'];
 
 const Dashboard: React.FC = () => {
   const muiTheme = useMuiTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
 
@@ -43,7 +46,7 @@ const Dashboard: React.FC = () => {
   const tooltipBg = alpha(surface, 0.96);
 
   const { data: stats, isLoading, error } = useQuery({
-    queryKey: ['admin', 'dashboard'],
+    queryKey: ['admin', 'dashboard', currentLanguage],
     queryFn: async () => {
       const ordersResponse = await api
         .get('/admin/analytics/orders/overview')
@@ -80,7 +83,7 @@ const Dashboard: React.FC = () => {
         lowStockCount: lowStockResponse.data.total || lowStockResponse.data.items?.length || 0,
         revenue:
           revenueResponse.data.items?.map((item: any, index: number) => ({
-            date: `Day ${index + 1}`,
+            date: `${t('dashboard.day')} ${index + 1}`,
             revenue: item.totalRevenue || 0,
           })) || [],
       };
@@ -102,7 +105,7 @@ const Dashboard: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Error loading dashboard data. Please refresh.
+        {t('dashboard.errorLoading')}
       </Alert>
     );
   }
@@ -113,31 +116,31 @@ const Dashboard: React.FC = () => {
   return (
     <Box className="page-shell">
       <Typography variant="h4" gutterBottom sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: textPrimary, mb: 3 }}>
-        Dashboard
+        {t('dashboard.title')}
       </Typography>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Delivered Orders" value={stats?.orders?.summary?.totalDeliveredOrders || 0} icon="orders" color={muiTheme.palette.primary.main} />
+          <StatsWidget title={t('dashboard.deliveredOrders')} value={stats?.orders?.summary?.totalDeliveredOrders || 0} icon="orders" color={muiTheme.palette.primary.main} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Pending Vendors" value={stats?.pendingVendors || 0} icon="vendors" color={muiTheme.palette.error.main} />
+          <StatsWidget title={t('dashboard.pendingVendors')} value={stats?.pendingVendors || 0} icon="vendors" color={muiTheme.palette.error.main} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Pending Products" value={stats?.pendingProducts || 0} icon="products" color={muiTheme.palette.warning.main} />
+          <StatsWidget title={t('dashboard.pendingProducts')} value={stats?.pendingProducts || 0} icon="products" color={muiTheme.palette.warning.main} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Pending Payouts" value={stats?.pendingPayouts || 0} icon="payouts" color={muiTheme.palette.success.main} />
+          <StatsWidget title={t('dashboard.pendingPayouts')} value={stats?.pendingPayouts || 0} icon="payouts" color={muiTheme.palette.success.main} />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatsWidget title="Low Stock Products" value={stats?.lowStockCount || 0} icon="inventory" color={muiTheme.palette.error.main} />
+          <StatsWidget title={t('dashboard.lowStockProducts')} value={stats?.lowStockCount || 0} icon="inventory" color={muiTheme.palette.error.main} />
         </Grid>
 
         <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Revenue Trend (Last 7 Days)
+                {t('dashboard.revenueTrend')}
               </Typography>
 
               <Box sx={{ height: isMobile ? 250 : 350 }}>
@@ -168,7 +171,7 @@ const Dashboard: React.FC = () => {
           <Card sx={{ height: '100%', backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Order Status
+                {t('dashboard.orderStatus')}
               </Typography>
 
               <Box sx={{ height: isMobile ? 200 : 300 }}>
@@ -215,7 +218,7 @@ const Dashboard: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Recent Orders
+                {t('dashboard.recentOrders')}
               </Typography>
               <RecentOrders />
             </CardContent>
@@ -226,7 +229,7 @@ const Dashboard: React.FC = () => {
           <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: textPrimary }}>
-                Low Stock Products
+                {t('dashboard.lowStockProducts')}
               </Typography>
 
               {stats?.lowStockProducts?.length ? (
@@ -251,32 +254,32 @@ const Dashboard: React.FC = () => {
                           {item.title}
                         </Typography>
                         <Typography variant="body2" sx={{ color: textSecondary }}>
-                          {item.categoryId?.name || 'Uncategorized'}
+                          {item.categoryId?.name || t('dashboard.uncategorized')}
                         </Typography>
                       </Box>
 
                       <Box>
                         <Typography sx={{ color: textPrimary }}>
-                          {item.vendorId?.storeName || 'Senel Admin'}
+                          {item.vendorId?.storeName || t('dashboard.senelAdmin')}
                         </Typography>
                         <Typography variant="body2" sx={{ color: textSecondary }}>
-                          {item.vendorId ? 'Vendor product' : 'Platform product'}
+                          {item.vendorId ? t('dashboard.vendorProduct') : t('dashboard.platformProduct')}
                         </Typography>
                       </Box>
 
                       <Typography sx={{ color: textPrimary, fontWeight: 700 }}>
-                        Stock: {Number(item.stockQty || 0)}
+                        {t('dashboard.stock')}: {Number(item.stockQty || 0)}
                       </Typography>
 
                       <Typography sx={{ color: muiTheme.palette.error.main, fontWeight: 700 }}>
-                        Threshold: {Number(item.lowStockThreshold || 0)}
+                        {t('dashboard.threshold')}: {Number(item.lowStockThreshold || 0)}
                       </Typography>
                     </Box>
                   ))}
                 </Box>
               ) : (
                 <Typography sx={{ color: textSecondary }}>
-                  No low stock products right now.
+                  {t('dashboard.noLowStock')}
                 </Typography>
               )}
             </CardContent>

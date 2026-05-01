@@ -52,6 +52,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface TabPanelProps {
@@ -117,6 +118,7 @@ interface AuditLog {
 const VendorDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const muiTheme = useMuiTheme();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -242,7 +244,7 @@ const VendorDetail: React.FC = () => {
   if (error || !vendor) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
-        Vendor not found or error loading data.
+        {t('vendors.errorLoading')}
       </Alert>
     );
   }
@@ -272,20 +274,20 @@ const VendorDetail: React.FC = () => {
           <ArrowBack />
         </IconButton>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: muiTheme.palette.text.primary, flex: 1 }}>
-          Vendor Details
+          {t('vendors.details')}
         </Typography>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
           {vendor.status === 'submitted' && (
             <>
               <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
-                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Approve'}
+                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('vendors.approve')}
               </Button>
               <Button variant="contained" color="error" startIcon={<Cancel />} onClick={() => setRejectDialog(true)}>
-                Reject
+                {t('vendors.reject')}
               </Button>
               <Button variant="outlined" startIcon={<Info sx={{ color: accent }} />} onClick={() => setReviewDialog(true)}>
-                Under Review
+                {t('vendors.underReview')}
               </Button>
             </>
           )}
@@ -293,17 +295,17 @@ const VendorDetail: React.FC = () => {
           {vendor.status === 'under_review' && (
             <>
               <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
-                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Approve'}
+                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('vendors.approve')}
               </Button>
               <Button variant="contained" color="error" startIcon={<Cancel />} onClick={() => setRejectDialog(true)}>
-                Reject
+                {t('vendors.reject')}
               </Button>
             </>
           )}
 
           {vendor.status === 'approved' && (
             <Button variant="contained" color="warning" startIcon={<Block />} onClick={() => setBlockDialog(true)}>
-              Block
+              {t('vendors.block')}
             </Button>
           )}
         </Stack>
@@ -313,39 +315,39 @@ const VendorDetail: React.FC = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Status
+              {t('vendors.status')}
             </Typography>
             <Chip label={vendor.status || 'draft'} color={getStatusColor(vendor.status || 'draft')} sx={{ mt: 0.5, textTransform: 'capitalize' }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Verified Badge
+              {t('vendors.verifiedBadge')}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
               {vendor.isVerifiedBadge ? (
                 <>
                   <Verified sx={{ color: muiTheme.palette.success.main, mr: 1 }} />
-                  <Typography sx={{ color: muiTheme.palette.text.primary }}>Verified</Typography>
+                  <Typography sx={{ color: muiTheme.palette.text.primary }}>{t('vendors.verified')}</Typography>
                 </>
               ) : (
-                <Typography sx={{ color: muiTheme.palette.text.primary }}>Not Verified</Typography>
+                <Typography sx={{ color: muiTheme.palette.text.primary }}>{t('vendors.notVerified')}</Typography>
               )}
             </Box>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Joined
+              {t('vendors.joined')}
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: muiTheme.palette.text.primary }}>
-              {vendor.createdAt ? format(new Date(vendor.createdAt), 'PPP') : 'N/A'}
+              {vendor.createdAt ? format(new Date(vendor.createdAt), 'PPP') : t('products.notAvailable')}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Last Reviewed
+              {t('vendors.lastReviewed')}
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: muiTheme.palette.text.primary }}>
-              {vendor.reviewedAt ? format(new Date(vendor.reviewedAt), 'PPP') : 'Never'}
+              {vendor.reviewedAt ? format(new Date(vendor.reviewedAt), 'PPP') : t('vendors.never')}
             </Typography>
           </Grid>
         </Grid>
@@ -368,9 +370,9 @@ const VendorDetail: React.FC = () => {
             },
           }}
         >
-          <Tab label="Profile" />
-          <Tab label="Documents" />
-          <Tab label="Audit Log" />
+          <Tab label={t('vendors.profile')} />
+          <Tab label={t('vendors.documentsTab')} />
+          <Tab label={t('vendors.auditLog')} />
         </Tabs>
 
         <TabPanel value={tabValue} index={0}>
@@ -379,7 +381,7 @@ const VendorDetail: React.FC = () => {
               <Card sx={{ backgroundColor: panel, border: `1px solid ${border}` }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-                    Store Information
+                    {t('vendors.storeInfo')}
                   </Typography>
                   <List>
                     <ListItem>
@@ -387,8 +389,8 @@ const VendorDetail: React.FC = () => {
                         <Business sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Store Name"
-                        secondary={vendor.storeName || 'N/A'}
+                        primary={t('vendors.storeName')}
+                        secondary={vendor.storeName || t('products.notAvailable')}
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                       />
@@ -398,8 +400,8 @@ const VendorDetail: React.FC = () => {
                         <Email sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Email"
-                        secondary={vendor.email || 'N/A'}
+                        primary={t('login.email')}
+                        secondary={vendor.email || t('products.notAvailable')}
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                       />
@@ -409,8 +411,8 @@ const VendorDetail: React.FC = () => {
                         <Phone sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Phone"
-                        secondary={vendor.phone || 'N/A'}
+                        primary={t('vendors.phone')}
+                        secondary={vendor.phone || t('products.notAvailable')}
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                       />
@@ -424,7 +426,7 @@ const VendorDetail: React.FC = () => {
               <Card sx={{ backgroundColor: panel, border: `1px solid ${border}` }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-                    Business Information
+                    {t('vendors.businessInfo')}
                   </Typography>
                   <List>
                     <ListItem>
@@ -432,8 +434,8 @@ const VendorDetail: React.FC = () => {
                         <Business sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Company Name"
-                        secondary={vendor.business?.companyName || 'N/A'}
+                        primary={t('vendors.company')}
+                        secondary={vendor.business?.companyName || t('products.notAvailable')}
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                       />
@@ -444,7 +446,7 @@ const VendorDetail: React.FC = () => {
                       </ListItemIcon>
                       <ListItemText
                         primary="Tax ID"
-                        secondary={vendor.business?.taxId || 'N/A'}
+                        secondary={vendor.business?.taxId || t('products.notAvailable')}
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
                       />
@@ -454,11 +456,11 @@ const VendorDetail: React.FC = () => {
                         <LocationOn sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Address"
+                        primary={t('vendors.address')}
                         secondary={
                           vendor.business
                             ? `${vendor.business.addressLine || ''}, ${vendor.business.city || ''}, ${vendor.business.country || ''}`
-                            : 'N/A'
+                            : t('products.notAvailable')
                         }
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
@@ -469,11 +471,11 @@ const VendorDetail: React.FC = () => {
                         <Phone sx={{ color: accent }} />
                       </ListItemIcon>
                       <ListItemText
-                        primary="Contact"
+                        primary={t('vendors.contact')}
                         secondary={
                           vendor.business
                             ? `${vendor.business.contactName || ''} ${vendor.business.contactPhone || ''}`
-                            : 'N/A'
+                            : t('products.notAvailable')
                         }
                         primaryTypographyProps={{ sx: { color: muiTheme.palette.text.primary } }}
                         secondaryTypographyProps={{ sx: { color: muiTheme.palette.text.secondary } }}
@@ -490,14 +492,14 @@ const VendorDetail: React.FC = () => {
                   <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2}>
                     <Box>
                       <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-                        Supplier Permissions
+                        {t('vendors.permissions')}
                       </Typography>
                       <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }}>
-                        Control whether this supplier can create products, receive orders, and request payouts.
+                        {t('vendors.permissionsIntro')}
                       </Typography>
                     </Box>
                     <Button variant="contained" startIcon={<Settings />} onClick={() => permissionsMutation.mutate()} disabled={permissionsMutation.isPending}>
-                      {permissionsMutation.isPending ? 'Saving...' : 'Save Permissions'}
+                      {permissionsMutation.isPending ? `${t('common.save')}...` : t('vendors.savePermissions')}
                     </Button>
                   </Stack>
 
@@ -508,7 +510,7 @@ const VendorDetail: React.FC = () => {
                         variant={permissionDraft.canCreateProducts ? 'contained' : 'outlined'}
                         onClick={() => setPermissionDraft((prev) => ({ ...prev, canCreateProducts: !prev.canCreateProducts }))}
                       >
-                        Product Creation: {permissionDraft.canCreateProducts ? 'Allowed' : 'Blocked'}
+                        {t('vendors.productCreation')}: {permissionDraft.canCreateProducts ? t('vendors.allowed') : t('vendors.blockedState')}
                       </Button>
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
@@ -517,7 +519,7 @@ const VendorDetail: React.FC = () => {
                         variant={permissionDraft.canReceiveOrders ? 'contained' : 'outlined'}
                         onClick={() => setPermissionDraft((prev) => ({ ...prev, canReceiveOrders: !prev.canReceiveOrders }))}
                       >
-                        Receive Orders: {permissionDraft.canReceiveOrders ? 'Allowed' : 'Blocked'}
+                        {t('vendors.receiveOrders')}: {permissionDraft.canReceiveOrders ? t('vendors.allowed') : t('vendors.blockedState')}
                       </Button>
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
@@ -526,7 +528,7 @@ const VendorDetail: React.FC = () => {
                         variant={permissionDraft.canRequestPayouts ? 'contained' : 'outlined'}
                         onClick={() => setPermissionDraft((prev) => ({ ...prev, canRequestPayouts: !prev.canRequestPayouts }))}
                       >
-                        Payout Requests: {permissionDraft.canRequestPayouts ? 'Allowed' : 'Blocked'}
+                        {t('vendors.payoutRequests')}: {permissionDraft.canRequestPayouts ? t('vendors.allowed') : t('vendors.blockedState')}
                       </Button>
                     </Grid>
                   </Grid>
@@ -538,7 +540,7 @@ const VendorDetail: React.FC = () => {
               <Grid size={{ xs: 12 }}>
                 <Alert severity="info" icon={<Message />} sx={{ backgroundColor: panel, border: `1px solid ${border}` }}>
                   <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.primary }}>
-                    Review Note:
+                    {t('vendors.reviewNote')}:
                   </Typography>
                   <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }}>
                     {vendor.reviewNote}
@@ -564,7 +566,7 @@ const VendorDetail: React.FC = () => {
                               {doc.type?.replace(/_/g, ' ').toUpperCase()}
                             </Typography>
                             <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                              {doc.fileName || 'Document'}
+                              {doc.fileName || t('vendors.noDocumentName')}
                             </Typography>
                           </Box>
                         </Box>
@@ -578,12 +580,12 @@ const VendorDetail: React.FC = () => {
                       </Grid>
                       <Grid size={{ xs: 12, md: 4 }}>
                         <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Tooltip title="View">
+                          <Tooltip title={t('vendors.view')}>
                             <IconButton size="small" onClick={() => window.open(doc.fileUrl, '_blank')}>
                               <Visibility />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Download">
+                          <Tooltip title={t('vendors.download')}>
                             <IconButton size="small" href={doc.fileUrl} download sx={{ color: accent }}>
                               <FileDownload />
                             </IconButton>
@@ -598,7 +600,7 @@ const VendorDetail: React.FC = () => {
             {(!vendor.verificationDocs || vendor.verificationDocs.length === 0) && (
               <Grid size={{ xs: 12 }}>
                 <Alert severity="info" sx={{ backgroundColor: panel, border: `1px solid ${border}` }}>
-                  No documents uploaded yet.
+                  {t('vendors.noDocuments')}
                 </Alert>
               </Grid>
             )}
@@ -619,7 +621,7 @@ const VendorDetail: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Chip label={log.action} size="small" color="primary" variant="outlined" />
                           <Typography variant="body2" sx={{ color: muiTheme.palette.text.primary }}>
-                            by {log.actorUserId?.email || 'System'}
+                            by {log.actorUserId?.email || t('vendors.system')}
                           </Typography>
                         </Box>
                       }
@@ -641,80 +643,80 @@ const VendorDetail: React.FC = () => {
             </List>
           ) : (
             <Alert severity="info" sx={{ backgroundColor: panel, border: `1px solid ${border}` }}>
-              No audit logs available
+              {t('vendors.noAuditLogs')}
             </Alert>
           )}
         </TabPanel>
       </Paper>
 
       <Dialog open={reviewDialog} onClose={() => setReviewDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle>Set Under Review</DialogTitle>
+        <DialogTitle>{t('vendors.setUnderReview')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Review Note"
+            label={t('vendors.reviewNoteLabel')}
             fullWidth
             multiline
             rows={4}
             value={reviewNote}
             onChange={(event) => setReviewNote(event.target.value)}
-            placeholder="Add notes about this review..."
+            placeholder={t('vendors.reviewPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setReviewDialog(false)}>Cancel</Button>
+          <Button onClick={() => setReviewDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => reviewNote.trim() && underReviewMutation.mutate({ note: reviewNote })} variant="contained" disabled={!reviewNote.trim() || underReviewMutation.isPending}>
-            {underReviewMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Confirm'}
+            {underReviewMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={rejectDialog} onClose={() => setRejectDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle>Reject Vendor</DialogTitle>
+        <DialogTitle>{t('vendors.rejectVendor')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Rejection Reason"
+            label={t('vendors.rejectionReason')}
             fullWidth
             multiline
             rows={3}
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            placeholder="Explain why the vendor is being rejected..."
+            placeholder={t('vendors.rejectionPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejectDialog(false)}>Cancel</Button>
+          <Button onClick={() => setRejectDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => rejectReason.trim() && rejectMutation.mutate({ reason: rejectReason })} variant="contained" color="error" disabled={!rejectReason.trim() || rejectMutation.isPending}>
-            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Reject'}
+            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('vendors.reject')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={blockDialog} onClose={() => setBlockDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle>Block Vendor</DialogTitle>
+        <DialogTitle>{t('vendors.blockVendor')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Block Reason"
+            label={t('vendors.blockReason')}
             fullWidth
             multiline
             rows={3}
             value={blockReason}
             onChange={(event) => setBlockReason(event.target.value)}
-            placeholder="Explain why the vendor is being blocked..."
+            placeholder={t('vendors.blockPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setBlockDialog(false)}>Cancel</Button>
+          <Button onClick={() => setBlockDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => blockReason.trim() && blockMutation.mutate({ reason: blockReason })} variant="contained" color="warning" disabled={!blockReason.trim() || blockMutation.isPending}>
-            {blockMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Block'}
+            {blockMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('vendors.block')}
           </Button>
         </DialogActions>
       </Dialog>

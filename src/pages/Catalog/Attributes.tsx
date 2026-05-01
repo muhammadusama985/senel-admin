@@ -35,6 +35,7 @@ import {
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, Delete, Edit, Save, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface Attribute {
@@ -56,6 +57,7 @@ interface AttributeSet {
 
 const Attributes: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
 
@@ -113,7 +115,7 @@ const Attributes: React.FC = () => {
         const response = await api.get('/catalog/admin/attribute-sets');
         return response.data.attributeSets || [];
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to fetch attribute sets');
+        setError(err.response?.data?.message || t('attributes.failedFetch'));
         return [];
       }
     },
@@ -130,7 +132,7 @@ const Attributes: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to create attribute set');
+      setError(err.response?.data?.message || t('attributes.failedCreate'));
     },
   });
 
@@ -145,7 +147,7 @@ const Attributes: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to update attribute set');
+      setError(err.response?.data?.message || t('attributes.failedUpdate'));
     },
   });
 
@@ -159,7 +161,7 @@ const Attributes: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to delete attribute set');
+      setError(err.response?.data?.message || t('attributes.failedDelete'));
     },
   });
 
@@ -173,7 +175,7 @@ const Attributes: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to update attribute set status');
+      setError(err.response?.data?.message || t('attributes.failedStatus'));
     },
   });
 
@@ -237,11 +239,11 @@ const Attributes: React.FC = () => {
 
   const handleSaveAttribute = () => {
     if (!attributeForm.code || attributeForm.code.length < 2) {
-      alert('Code must be at least 2 characters');
+      alert(t('attributes.codeMin'));
       return;
     }
     if (!attributeForm.name || attributeForm.name.length < 2) {
-      alert('Name must be at least 2 characters');
+      alert(t('attributes.nameMin'));
       return;
     }
 
@@ -253,7 +255,7 @@ const Attributes: React.FC = () => {
         .filter((option) => option.length > 0);
 
       if (options.length === 0) {
-        alert('Select type attributes must have at least one option');
+        alert(t('attributes.selectNeedsOptions'));
         return;
       }
     }
@@ -280,16 +282,16 @@ const Attributes: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.name.trim() || formData.name.length < 2) {
-      setError('Name must be at least 2 characters');
+      setError(t('attributes.nameMin'));
       return;
     }
     if (!formData.code.trim() || formData.code.length < 2) {
-      setError('Code must be at least 2 characters');
+      setError(t('attributes.codeMin'));
       return;
     }
 
     if (!editingAttributeSet && attributeSets?.some((set: AttributeSet) => set.code === formData.code.toLowerCase())) {
-      setError('Attribute set code already exists');
+      setError(t('attributes.codeExists'));
       return;
     }
 
@@ -322,10 +324,10 @@ const Attributes: React.FC = () => {
 
   const getAttributeTypeLabel = (type: string) => {
     const types: Record<string, string> = {
-      select: 'Single Select',
-      multi_select: 'Multi Select',
-      text: 'Text',
-      number: 'Number',
+      select: t('attributes.singleSelect'),
+      multi_select: t('attributes.multiSelect'),
+      text: t('attributes.text'),
+      number: t('attributes.number'),
     };
     return types[type] || type;
   };
@@ -344,12 +346,12 @@ const Attributes: React.FC = () => {
         severity="error"
         sx={{ m: 2, backgroundColor: surface, color: muiTheme.palette.text.primary, border: `1px solid ${border}` }}
         action={
-          <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            <Button color="inherit" size="small" onClick={() => refetch()}>
+            {t('common.retry')}
           </Button>
         }
       >
-        Error loading attribute sets. Please check API connection.
+        {t('attributes.errorLoading')}
       </Alert>
     );
   }
@@ -358,10 +360,10 @@ const Attributes: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Attribute Sets
+          {t('attributes.title')}
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-          New Attribute Set
+          {t('attributes.newSet')}
         </Button>
       </Box>
 
@@ -373,7 +375,7 @@ const Attributes: React.FC = () => {
 
       {!attributeSets || attributeSets.length === 0 ? (
         <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-          No attribute sets found. Create your first attribute set.
+          {t('attributes.noSets')}
         </Alert>
       ) : (
         <TableContainer component={Paper} sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
@@ -389,11 +391,11 @@ const Attributes: React.FC = () => {
                   },
                 }}
               >
-                <TableCell>Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Attributes</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                <TableCell>{t('attributes.name')}</TableCell>
+                <TableCell>{t('attributes.code')}</TableCell>
+                <TableCell>{t('attributes.attributes')}</TableCell>
+                <TableCell>{t('attributes.status')}</TableCell>
+                <TableCell align="center">{t('common.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -423,7 +425,7 @@ const Attributes: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
-                    <Chip label={set.isActive ? 'Active' : 'Inactive'} size="small" color={set.isActive ? 'success' : 'default'} />
+                    <Chip label={set.isActive ? t('catalog.active') : t('catalog.inactive')} size="small" color={set.isActive ? 'success' : 'default'} />
                   </TableCell>
                   <TableCell align="center" sx={{ borderBottom: `1px solid ${border}` }}>
                     <IconButton
@@ -440,7 +442,7 @@ const Attributes: React.FC = () => {
                       size="small"
                       color="error"
                       onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this attribute set?')) {
+                        if (window.confirm(t('attributes.deleteSetConfirm'))) {
                           deleteMutation.mutate(set._id);
                         }
                       }}
@@ -463,37 +465,37 @@ const Attributes: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingAttributeSet ? 'Edit Attribute Set' : 'Create Attribute Set'}</DialogTitle>
+        <DialogTitle>{editingAttributeSet ? t('attributes.editSet') : t('attributes.createSet')}</DialogTitle>
         <DialogContent dividers sx={{ borderColor: border }}>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Name"
+                label={t('attributes.name')}
                 fullWidth
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
                 error={formData.name.length > 0 && formData.name.length < 2}
-                helperText={formData.name.length > 0 && formData.name.length < 2 ? 'Min 2 characters' : ''}
+                helperText={formData.name.length > 0 && formData.name.length < 2 ? t('attributes.minChars') : ''}
                 sx={fieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Code"
+                label={t('attributes.code')}
                 fullWidth
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value.toLowerCase() })}
                 required
                 error={formData.code.length > 0 && formData.code.length < 2}
-                helperText={formData.code.length > 0 && formData.code.length < 2 ? 'Min 2 characters' : ''}
+                helperText={formData.code.length > 0 && formData.code.length < 2 ? t('attributes.minChars') : ''}
                 sx={fieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={<Switch checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />}
-                label="Active"
+                label={t('catalog.active')}
               />
             </Grid>
 
@@ -501,16 +503,16 @@ const Attributes: React.FC = () => {
               <Divider sx={{ my: 1, borderColor: border }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" sx={{ color: accent }}>
-                  Attributes
+                  {t('attributes.attributes')}
                 </Typography>
                 <Button variant="outlined" startIcon={<Add />} onClick={() => handleOpenAttributeDialog()}>
-                  Add Attribute
+                  {t('attributes.addAttribute')}
                 </Button>
               </Box>
 
               {formData.attributes.length === 0 ? (
                 <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-                  No attributes added yet.
+                  {t('attributes.noAttributesYet')}
                 </Alert>
               ) : (
                 <Grid container spacing={2}>
@@ -524,7 +526,7 @@ const Attributes: React.FC = () => {
                                 {attr.name} <Chip label={attr.code} size="small" variant="outlined" />
                               </Typography>
                               <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                                Type: {getAttributeTypeLabel(attr.type)}
+                                {t('attributes.type')}: {getAttributeTypeLabel(attr.type)}
                               </Typography>
                               {attr.options && attr.options.length > 0 && (
                                 <Box sx={{ mt: 1, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
@@ -534,8 +536,8 @@ const Attributes: React.FC = () => {
                                 </Box>
                               )}
                               <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-                                {attr.isVariant && <Chip label="Variant" size="small" color="primary" />}
-                                {attr.isRequired && <Chip label="Required" size="small" color="warning" />}
+                                {attr.isVariant && <Chip label={t('attributes.variant')} size="small" color="primary" />}
+                                {attr.isRequired && <Chip label={t('attributes.required')} size="small" color="warning" />}
                               </Box>
                             </Box>
                             <Box>
@@ -546,7 +548,7 @@ const Attributes: React.FC = () => {
                                 size="small"
                                 color="error"
                                 onClick={() => {
-                                  if (window.confirm('Are you sure you want to remove this attribute?')) {
+                                  if (window.confirm(t('attributes.deleteAttributeConfirm'))) {
                                     setFormData((prev) => ({
                                       ...prev,
                                       attributes: prev.attributes.filter((_, currentIndex) => currentIndex !== index),
@@ -569,7 +571,7 @@ const Attributes: React.FC = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
@@ -583,7 +585,7 @@ const Attributes: React.FC = () => {
               updateMutation.isPending
             }
           >
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -595,44 +597,44 @@ const Attributes: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingAttributeIndex !== null ? 'Edit Attribute' : 'Add Attribute'}</DialogTitle>
+        <DialogTitle>{editingAttributeIndex !== null ? t('attributes.editAttribute') : t('attributes.addAttributeTitle')}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ pt: 2 }}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Code"
+                label={t('attributes.code')}
                 fullWidth
                 value={attributeForm.code}
                 onChange={(e) => setAttributeForm({ ...attributeForm, code: e.target.value })}
                 error={attributeForm.code.length > 0 && attributeForm.code.length < 2}
-                helperText={attributeForm.code.length > 0 && attributeForm.code.length < 2 ? 'Min 2 characters' : ''}
+                helperText={attributeForm.code.length > 0 && attributeForm.code.length < 2 ? t('attributes.minChars') : ''}
                 sx={fieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Name"
+                label={t('attributes.name')}
                 fullWidth
                 value={attributeForm.name}
                 onChange={(e) => setAttributeForm({ ...attributeForm, name: e.target.value })}
                 error={attributeForm.name.length > 0 && attributeForm.name.length < 2}
-                helperText={attributeForm.name.length > 0 && attributeForm.name.length < 2 ? 'Min 2 characters' : ''}
+                helperText={attributeForm.name.length > 0 && attributeForm.name.length < 2 ? t('attributes.minChars') : ''}
                 sx={fieldSx}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
-                <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>Type</InputLabel>
+                <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>{t('attributes.type')}</InputLabel>
                 <Select
                   value={attributeForm.type}
-                  label="Type"
+                  label={t('attributes.type')}
                   onChange={(e) => setAttributeForm({ ...attributeForm, type: e.target.value as any, options: [] })}
                   sx={selectSx}
                 >
-                  <MenuItem value="select">Single Select</MenuItem>
-                  <MenuItem value="multi_select">Multi Select</MenuItem>
-                  <MenuItem value="text">Text</MenuItem>
-                  <MenuItem value="number">Number</MenuItem>
+                  <MenuItem value="select">{t('attributes.singleSelect')}</MenuItem>
+                  <MenuItem value="multi_select">{t('attributes.multiSelect')}</MenuItem>
+                  <MenuItem value="text">{t('attributes.text')}</MenuItem>
+                  <MenuItem value="number">{t('attributes.number')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -640,11 +642,11 @@ const Attributes: React.FC = () => {
             {(attributeForm.type === 'select' || attributeForm.type === 'multi_select') && (
               <Grid size={{ xs: 12 }}>
                 <TextField
-                  label="Options (comma separated)"
+                  label={t('attributes.optionsComma')}
                   fullWidth
                   value={optionsInput}
                   onChange={(e) => setOptionsInput(e.target.value)}
-                  helperText="Enter options separated by commas"
+                  helperText={t('attributes.optionsHelp')}
                   sx={fieldSx}
                 />
               </Grid>
@@ -653,19 +655,19 @@ const Attributes: React.FC = () => {
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={<Switch checked={attributeForm.isVariant} onChange={(e) => setAttributeForm({ ...attributeForm, isVariant: e.target.checked })} />}
-                label="Variant (contributes to SKU)"
+                label={t('attributes.variantHelp')}
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <FormControlLabel
                 control={<Switch checked={attributeForm.isRequired} onChange={(e) => setAttributeForm({ ...attributeForm, isRequired: e.target.checked })} />}
-                label="Required"
+                label={t('attributes.required')}
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseAttributeDialog}>Cancel</Button>
+          <Button onClick={handleCloseAttributeDialog}>{t('common.cancel')}</Button>
           <Button
             onClick={handleSaveAttribute}
             variant="contained"
@@ -676,7 +678,7 @@ const Attributes: React.FC = () => {
               attributeForm.name.length < 2
             }
           >
-            Save Attribute
+            {t('attributes.saveAttribute')}
           </Button>
         </DialogActions>
       </Dialog>

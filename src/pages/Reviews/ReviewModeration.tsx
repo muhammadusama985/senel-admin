@@ -31,11 +31,20 @@ const ReviewModeration: React.FC = () => {
     },
   });
 
+  const translateReviewStatus = (value?: string) => {
+    const map: Record<string, string> = {
+      approved: t('reviews.approved'),
+      rejected: t('reviews.rejected'),
+      hidden: t('reviews.hidden'),
+    };
+    return value ? (map[value] || value) : '';
+  };
+
   const columns: GridColDef[] = [
-    { field: 'title', headerName: 'Title', minWidth: 200, flex: 1 },
-    { field: 'rating', headerName: 'Rating', minWidth: 100, flex: 0.5 },
-    { field: 'status', headerName: t('common.status'), minWidth: 130, flex: 0.7 },
-    { field: 'productId', headerName: 'Product', minWidth: 170, flex: 1 },
+    { field: 'title', headerName: t('reviews.reviewTitle'), minWidth: 200, flex: 1 },
+    { field: 'rating', headerName: t('reviews.rating'), minWidth: 100, flex: 0.5 },
+    { field: 'status', headerName: t('common.status'), minWidth: 130, flex: 0.7, valueGetter: (_value, row) => translateReviewStatus(row.status) },
+    { field: 'productId', headerName: t('reviews.product'), minWidth: 170, flex: 1 },
     { field: 'vendorId', headerName: t('common.vendor'), minWidth: 170, flex: 1 },
     {
       field: 'actions',
@@ -58,7 +67,7 @@ const ReviewModeration: React.FC = () => {
           {t('reviews.intro')}
         </Typography>
 
-        {error && <Alert severity="error">Failed to load reviews.</Alert>}
+        {error && <Alert severity="error">{t('reviews.failedLoad')}</Alert>}
 
         <div style={{ height: 620 }}>
           <DataGrid rows={data} columns={columns} loading={isLoading} getRowId={(row) => row._id} disableRowSelectionOnClick />
@@ -70,9 +79,9 @@ const ReviewModeration: React.FC = () => {
         <DialogContent sx={{ pt: 2 }}>
           <Stack spacing={2}>
             <TextField select label={t('common.status')} value={status} onChange={(e) => setStatus(e.target.value)} fullWidth>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="rejected">Rejected</MenuItem>
-              <MenuItem value="hidden">Hidden</MenuItem>
+              <MenuItem value="approved">{t('reviews.approved')}</MenuItem>
+              <MenuItem value="rejected">{t('reviews.rejected')}</MenuItem>
+              <MenuItem value="hidden">{t('reviews.hidden')}</MenuItem>
             </TextField>
             <TextField
               label={t('reviews.note')}

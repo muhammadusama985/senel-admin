@@ -42,11 +42,13 @@ import {
 } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const ProductApprovals: React.FC = () => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -138,11 +140,11 @@ const ProductApprovals: React.FC = () => {
         sx={{ m: 2 }}
         action={
           <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            {t('common.retry')}
           </Button>
         }
       >
-        Error loading products. Please refresh.
+        {t('products.errorLoading')}
       </Alert>
     );
   }
@@ -151,12 +153,12 @@ const ProductApprovals: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: muiTheme.palette.text.primary }}>
-          Product Approvals
+          {t('products.approvalsTitle')}
         </Typography>
 
         <TextField
           size="small"
-          placeholder="Search products..."
+          placeholder={t('products.searchProducts')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           InputProps={{
@@ -183,13 +185,13 @@ const ProductApprovals: React.FC = () => {
                 },
               }}
             >
-              <TableCell>Product</TableCell>
-              <TableCell>Vendor</TableCell>
-              <TableCell>Category</TableCell>
+              <TableCell>{t('products.product')}</TableCell>
+              <TableCell>{t('products.vendor')}</TableCell>
+              <TableCell>{t('products.category')}</TableCell>
               <TableCell>MOQ</TableCell>
-              <TableCell>Price</TableCell>
-              <TableCell>Submitted</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('products.price')}</TableCell>
+              <TableCell>{t('products.submitted')}</TableCell>
+              <TableCell align="center">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -205,16 +207,16 @@ const ProductApprovals: React.FC = () => {
                         {product.title}
                       </Typography>
                       <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                        SKU: {product.sku || 'N/A'}
+                        SKU: {product.sku || t('products.notAvailable')}
                       </Typography>
                     </Box>
                   </Box>
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  {product.vendorName || 'Unknown'}
+                  {product.vendorName || t('products.unknown')}
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  {product.categoryName || 'N/A'}
+                  {product.categoryName || t('products.notAvailable')}
                 </TableCell>
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>{product.moq}</TableCell>
                 <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
@@ -262,7 +264,7 @@ const ProductApprovals: React.FC = () => {
             setAnchorEl(null);
           }}
         >
-          <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+          <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('products.viewDetails')}
         </MenuItem>
       </Menu>
 
@@ -271,7 +273,7 @@ const ProductApprovals: React.FC = () => {
           <>
             <DialogTitle>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">Product Details</Typography>
+                <Typography variant="h6">{t('products.detailsTitle')}</Typography>
                 <IconButton onClick={() => setDetailOpen(false)} sx={{ '&:hover': { backgroundColor: hover } }}>
                   <Close />
                 </IconButton>
@@ -304,12 +306,12 @@ const ProductApprovals: React.FC = () => {
 
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 6 }}>
-                          <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>Vendor</Typography>
-                          <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>{selectedProduct.vendorName || 'Unknown'}</Typography>
+                          <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>{t('products.vendor')}</Typography>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>{selectedProduct.vendorName || t('products.unknown')}</Typography>
                         </Grid>
                         <Grid size={{ xs: 6 }}>
-                          <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>Category</Typography>
-                          <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>{selectedProduct.categoryName || 'N/A'}</Typography>
+                          <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>{t('products.category')}</Typography>
+                          <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>{selectedProduct.categoryName || t('products.notAvailable')}</Typography>
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                           <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>MOQ</Typography>
@@ -343,8 +345,8 @@ const ProductApprovals: React.FC = () => {
                                 },
                               }}
                             >
-                              <TableCell>Min Quantity</TableCell>
-                              <TableCell>Unit Price</TableCell>
+                              <TableCell>{t('products.minQuantityShort')}</TableCell>
+                              <TableCell>{t('products.unitPrice')}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -367,7 +369,7 @@ const ProductApprovals: React.FC = () => {
 
             <DialogActions>
               <Button onClick={() => setRejectDialog(true)} color="error" startIcon={<Cancel />} disabled={rejectMutation.isPending}>
-                Reject
+                {t('products.reject')}
               </Button>
               <Button
                 onClick={() => setApproveDialog(true)}
@@ -376,7 +378,7 @@ const ProductApprovals: React.FC = () => {
                 startIcon={<CheckCircle />}
                 disabled={approveMutation.isPending}
               >
-                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Approve'}
+                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.approve')}
               </Button>
             </DialogActions>
           </>
@@ -384,59 +386,59 @@ const ProductApprovals: React.FC = () => {
       </Dialog>
 
       <Dialog open={approveDialog} onClose={() => setApproveDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle>Approve Product</DialogTitle>
+        <DialogTitle>{t('products.approveProduct')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Approval Note (Optional)"
+            label={t('products.approvalNote')}
             fullWidth
             multiline
             rows={3}
             value={approveNote}
             onChange={(event) => setApproveNote(event.target.value)}
-            placeholder="Add an optional note for approval..."
+            placeholder={t('products.approvalPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setApproveDialog(false)}>Cancel</Button>
+          <Button onClick={() => setApproveDialog(false)}>{t('common.cancel')}</Button>
           <Button
             onClick={() => selectedProduct && approveMutation.mutate({ id: selectedProduct._id, note: approveNote.trim() })}
             variant="contained"
             color="success"
             disabled={approveMutation.isPending}
           >
-            {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Approve'}
+            {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.approve')}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog open={rejectDialog} onClose={() => setRejectDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle>Reject Product</DialogTitle>
+        <DialogTitle>{t('products.rejectProduct')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Rejection Reason"
+            label={t('products.rejectionReason')}
             fullWidth
             multiline
             rows={3}
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            placeholder="Explain why the product is being rejected..."
+            placeholder={t('products.rejectionPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejectDialog(false)}>Cancel</Button>
+          <Button onClick={() => setRejectDialog(false)}>{t('common.cancel')}</Button>
           <Button
             onClick={() => selectedProduct && rejectReason.trim() && rejectMutation.mutate({ id: selectedProduct._id, reason: rejectReason })}
             variant="contained"
             color="error"
             disabled={!rejectReason.trim() || rejectMutation.isPending}
           >
-            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Reject'}
+            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.reject')}
           </Button>
         </DialogActions>
       </Dialog>

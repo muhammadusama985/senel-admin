@@ -36,7 +36,9 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, Delete, Edit, Language, Publish } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import { pickLocalizedText } from '../../utils/localization';
 
 interface Announcement {
   _id: string;
@@ -58,6 +60,8 @@ const TabPanel: React.FC<{ children?: React.ReactNode; value: number; index: num
 const Announcements: React.FC = () => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
 
@@ -92,7 +96,7 @@ const Announcements: React.FC = () => {
   };
 
   const { data: announcements, isLoading, error } = useQuery({
-    queryKey: ['admin', 'announcements'],
+    queryKey: ['admin', 'announcements', currentLanguage],
     queryFn: async () => {
       const response = await api.get('/admin/announcements');
       return response.data.items || [];
@@ -170,7 +174,7 @@ const Announcements: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.titleML.en.trim()) {
-      alert('English title is required');
+      alert(t('announcements.englishTitleRequired'));
       return;
     }
 
@@ -196,13 +200,32 @@ const Announcements: React.FC = () => {
     return announcements || [];
   };
 
+  const translateAnnouncementStatus = (status: string) => {
+    const map: Record<string, string> = {
+      draft: t('announcements.drafts'),
+      published: t('announcements.published'),
+      archived: t('products.archived'),
+    };
+    return map[status] || status;
+  };
+
+  const translateAnnouncementTarget = (scope?: string) => {
+    const map: Record<string, string> = {
+      all: t('announcements.allUsers'),
+      customers: t('announcements.customersOnly'),
+      vendors: t('announcements.vendorsOnly'),
+      admins: t('announcements.adminsOnly'),
+    };
+    return scope ? (map[scope] || scope) : t('notifications.all');
+  };
+
   const getStatusChip = (status: string) => {
     const colors: Record<string, 'default' | 'success' | 'info'> = {
       draft: 'default',
       published: 'success',
       archived: 'info',
     };
-    return <Chip label={status} size="small" color={colors[status] || 'default'} />;
+    return <Chip label={translateAnnouncementStatus(status)} size="small" color={colors[status] || 'default'} />;
   };
 
   if (isLoading) {
@@ -212,7 +235,7 @@ const Announcements: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
-        Error loading announcements. Please try again.
+        {t('announcements.errorLoading')}
       </Alert>
     );
   }
@@ -221,10 +244,10 @@ const Announcements: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Announcements
+          {t('announcements.title')}
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-          New Announcement
+          {t('announcements.newAnnouncement')}
         </Button>
       </Box>
 
@@ -244,9 +267,9 @@ const Announcements: React.FC = () => {
             },
           }}
         >
-          <Tab label="All" />
-          <Tab label="Drafts" />
-          <Tab label="Published" />
+          <Tab label={t('announcements.all')} />
+          <Tab label={t('announcements.drafts')} />
+          <Tab label={t('announcements.published')} />
         </Tabs>
 
         <TabPanel value={tabValue} index={tabValue}>
@@ -263,19 +286,19 @@ const Announcements: React.FC = () => {
                     },
                   }}
                 >
-                  <TableCell>Title (EN)</TableCell>
-                  <TableCell>Target</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>{tabValue === 1 ? 'Created' : 'Published'}</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell>{t('announcements.titleColumn')}</TableCell>
+                  <TableCell>{t('announcements.targetColumn')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{tabValue === 1 ? t('announcements.created') : t('announcements.published')}</TableCell>
+                  <TableCell align="center">{t('common.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {getRows().map((item: Announcement) => (
                   <TableRow key={item._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
-                    <TableCell>{item.titleML?.en || 'No title'}</TableCell>
+                    <TableCell>{pickLocalizedText(item.titleML, currentLanguage) || t('announcements.noTitle')}</TableCell>
                     <TableCell>
-                      <Chip label={item.target?.scope || 'all'} size="small" variant="outlined" />
+                      <Chip label={translateAnnouncementTarget(item.target?.scope)} size="small" variant="outlined" />
                     </TableCell>
                     <TableCell>{getStatusChip(item.status)}</TableCell>
                     <TableCell>
@@ -307,7 +330,7 @@ const Announcements: React.FC = () => {
                 {getRows().length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ py: 4, color: muiTheme.palette.text.secondary }}>
-                      No announcements found
+                      {t('announcements.noAnnouncements')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -324,7 +347,7 @@ const Announcements: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}</DialogTitle>
+        <DialogTitle>{editingAnnouncement ? t('announcements.editAnnouncement') : t('announcements.createAnnouncement')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Tabs
@@ -342,16 +365,16 @@ const Announcements: React.FC = () => {
                 },
               }}
             >
-              <Tab icon={<Language />} label="English" />
-              <Tab icon={<Language />} label="Deutsch" />
-              <Tab icon={<Language />} label="Turkish" />
+              <Tab icon={<Language />} label={t('announcements.english')} />
+              <Tab icon={<Language />} label={t('announcements.german')} />
+              <Tab icon={<Language />} label={t('announcements.turkish')} />
             </Tabs>
 
             {langTabValue === 0 && (
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Title (English)"
+                    label={t('announcements.titleEn')}
                     fullWidth
                     value={formData.titleML.en}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleML: { ...prev.titleML, en: e.target.value } }))}
@@ -360,7 +383,7 @@ const Announcements: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Body (English)"
+                    label={t('announcements.bodyEn')}
                     fullWidth
                     multiline
                     rows={3}
@@ -376,7 +399,7 @@ const Announcements: React.FC = () => {
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Title (German)"
+                    label={t('announcements.titleDe')}
                     fullWidth
                     value={formData.titleML.de}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleML: { ...prev.titleML, de: e.target.value } }))}
@@ -385,7 +408,7 @@ const Announcements: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Body (German)"
+                    label={t('announcements.bodyDe')}
                     fullWidth
                     multiline
                     rows={3}
@@ -401,7 +424,7 @@ const Announcements: React.FC = () => {
               <Grid container spacing={2} sx={{ mt: 1 }}>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Title (Turkish)"
+                    label={t('announcements.titleTr')}
                     fullWidth
                     value={formData.titleML.tr}
                     onChange={(e) => setFormData((prev) => ({ ...prev, titleML: { ...prev.titleML, tr: e.target.value } }))}
@@ -410,7 +433,7 @@ const Announcements: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label="Body (Turkish)"
+                    label={t('announcements.bodyTr')}
                     fullWidth
                     multiline
                     rows={3}
@@ -425,27 +448,27 @@ const Announcements: React.FC = () => {
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <FormControl fullWidth>
-                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>Target Scope</InputLabel>
+                  <InputLabel sx={{ color: muiTheme.palette.text.secondary }}>{t('announcements.targetScope')}</InputLabel>
                   <Select
                     value={formData.target.scope}
-                    label="Target Scope"
+                    label={t('announcements.targetScope')}
                     onChange={(e) => setFormData((prev) => ({ ...prev, target: { ...prev.target, scope: e.target.value } }))}
                     sx={{
                       color: muiTheme.palette.text.primary,
                       '& .MuiOutlinedInput-notchedOutline': { borderColor: border },
                     }}
                   >
-                    <MenuItem value="all">All Users</MenuItem>
-                    <MenuItem value="customers">Customers Only</MenuItem>
-                    <MenuItem value="vendors">Vendors Only</MenuItem>
-                    <MenuItem value="admins">Admins Only</MenuItem>
+                    <MenuItem value="all">{t('announcements.allUsers')}</MenuItem>
+                    <MenuItem value="customers">{t('announcements.customersOnly')}</MenuItem>
+                    <MenuItem value="vendors">{t('announcements.vendorsOnly')}</MenuItem>
+                    <MenuItem value="admins">{t('announcements.adminsOnly')}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  label="Deep Link (Optional)"
+                  label={t('announcements.deepLinkOptional')}
                   fullWidth
                   value={formData.deepLink}
                   onChange={(e) => setFormData((prev) => ({ ...prev, deepLink: e.target.value }))}
@@ -463,7 +486,7 @@ const Announcements: React.FC = () => {
                           onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.checked ? 'published' : 'draft' }))}
                         />
                       }
-                      label="Publish immediately"
+                      label={t('announcements.publishImmediately')}
                     />
                   </CardContent>
                 </Card>
@@ -472,9 +495,9 @@ const Announcements: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={createMutation.isPending || updateMutation.isPending}>
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

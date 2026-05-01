@@ -25,6 +25,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
 import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface Category {
@@ -39,6 +40,7 @@ interface Category {
 
 const Categories: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
 
@@ -76,7 +78,7 @@ const Categories: React.FC = () => {
         const response = await api.get('/catalog/admin/categories');
         return response.data.categories || [];
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to fetch categories');
+        setError(err.response?.data?.message || t('catalog.failedFetchCategories'));
         return [];
       }
     },
@@ -93,7 +95,7 @@ const Categories: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to create category');
+      setError(err.response?.data?.message || t('catalog.failedCreateCategory'));
     },
   });
 
@@ -108,7 +110,7 @@ const Categories: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to update category');
+      setError(err.response?.data?.message || t('catalog.failedUpdateCategory'));
     },
   });
 
@@ -122,7 +124,7 @@ const Categories: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to delete category');
+      setError(err.response?.data?.message || t('catalog.failedDeleteCategory'));
     },
   });
 
@@ -136,7 +138,7 @@ const Categories: React.FC = () => {
       setError(null);
     },
     onError: (err: any) => {
-      setError(err.response?.data?.message || 'Failed to update category status');
+      setError(err.response?.data?.message || t('catalog.failedCategoryStatus'));
     },
   });
 
@@ -187,7 +189,7 @@ const Categories: React.FC = () => {
 
   const handleSubmit = () => {
     if (!formData.name.trim()) {
-      setError('Category name is required');
+      setError(t('catalog.nameRequired'));
       return;
     }
 
@@ -228,8 +230,8 @@ const Categories: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', py: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 <Typography>{node.name}</Typography>
-                <Chip label={`Sort: ${node.sortOrder}`} size="small" variant="outlined" />
-                {!node.isActive && <Chip label="Inactive" size="small" />}
+                <Chip label={t('catalog.sortLabel', { value: node.sortOrder })} size="small" variant="outlined" />
+                {!node.isActive && <Chip label={t('catalog.inactive')} size="small" />}
               </Box>
               <Box>
                 <IconButton
@@ -258,7 +260,7 @@ const Categories: React.FC = () => {
                   color="error"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm('Are you sure you want to delete this category?')) {
+                    if (window.confirm(t('catalog.deleteCategoryConfirm'))) {
                       deleteMutation.mutate(node._id);
                     }
                   }}
@@ -291,12 +293,12 @@ const Categories: React.FC = () => {
         severity="error"
         sx={{ m: 2, backgroundColor: surface, color: muiTheme.palette.text.primary, border: `1px solid ${border}` }}
         action={
-          <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            <Button color="inherit" size="small" onClick={() => refetch()}>
+            {t('common.retry')}
           </Button>
         }
       >
-        Error loading categories. Please check API connection.
+        {t('catalog.errorLoadingCategories')}
       </Alert>
     );
   }
@@ -307,10 +309,10 @@ const Categories: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Categories
+          {t('catalog.categoriesTitle')}
         </Typography>
         <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-          Add Category
+          {t('catalog.addCategory')}
         </Button>
       </Box>
 
@@ -322,7 +324,7 @@ const Categories: React.FC = () => {
 
       {treeData.length === 0 ? (
         <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-          No categories found. Create your first category.
+          {t('catalog.noCategories')}
         </Alert>
       ) : (
         <Paper sx={{ p: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
@@ -345,31 +347,31 @@ const Categories: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
-        <DialogTitle>{editingCategory ? 'Edit Category' : 'Create Category'}</DialogTitle>
+        <DialogTitle>{editingCategory ? t('catalog.editCategory') : t('catalog.createCategory')}</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
-              label="Category Name"
+              label={t('catalog.categoryName')}
               fullWidth
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
               error={!formData.name.trim()}
-              helperText={!formData.name.trim() ? 'Name is required' : ''}
+              helperText={!formData.name.trim() ? t('catalog.nameRequired') : ''}
               sx={fieldSx}
             />
 
             <TextField
-              label="Parent Category (Optional)"
+              label={t('catalog.parentCategory')}
               fullWidth
               value={formData.parentId}
               onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
               select
-              helperText="Optional"
+              helperText={t('catalog.optional')}
               InputLabelProps={{ shrink: true }}
               sx={fieldSx}
             >
-              <MenuItem value="">None (Top Level)</MenuItem>
+              <MenuItem value="">{t('catalog.noneTopLevel')}</MenuItem>
               {categories?.map((cat: Category) => (
                 <MenuItem key={cat._id} value={cat._id}>
                   {cat.name}
@@ -378,7 +380,7 @@ const Categories: React.FC = () => {
             </TextField>
 
             <TextField
-              label="Sort Order"
+              label={t('catalog.sortOrder')}
               type="number"
               fullWidth
               value={formData.sortOrder}
@@ -389,18 +391,18 @@ const Categories: React.FC = () => {
 
             <FormControlLabel
               control={<Switch checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />}
-              label="Active"
+              label={t('catalog.active')}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleCloseDialog}>{t('common.cancel')}</Button>
           <Button
             onClick={handleSubmit}
             variant="contained"
             disabled={!formData.name.trim() || createMutation.isPending || updateMutation.isPending}
           >
-            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Save'}
+            {createMutation.isPending || updateMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('common.save')}
           </Button>
         </DialogActions>
       </Dialog>

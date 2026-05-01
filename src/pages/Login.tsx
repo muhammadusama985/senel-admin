@@ -17,23 +17,25 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import api from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import Logo from '../components/common/Logo';
 
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
-
 const Login: React.FC = () => {
   const muiTheme = useMuiTheme();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const loginSchema = z.object({
+    email: z.string().email(t('login.invalidEmail')),
+    password: z.string().min(6, t('login.passwordMin')),
+  });
+
+  type LoginForm = z.infer<typeof loginSchema>;
 
   const isLight = muiTheme.palette.mode === 'light';
   const surface = muiTheme.palette.background.paper;
@@ -98,7 +100,7 @@ const Login: React.FC = () => {
       const { accessToken, user } = response.data;
 
       if (user.role !== 'admin') {
-        setError('Access denied. Admin only.');
+        setError(t('login.accessDeniedAdmin'));
         return;
       }
 
@@ -107,13 +109,13 @@ const Login: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        setError('Invalid email or password');
+        setError(t('login.invalidCredentials'));
       } else if (err.response?.status === 403) {
-        setError('Access denied. Admin only.');
+        setError(t('login.accessDeniedAdmin'));
       } else if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
-        setError('Cannot connect to server. Make sure backend is running.');
+        setError(t('login.cannotConnect'));
       } else {
-        setError(err.response?.data?.message || 'Login failed');
+        setError(err.response?.data?.message || t('login.failed'));
       }
     } finally {
       setLoading(false);
@@ -188,10 +190,10 @@ const Login: React.FC = () => {
               </Box>
             </Box>
             <Typography variant="h4" sx={{ color: textPrimary, fontWeight: 700, mt: 2 }}>
-              Welcome Back
+              {t('login.welcomeBack')}
             </Typography>
             <Typography variant="body2" sx={{ color: textSecondary, maxWidth: 280, mt: -1 }}>
-              Sign in to access the admin dashboard
+              {t('login.subtitle')}
             </Typography>
           </Box>
 
@@ -212,9 +214,9 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
               fullWidth
-              label="Email Address"
+              label={t('login.email')}
               type="email"
-              placeholder="admin@example.com"
+              placeholder={t('login.emailPlaceholder')}
               {...register('email')}
               error={!!errors.email}
               helperText={errors.email?.message}
@@ -230,9 +232,9 @@ const Login: React.FC = () => {
 
             <TextField
               fullWidth
-              label="Password"
+              label={t('login.password')}
               type={showPassword ? 'text' : 'password'}
-              placeholder="........"
+              placeholder={t('login.passwordPlaceholder')}
               {...register('password')}
               error={!!errors.password}
               helperText={errors.password?.message}
@@ -271,7 +273,7 @@ const Login: React.FC = () => {
                 fontWeight: 600,
               }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In to Dashboard'}
+              {loading ? <CircularProgress size={24} color="inherit" /> : t('login.signIn')}
             </Button>
 
             <Box
@@ -283,7 +285,7 @@ const Login: React.FC = () => {
               }}
             >
               <Typography variant="caption" sx={{ color: textSecondary }}>
-                Secure admin access only
+                {t('login.secureAccess')}
               </Typography>
             </Box>
           </form>

@@ -19,6 +19,7 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../../api/client';
 import { formatMoney } from '../../../utils/currency';
 
@@ -26,6 +27,8 @@ type StatusColor = 'info' | 'warning' | 'primary' | 'success' | 'error' | 'defau
 
 const RecentOrders: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -36,7 +39,7 @@ const RecentOrders: React.FC = () => {
   const tableHeader = alpha(muiTheme.palette.text.primary, isLight ? 0.04 : 0.08);
 
   const { data: orders, isLoading, error } = useQuery({
-    queryKey: ['admin', 'recent-orders'],
+    queryKey: ['admin', 'recent-orders', currentLanguage],
     queryFn: async () => {
       const response = await api.get('/admin/orders?limit=5');
       return response.data.items || [];
@@ -62,7 +65,7 @@ const RecentOrders: React.FC = () => {
   };
 
   const formatDate = (date: string) => {
-    if (!date) return 'N/A';
+    if (!date) return t('products.notAvailable');
     try {
       return (
         new Date(date).toLocaleDateString() +
@@ -70,7 +73,7 @@ const RecentOrders: React.FC = () => {
         new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       );
     } catch {
-      return 'Invalid date';
+      return t('products.notAvailable');
     }
   };
 
@@ -83,13 +86,13 @@ const RecentOrders: React.FC = () => {
   }
 
   if (error) {
-    return <Alert severity="error">Error loading orders</Alert>;
+    return <Alert severity="error">{t('dashboard.recentOrdersError')}</Alert>;
   }
 
   if (!orders || orders.length === 0) {
     return (
       <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography sx={{ color: muiTheme.palette.text.secondary }}>No recent orders</Typography>
+        <Typography sx={{ color: muiTheme.palette.text.secondary }}>{t('dashboard.noRecentOrders')}</Typography>
       </Box>
     );
   }
@@ -108,12 +111,12 @@ const RecentOrders: React.FC = () => {
               },
             }}
           >
-            <TableCell>Order #</TableCell>
-            {!isMobile && <TableCell>Customer</TableCell>}
-            <TableCell>Total</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell align="center">Action</TableCell>
+            <TableCell>{t('orders.order')}</TableCell>
+            {!isMobile && <TableCell>{t('common.customer')}</TableCell>}
+            <TableCell>{t('common.total')}</TableCell>
+            <TableCell>{t('common.status')}</TableCell>
+            <TableCell>{t('common.date')}</TableCell>
+            <TableCell align="center">{t('dashboard.action')}</TableCell>
           </TableRow>
         </TableHead>
 
@@ -122,13 +125,13 @@ const RecentOrders: React.FC = () => {
             <TableRow key={order._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
               <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                 <Typography variant="body2" fontWeight={600}>
-                  {order.orderNumber || 'N/A'}
+                  {order.orderNumber || t('products.notAvailable')}
                 </Typography>
               </TableCell>
 
               {!isMobile && (
                 <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                  {order.customerName || order.customerUserId?.email || 'N/A'}
+                  {order.customerName || order.customerUserId?.email || t('products.notAvailable')}
                 </TableCell>
               )}
 
@@ -137,7 +140,7 @@ const RecentOrders: React.FC = () => {
               </TableCell>
 
               <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
-                <Chip label={order.status || 'unknown'} size="small" color={getStatusColor(order.status)} sx={{ textTransform: 'capitalize' }} />
+                <Chip label={order.status || t('products.unknown')} size="small" color={getStatusColor(order.status)} sx={{ textTransform: 'capitalize' }} />
               </TableCell>
 
               <TableCell sx={{ color: muiTheme.palette.text.secondary, borderBottom: `1px solid ${border}` }}>

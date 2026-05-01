@@ -23,6 +23,7 @@ import {
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { CheckCircle, LocalShipping, MoreVert, Schedule, Search } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import SchedulePickupModal from './SchedulePickupModal';
 import AssignShippingModal from './AssignShippingModal';
@@ -30,6 +31,7 @@ import AssignShippingModal from './AssignShippingModal';
 const PickupQueue: React.FC = () => {
   const queryClient = useQueryClient();
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState('');
@@ -98,6 +100,21 @@ const PickupQueue: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const translatePickupStatus = (status?: string) => {
+    if (!status) return t('shipping.readyPickup');
+
+    const normalized = String(status).toLowerCase().replace(/[\s-]+/g, '_');
+    const statusKeyMap: Record<string, string> = {
+      ready_pickup: 'shipping.readyPickup',
+      in_transit: 'shipping.inTransit',
+      delivered: 'shipping.delivered',
+      shipped: 'shipping.markShipped',
+    };
+
+    const translationKey = statusKeyMap[normalized];
+    return translationKey ? t(translationKey) : status;
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -108,8 +125,16 @@ const PickupQueue: React.FC = () => {
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ m: 2 }} action={<Button color="inherit" size="small" onClick={() => refetch()}>Retry</Button>}>
-        Error loading pickup queue. Please try again.
+      <Alert
+        severity="error"
+        sx={{ m: 2 }}
+        action={
+          <Button color="inherit" size="small" onClick={() => refetch()}>
+            {t('common.retry')}
+          </Button>
+        }
+      >
+        {t('shipping.errorPickupQueue')}
       </Alert>
     );
   }
@@ -119,7 +144,7 @@ const PickupQueue: React.FC = () => {
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-start' }}>
         <TextField
           size="small"
-          placeholder="Search orders..."
+          placeholder={t('shipping.searchOrders')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -157,19 +182,19 @@ const PickupQueue: React.FC = () => {
                 },
               }}
             >
-              <TableCell>Order</TableCell>
-              <TableCell>Vendor</TableCell>
-              <TableCell>Boxes</TableCell>
-              <TableCell>Ready Since</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('shipping.order')}</TableCell>
+              <TableCell>{t('shipping.vendor')}</TableCell>
+              <TableCell>{t('shipping.boxes')}</TableCell>
+              <TableCell>{t('shipping.readySince')}</TableCell>
+              <TableCell>{t('common.status')}</TableCell>
+              <TableCell align="center">{t('shipping.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedOrders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4, color: textSecondary }}>
-                  No orders found
+                  {t('shipping.noOrders')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -190,7 +215,7 @@ const PickupQueue: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell sx={{ color: textPrimary, borderBottom: `1px solid ${border}` }}>
-                    <Chip label={order.status || 'ready_pickup'} size="small" color="warning" />
+                    <Chip label={translatePickupStatus(order.status)} size="small" color="warning" />
                   </TableCell>
                   <TableCell align="center" sx={{ borderBottom: `1px solid ${border}` }}>
                     <IconButton
@@ -236,10 +261,10 @@ const PickupQueue: React.FC = () => {
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
         <MenuItem onClick={() => { setScheduleModalOpen(true); setAnchorEl(null); }} sx={{ color: textPrimary }}>
-          <Schedule sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> Schedule Pickup
+          <Schedule sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> {t('shipping.schedulePickup')}
         </MenuItem>
         <MenuItem onClick={() => { setAssignModalOpen(true); setAnchorEl(null); }} sx={{ color: textPrimary }}>
-          <LocalShipping sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> Assign Shipping
+          <LocalShipping sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> {t('shipping.assignShipping')}
         </MenuItem>
         <MenuItem
           sx={{ color: textPrimary }}
@@ -249,7 +274,7 @@ const PickupQueue: React.FC = () => {
             }
           }}
         >
-          <CheckCircle sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> Mark Shipped
+          <CheckCircle sx={{ mr: 1, fontSize: 20, color: textSecondary }} /> {t('shipping.markShipped')}
         </MenuItem>
       </Menu>
 

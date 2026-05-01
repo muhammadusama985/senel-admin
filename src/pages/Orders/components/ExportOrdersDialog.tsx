@@ -31,6 +31,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../../api/client';
 import { useTheme } from '../../../context/ThemeContext';
 import SchedulePickupDialog from '../components/SchedulePickupDialog';
@@ -48,6 +49,8 @@ const HOVER_DARK = 'rgba(255,210,63,0.14)';
 const PickupQueue: React.FC = () => {
   const navigate = useNavigate();
   const { mode } = useTheme();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const isMobile = useMediaQuery('(max-width:600px)');
   const isDark = mode !== 'light';
 
@@ -59,7 +62,7 @@ const PickupQueue: React.FC = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'pickup-queue'],
+    queryKey: ['admin', 'pickup-queue', currentLanguage],
     queryFn: async () => {
       const response = await api.get('/admin/vendor-orders/queue/ready-pickup');
       return response.data;
@@ -134,13 +137,13 @@ const PickupQueue: React.FC = () => {
           variant="h4"
           sx={{ color: isDark ? '#fff' : '#1C0770', fontSize: isMobile ? '1.5rem' : '2rem' }}
         >
-          Pickup Queue
+          {t('shipping.pickupQueue')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search orders..."
+            placeholder={t('shipping.searchOrders')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             InputProps={{
@@ -153,7 +156,7 @@ const PickupQueue: React.FC = () => {
             sx={searchFieldSx}
           />
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('common.refresh')}>
             <IconButton onClick={() => refetch()} sx={{ color: isDark ? ACCENT : 'primary.main' }}>
               <Refresh />
             </IconButton>
@@ -162,7 +165,7 @@ const PickupQueue: React.FC = () => {
       </Box>
 
       {filteredOrders.length === 0 ? (
-        <Alert severity="info">No orders ready for pickup</Alert>
+        <Alert severity="info">{t('shipping.noOrders')}</Alert>
       ) : (
         <>
           <TableContainer
@@ -175,12 +178,12 @@ const PickupQueue: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow sx={headerRowSx}>
-                  <TableCell>Order #</TableCell>
-                  <TableCell>Vendor</TableCell>
-                  <TableCell>Boxes</TableCell>
-                  <TableCell>Dimensions</TableCell>
-                  <TableCell>Ready Since</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell>{t('shipping.order')}</TableCell>
+                  <TableCell>{t('shipping.vendor')}</TableCell>
+                  <TableCell>{t('shipping.boxes')}</TableCell>
+                  <TableCell>{t('shipping.dimensions')}</TableCell>
+                  <TableCell>{t('shipping.readySince')}</TableCell>
+                  <TableCell align="center">{t('shipping.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -194,7 +197,7 @@ const PickupQueue: React.FC = () => {
                     <TableCell sx={bodyCellSx}>{order.vendorStoreName}</TableCell>
                     <TableCell sx={bodyCellSx}>
                       <Chip
-                        label={`${order.shippingPrep?.boxCount || 1} boxes`}
+                        label={`${order.shippingPrep?.boxCount || 1} ${t('shipping.boxes').toLowerCase()}`}
                         size="small"
                         sx={{
                           ...(isDark && {
@@ -225,7 +228,7 @@ const PickupQueue: React.FC = () => {
                     </TableCell>
                     <TableCell align="center" sx={bodyCellSx}>
                       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                        <Tooltip title="Schedule Pickup">
+                        <Tooltip title={t('shipping.schedulePickup')}>
                           <IconButton
                             size="small"
                             onClick={() => handleSchedule(order)}
@@ -234,7 +237,7 @@ const PickupQueue: React.FC = () => {
                             <Schedule />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Assign Shipping">
+                        <Tooltip title={t('shipping.assignShipping')}>
                           <IconButton
                             size="small"
                             onClick={() => handleAssign(order)}
@@ -243,7 +246,7 @@ const PickupQueue: React.FC = () => {
                             <LocalShipping />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="View Details">
+                        <Tooltip title={t('orders.viewDetails')}>
                           <IconButton
                             size="small"
                             onClick={() => handleView(order.orderId)}

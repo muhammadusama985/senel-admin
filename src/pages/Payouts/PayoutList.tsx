@@ -52,6 +52,7 @@ import {
 } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 interface Payout {
@@ -81,6 +82,7 @@ const vendorNameCache = new Map<string, string>();
 
 const PayoutList: React.FC = () => {
   const muiTheme = useMuiTheme();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -241,7 +243,7 @@ const PayoutList: React.FC = () => {
     return <Chip label={status} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
   };
 
-  const getVendorName = (vendorId: string) => vendorNames[vendorId] || 'Loading...';
+  const getVendorName = (vendorId: string) => vendorNames[vendorId] || t('payouts.loadingVendor');
 
   const formatCurrency = (amount: number | undefined) => `EUR ${amount?.toFixed(2) || '0.00'}`;
 
@@ -271,7 +273,7 @@ const PayoutList: React.FC = () => {
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2, backgroundColor: surface, border: `1px solid ${border}` }}>
-        Error loading payout requests. Please try again.
+        {t('payouts.errorLoading')}
       </Alert>
     );
   }
@@ -280,13 +282,13 @@ const PayoutList: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: muiTheme.palette.text.primary }}>
-          Payout Requests
+          {t('payouts.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search vendors..."
+            placeholder={t('payouts.searchVendors')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             InputProps={{
@@ -300,12 +302,12 @@ const PayoutList: React.FC = () => {
           />
 
           <FormControl size="small" sx={{ width: 160 }}>
-            <InputLabel>Status</InputLabel>
-            <Select value={statusFilter} label="Status" onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
-              <MenuItem value="requested">Requested</MenuItem>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="paid">Paid</MenuItem>
-              <MenuItem value="rejected">Rejected</MenuItem>
+            <InputLabel>{t('common.status')}</InputLabel>
+            <Select value={statusFilter} label={t('common.status')} onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
+              <MenuItem value="requested">{t('payouts.requested')}</MenuItem>
+              <MenuItem value="approved">{t('products.approved')}</MenuItem>
+              <MenuItem value="paid">{t('payouts.markPaid')}</MenuItem>
+              <MenuItem value="rejected">{t('products.rejected')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -324,13 +326,13 @@ const PayoutList: React.FC = () => {
                 },
               }}
             >
-              <TableCell>Vendor</TableCell>
-              <TableCell>Amount</TableCell>
-              <TableCell>Method</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Requested</TableCell>
-              <TableCell>Reference</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('common.vendor')}</TableCell>
+              <TableCell>{t('orders.amount')}</TableCell>
+              <TableCell>{t('payouts.method')}</TableCell>
+              <TableCell>{t('common.status')}</TableCell>
+              <TableCell>{t('payouts.requested')}</TableCell>
+              <TableCell>{t('payouts.reference')}</TableCell>
+              <TableCell align="center">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -415,32 +417,32 @@ const PayoutList: React.FC = () => {
             {selectedPayout.status === 'requested' && (
               <>
                 <MenuItem onClick={() => { setViewDialog(true); handleMenuClose(); }}>
-                  <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+                  <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('payouts.viewDetails')}
                 </MenuItem>
                 <MenuItem onClick={() => setApproveDialog(true)}>
-                  <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> Approve
+                  <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> {t('products.approve')}
                 </MenuItem>
                 <MenuItem onClick={() => setRejectDialog(true)}>
-                  <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> Reject
+                  <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> {t('products.reject')}
                 </MenuItem>
               </>
             )}
             {selectedPayout.status === 'approved' && (
               <>
                 <MenuItem onClick={() => setApproveDialog(true)}>
-                  <Payment sx={{ mr: 1, fontSize: 20, color: accent }} /> Mark Paid
+                  <Payment sx={{ mr: 1, fontSize: 20, color: accent }} /> {t('payouts.markPaid')}
                 </MenuItem>
                 <MenuItem onClick={() => setRejectDialog(true)}>
-                  <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> Reject
+                  <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> {t('products.reject')}
                 </MenuItem>
                 <MenuItem onClick={() => { setViewDialog(true); handleMenuClose(); }}>
-                  <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+                  <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('payouts.viewDetails')}
                 </MenuItem>
               </>
             )}
             {(selectedPayout.status === 'paid' || selectedPayout.status === 'rejected') && (
               <MenuItem onClick={() => { setViewDialog(true); handleMenuClose(); }}>
-                <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+                <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('payouts.viewDetails')}
               </MenuItem>
             )}
           </>

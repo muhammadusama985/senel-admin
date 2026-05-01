@@ -28,12 +28,15 @@ import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Block, CheckCircle, Cancel, Info, MoreVert, Search, Visibility } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 
 type StatusColor = 'default' | 'warning' | 'success' | 'error' | 'info';
 
 const VendorList: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -76,7 +79,7 @@ const VendorList: React.FC = () => {
   };
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['admin', 'vendors', statusFilter],
+    queryKey: ['admin', 'vendors', currentLanguage, statusFilter],
     queryFn: async () => {
       const url = statusFilter !== 'all' ? `/vendors/admin/vendors?status=${statusFilter}` : '/vendors/admin/vendors';
       const response = await api.get(url);
@@ -190,11 +193,11 @@ const VendorList: React.FC = () => {
         sx={{ m: 2 }}
         action={
           <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            {t('common.retry')}
           </Button>
         }
       >
-        Error loading vendors. Please try again.
+        {t('vendors.errorLoading')}
       </Alert>
     );
   }
@@ -203,13 +206,13 @@ const VendorList: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem', color: muiTheme.palette.text.primary }}>
-          Vendor Management
+          {t('vendors.title')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search vendors..."
+            placeholder={t('vendors.searchPlaceholder')}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -226,22 +229,22 @@ const VendorList: React.FC = () => {
           />
 
           <FormControl size="small" sx={{ width: isMobile ? '100%' : 150 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{t('vendors.status')}</InputLabel>
             <Select
               value={statusFilter}
-              label="Status"
+              label={t('vendors.status')}
               onChange={(event) => {
                 setStatusFilter(event.target.value);
                 setPage(0);
               }}
               sx={selectSx}
             >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="submitted">Submitted</MenuItem>
-              <MenuItem value="under_review">Under Review</MenuItem>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="rejected">Rejected</MenuItem>
-              <MenuItem value="blocked">Blocked</MenuItem>
+              <MenuItem value="all">{t('vendors.all')}</MenuItem>
+              <MenuItem value="submitted">{t('vendors.submitted')}</MenuItem>
+              <MenuItem value="under_review">{t('vendors.underReview')}</MenuItem>
+              <MenuItem value="approved">{t('vendors.approved')}</MenuItem>
+              <MenuItem value="rejected">{t('vendors.rejected')}</MenuItem>
+              <MenuItem value="blocked">{t('vendors.blocked')}</MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -260,13 +263,13 @@ const VendorList: React.FC = () => {
                 },
               }}
             >
-              <TableCell>Store Name</TableCell>
-              <TableCell>Email</TableCell>
-              {!isMobile && <TableCell>Company</TableCell>}
-              <TableCell>Status</TableCell>
-              <TableCell>Documents</TableCell>
-              <TableCell>Joined</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell>{t('vendors.storeName')}</TableCell>
+              <TableCell>{t('common.email')}</TableCell>
+              {!isMobile && <TableCell>{t('vendors.company')}</TableCell>}
+              <TableCell>{t('vendors.status')}</TableCell>
+              <TableCell>{t('vendors.documents')}</TableCell>
+              <TableCell>{t('vendors.joined')}</TableCell>
+              <TableCell align="center">{t('common.actions')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -296,7 +299,7 @@ const VendorList: React.FC = () => {
                   <Chip label={vendor.status || 'draft'} size="small" color={getStatusChip(vendor.status || 'draft')} sx={{ textTransform: 'capitalize' }} />
                 </TableCell>
                 <TableCell>
-                  <Chip label={`${vendor.verificationDocs?.length || 0} docs`} size="small" variant="outlined" icon={<Info sx={{ color: accent }} />} />
+                  <Chip label={t('vendors.docsCount', { count: vendor.verificationDocs?.length || 0 })} size="small" variant="outlined" icon={<Info sx={{ color: accent }} />} />
                 </TableCell>
                 <TableCell>{vendor.createdAt ? new Date(vendor.createdAt).toLocaleDateString() : '-'}</TableCell>
                 <TableCell align="center">
@@ -335,36 +338,36 @@ const VendorList: React.FC = () => {
         PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}
       >
         <MenuItem onClick={() => handleAction('view')}>
-          <Visibility sx={{ mr: 1, fontSize: 20 }} /> View Details
+          <Visibility sx={{ mr: 1, fontSize: 20 }} /> {t('vendors.viewDetails')}
         </MenuItem>
 
         {selectedVendor?.status === 'submitted' && (
           <>
             <MenuItem onClick={() => handleAction('approve')}>
-              <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> Approve
+              <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> {t('vendors.approve')}
             </MenuItem>
             <MenuItem onClick={() => handleAction('reject')}>
-              <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> Reject
+              <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> {t('vendors.reject')}
             </MenuItem>
             <MenuItem onClick={() => handleAction('under-review')}>
-              <Info sx={{ mr: 1, fontSize: 20, color: accent }} /> Set Under Review
+              <Info sx={{ mr: 1, fontSize: 20, color: accent }} /> {t('vendors.setUnderReview')}
             </MenuItem>
           </>
         )}
 
         {selectedVendor?.status === 'approved' && (
           <MenuItem onClick={() => handleAction('block')}>
-            <Block sx={{ mr: 1, fontSize: 20, color: accent }} /> Block
+            <Block sx={{ mr: 1, fontSize: 20, color: accent }} /> {t('vendors.block')}
           </MenuItem>
         )}
 
         {selectedVendor?.status === 'under_review' && (
           <>
             <MenuItem onClick={() => handleAction('approve')}>
-              <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> Approve
+              <CheckCircle sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.success.main }} /> {t('vendors.approve')}
             </MenuItem>
             <MenuItem onClick={() => handleAction('reject')}>
-              <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> Reject
+              <Cancel sx={{ mr: 1, fontSize: 20, color: muiTheme.palette.error.main }} /> {t('vendors.reject')}
             </MenuItem>
           </>
         )}

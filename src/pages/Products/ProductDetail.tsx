@@ -40,12 +40,15 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const muiTheme = useMuiTheme();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery('(max-width:600px)');
@@ -74,12 +77,12 @@ const ProductDetail: React.FC = () => {
   };
 
   const { data: product, isLoading, error, refetch } = useQuery({
-    queryKey: ['admin', 'products', id],
+    queryKey: ['admin', 'products', currentLanguage, id],
     queryFn: async () => {
       const response = await api.get('/products/admin/products');
       const products = response.data.products || [];
       const found = products.find((productItem: any) => productItem._id === id);
-      if (!found) throw new Error('Product not found');
+      if (!found) throw new Error(t('products.notFound'));
       return found;
     },
   });
@@ -89,7 +92,7 @@ const ProductDetail: React.FC = () => {
       await api.post(`/products/admin/products/${id}/approve`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products', currentLanguage, id] });
     },
   });
 
@@ -100,7 +103,7 @@ const ProductDetail: React.FC = () => {
     onSuccess: () => {
       setRejectDialog(false);
       setRejectReason('');
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products', currentLanguage, id] });
     },
   });
 
@@ -109,7 +112,7 @@ const ProductDetail: React.FC = () => {
       await api.patch(`/products/admin/products/${id}`, { status: 'archived' });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'products', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products', currentLanguage, id] });
     },
   });
 
@@ -131,11 +134,11 @@ const ProductDetail: React.FC = () => {
         sx={{ m: 2 }}
         action={
           <Button color="inherit" size="small" onClick={() => refetch()}>
-            Retry
+            {t('common.retry')}
           </Button>
         }
       >
-        Product not found or error loading data.
+        {t('products.notFound')}
       </Alert>
     );
   }
@@ -175,18 +178,18 @@ const ProductDetail: React.FC = () => {
           {product.status === 'submitted' && (
             <>
               <Button variant="contained" color="success" startIcon={<CheckCircle />} onClick={() => approveMutation.mutate()} disabled={approveMutation.isPending}>
-                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Approve'}
+                {approveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.approve')}
               </Button>
               <Button variant="contained" color="error" startIcon={<Cancel />} onClick={() => setRejectDialog(true)}>
-                Reject
+                {t('products.reject')}
               </Button>
             </>
           )}
           <Button variant="outlined" startIcon={<Edit />} onClick={() => navigate(`/products/edit/${id}`)}>
-            Edit
+            {t('common.edit')}
           </Button>
           <Button variant="outlined" startIcon={<Archive />} onClick={() => archiveMutation.mutate()} disabled={archiveMutation.isPending}>
-            {archiveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Archive'}
+            {archiveMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.archive')}
           </Button>
         </Stack>
       </Box>
@@ -195,32 +198,32 @@ const ProductDetail: React.FC = () => {
         <Grid container spacing={2} alignItems="center">
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Status
+              {t('products.status')}
             </Typography>
             <Chip label={product.status} color={getStatusColor(product.status)} sx={{ mt: 0.5, textTransform: 'capitalize' }} />
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Vendor
+              {t('products.vendor')}
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: muiTheme.palette.text.primary }}>
-              {product.vendorName || 'Unknown'}
+              {product.vendorName || t('products.unknown')}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Created
+              {t('products.created')}
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: muiTheme.palette.text.primary }}>
-              {product.createdAt ? format(new Date(product.createdAt), 'PPP') : 'N/A'}
+              {product.createdAt ? format(new Date(product.createdAt), 'PPP') : t('products.notAvailable')}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Typography variant="subtitle2" sx={{ color: muiTheme.palette.text.secondary }}>
-              Featured
+              {t('products.featured')}
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5, color: muiTheme.palette.text.primary }}>
-              {product.isFeatured ? 'Yes' : 'No'}
+              {product.isFeatured ? t('products.yes') : t('products.no')}
             </Typography>
           </Grid>
         </Grid>
@@ -280,7 +283,7 @@ const ProductDetail: React.FC = () => {
                     SKU
                   </Typography>
                   <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>
-                    {product.sku || 'N/A'}
+                    {product.sku || t('products.notAvailable')}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
@@ -301,10 +304,10 @@ const ProductDetail: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant="caption" sx={{ color: muiTheme.palette.text.secondary }}>
-                    Country
+                    {t('products.country')}
                   </Typography>
                   <Typography variant="body2" fontWeight={700} sx={{ color: muiTheme.palette.text.primary }}>
-                    {product.country || 'N/A'}
+                    {product.country || t('products.notAvailable')}
                   </Typography>
                 </Grid>
               </Grid>
@@ -358,7 +361,7 @@ const ProductDetail: React.FC = () => {
             <Card sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ color: muiTheme.palette.primary.main }}>
-                  Variants
+                  {t('products.attributes')}
                 </Typography>
                 <TableContainer component={Paper} variant="outlined" sx={{ backgroundColor: surface, borderColor: border }}>
                   <Table size="small">
@@ -374,8 +377,8 @@ const ProductDetail: React.FC = () => {
                         }}
                       >
                         <TableCell>SKU</TableCell>
-                        <TableCell>Attributes</TableCell>
-                        <TableCell>Price</TableCell>
+                        <TableCell>{t('products.attributes')}</TableCell>
+                        <TableCell>{t('products.price')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -404,25 +407,25 @@ const ProductDetail: React.FC = () => {
       </Grid>
 
       <Dialog open={rejectDialog} onClose={() => setRejectDialog(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { backgroundColor: surface, border: `1px solid ${border}` } }}>
-        <DialogTitle sx={{ color: muiTheme.palette.text.primary }}>Reject Product</DialogTitle>
+        <DialogTitle sx={{ color: muiTheme.palette.text.primary }}>{t('products.rejectProduct')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Rejection Reason"
+            label={t('products.rejectionReason')}
             fullWidth
             multiline
             rows={3}
             value={rejectReason}
             onChange={(event) => setRejectReason(event.target.value)}
-            placeholder="Explain why the product is being rejected..."
+            placeholder={t('products.rejectionPlaceholder')}
             sx={fieldSx}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRejectDialog(false)}>Cancel</Button>
+          <Button onClick={() => setRejectDialog(false)}>{t('common.cancel')}</Button>
           <Button onClick={() => rejectReason.trim() && rejectMutation.mutate({ reason: rejectReason })} variant="contained" color="error" disabled={!rejectReason.trim() || rejectMutation.isPending}>
-            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : 'Reject'}
+            {rejectMutation.isPending ? <CircularProgress size={20} color="inherit" /> : t('products.reject')}
           </Button>
         </DialogActions>
       </Dialog>

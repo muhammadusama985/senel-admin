@@ -29,11 +29,14 @@ import { Refresh, Search, Visibility } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { format, isValid } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
 const VendorOrderList: React.FC = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.resolvedLanguage || i18n.language || 'en';
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
   const isLight = muiTheme.palette.mode === 'light';
@@ -76,7 +79,7 @@ const VendorOrderList: React.FC = () => {
   };
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'vendor-orders', page, rowsPerPage, search, statusFilter, vendorFilter],
+    queryKey: ['admin', 'vendor-orders', currentLanguage, page, rowsPerPage, search, statusFilter, vendorFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page + 1),
@@ -92,7 +95,7 @@ const VendorOrderList: React.FC = () => {
   });
 
   const { data: vendors } = useQuery({
-    queryKey: ['vendors', 'list'],
+    queryKey: ['vendors', 'list', currentLanguage],
     queryFn: async () => {
       const response = await api.get('/vendors/admin/vendors');
       return Array.isArray(response.data?.vendors) ? response.data.vendors : [];
@@ -100,9 +103,9 @@ const VendorOrderList: React.FC = () => {
   });
 
   const formatOrderDate = (value: string | null | undefined) => {
-    if (!value) return 'N/A';
+    if (!value) return t('products.notAvailable');
     const parsed = new Date(value);
-    return isValid(parsed) ? format(parsed, 'MMM dd, yyyy') : 'N/A';
+    return isValid(parsed) ? format(parsed, 'MMM dd, yyyy') : t('products.notAvailable');
   };
 
   const getStatusChip = (status: string) => {
@@ -116,7 +119,17 @@ const VendorOrderList: React.FC = () => {
       delivered: 'success',
       cancelled: 'error',
     };
-    return <Chip label={status.replace('_', ' ')} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
+    const labels: Record<string, string> = {
+      placed: t('orders.placed'),
+      accepted: t('orders.accepted'),
+      packed: t('shipping.packed'),
+      picking: t('orders.processing'),
+      ready_pickup: t('shipping.readyPickup'),
+      shipped: t('shipping.markShipped'),
+      delivered: t('shipping.delivered'),
+      cancelled: t('orders.cancelled'),
+    };
+    return <Chip label={labels[status] || status.replace('_', ' ')} size="small" color={colors[status] || 'default'} sx={{ textTransform: 'capitalize' }} />;
   };
 
   if (isLoading) {
@@ -134,13 +147,13 @@ const VendorOrderList: React.FC = () => {
     <Box className="page-shell">
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" sx={{ color: muiTheme.palette.text.primary, fontSize: isMobile ? '1.5rem' : '2rem' }}>
-          Vendor Orders
+          {t('orders.vendorOrdersTitle')}
         </Typography>
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             size="small"
-            placeholder="Search orders..."
+            placeholder={t('orders.searchPlaceholder')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             InputProps={{
@@ -153,7 +166,7 @@ const VendorOrderList: React.FC = () => {
             sx={{ width: isMobile ? '100%' : 250, ...fieldSx }}
           />
 
-          <Tooltip title="Refresh">
+          <Tooltip title={t('orders.refresh')}>
             <IconButton onClick={() => refetch()} sx={{ color: muiTheme.palette.primary.main, '&:hover': { backgroundColor: hover } }}>
               <Refresh />
             </IconButton>
@@ -164,25 +177,25 @@ const VendorOrderList: React.FC = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Order Status</InputLabel>
-            <Select value={statusFilter} label="Order Status" onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
-              <MenuItem value="all">All Statuses</MenuItem>
-              <MenuItem value="placed">Placed</MenuItem>
-              <MenuItem value="accepted">Accepted</MenuItem>
-              <MenuItem value="packed">Packed</MenuItem>
-              <MenuItem value="ready_pickup">Ready for Pickup</MenuItem>
-              <MenuItem value="shipped">Shipped</MenuItem>
-              <MenuItem value="delivered">Delivered</MenuItem>
-              <MenuItem value="cancelled">Cancelled</MenuItem>
+            <InputLabel>{t('orders.orderStatus')}</InputLabel>
+            <Select value={statusFilter} label={t('orders.orderStatus')} onChange={(event) => setStatusFilter(event.target.value)} sx={selectSx}>
+              <MenuItem value="all">{t('orders.allStatuses')}</MenuItem>
+              <MenuItem value="placed">{t('orders.placed')}</MenuItem>
+              <MenuItem value="accepted">{t('orders.accepted')}</MenuItem>
+              <MenuItem value="packed">{t('shipping.packed')}</MenuItem>
+              <MenuItem value="ready_pickup">{t('shipping.readyPickup')}</MenuItem>
+              <MenuItem value="shipped">{t('shipping.markShipped')}</MenuItem>
+              <MenuItem value="delivered">{t('shipping.delivered')}</MenuItem>
+              <MenuItem value="cancelled">{t('orders.cancelled')}</MenuItem>
             </Select>
           </FormControl>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <FormControl fullWidth size="small">
-            <InputLabel>Vendor</InputLabel>
-            <Select value={vendorFilter} label="Vendor" onChange={(event) => setVendorFilter(event.target.value)} sx={selectSx}>
-              <MenuItem value="all">All Vendors</MenuItem>
+            <InputLabel>{t('products.vendor')}</InputLabel>
+            <Select value={vendorFilter} label={t('products.vendor')} onChange={(event) => setVendorFilter(event.target.value)} sx={selectSx}>
+              <MenuItem value="all">{t('orders.allVendors')}</MenuItem>
               {vendors?.map((vendor: any) => (
                 <MenuItem key={vendor._id} value={vendor._id}>
                   {vendor.storeName}
@@ -195,7 +208,7 @@ const VendorOrderList: React.FC = () => {
 
       {data?.items?.length === 0 ? (
         <Alert severity="info" sx={{ backgroundColor: surface, border: `1px solid ${border}` }}>
-          No vendor orders found
+          {t('orders.noOrders')}
         </Alert>
       ) : (
         <>
@@ -212,13 +225,13 @@ const VendorOrderList: React.FC = () => {
                     },
                   }}
                 >
-                  <TableCell>Vendor Order #</TableCell>
-                  <TableCell>Master Order #</TableCell>
-                  <TableCell>Vendor</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Amount</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell align="center">Actions</TableCell>
+                  <TableCell>{t('orders.vendorOrderNumber')}</TableCell>
+                  <TableCell>{t('orders.masterOrderNumber')}</TableCell>
+                  <TableCell>{t('products.vendor')}</TableCell>
+                  <TableCell>{t('common.status')}</TableCell>
+                  <TableCell>{t('orders.amount')}</TableCell>
+                  <TableCell>{t('common.date')}</TableCell>
+                  <TableCell align="center">{t('orders.actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -230,7 +243,7 @@ const VendorOrderList: React.FC = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
-                      {order.orderId?.orderNumber || 'N/A'}
+                      {order.orderId?.orderNumber || t('products.notAvailable')}
                     </TableCell>
                     <TableCell sx={{ color: muiTheme.palette.text.primary, borderBottom: `1px solid ${border}` }}>
                       {order.vendorStoreName}
@@ -245,7 +258,7 @@ const VendorOrderList: React.FC = () => {
                       {formatOrderDate(order.createdAt)}
                     </TableCell>
                     <TableCell align="center" sx={{ borderBottom: `1px solid ${border}` }}>
-                      <Tooltip title="View Details">
+                      <Tooltip title={t('orders.viewDetails')}>
                         <IconButton size="small" onClick={() => navigate(`/orders/${order.orderId?._id}`)} sx={{ '&:hover': { backgroundColor: hover } }}>
                           <Visibility />
                         </IconButton>

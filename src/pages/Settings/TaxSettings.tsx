@@ -33,6 +33,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface CountryRate {
   country: string;
@@ -41,6 +42,7 @@ interface CountryRate {
 
 const TaxSettings: React.FC = () => {
   const { mode } = useTheme();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const isMobile = useMediaQuery('(max-width:600px)');
   
@@ -111,7 +113,7 @@ const TaxSettings: React.FC = () => {
             color: mode === 'light' ? '#1C0770' : '#9f96c1',
           }}
         >
-          Tax Settings
+          {t('tax.title')}
         </Typography>
         <Button
           variant="contained"
@@ -130,13 +132,13 @@ const TaxSettings: React.FC = () => {
   },
 }}
         >
-          {saveMutation.isPending ? <CircularProgress size={24} /> : 'Save Changes'}
+          {saveMutation.isPending ? <CircularProgress size={24} /> : t('tax.saveChanges')}
         </Button>
       </Box>
 
       {saveMutation.isSuccess && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Tax settings updated successfully!
+          {t('tax.updated')}
         </Alert>
       )}
 
@@ -145,7 +147,7 @@ const TaxSettings: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: '#1C0770' }}>
-                General Settings
+                {t('tax.generalSettings')}
               </Typography>
               
               <FormControlLabel
@@ -155,24 +157,24 @@ const TaxSettings: React.FC = () => {
                     onChange={(e) => setSettings({ ...settings, enabled: e.target.checked })}
                   />
                 }
-                label="Enable Tax Calculation"
+                label={t('tax.enableCalculation')}
                 sx={{ mb: 2, display: 'block' }}
               />
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Tax Mode</InputLabel>
+                <InputLabel>{t('tax.mode')}</InputLabel>
                 <Select
                   value={settings.mode}
-                  label="Tax Mode"
+                  label={t('tax.mode')}
                   onChange={(e) => setSettings({ ...settings, mode: e.target.value })}
                 >
-                  <MenuItem value="exclusive">Exclusive (added to price)</MenuItem>
-                  <MenuItem value="inclusive">Inclusive (included in price)</MenuItem>
+                  <MenuItem value="exclusive">{t('tax.exclusive')}</MenuItem>
+                  <MenuItem value="inclusive">{t('tax.inclusive')}</MenuItem>
                 </Select>
               </FormControl>
 
               <TextField
-                label="Default Tax Rate (%)"
+                label={t('tax.defaultRate')}
                 type="number"
                 fullWidth
                 value={settings.defaultRate}
@@ -190,7 +192,7 @@ const TaxSettings: React.FC = () => {
                     onChange={(e) => setSettings({ ...settings, applyOnShipping: e.target.checked })}
                   />
                 }
-                label="Apply Tax on Shipping"
+                label={t('tax.applyOnShipping')}
               />
             </CardContent>
           </Card>
@@ -200,21 +202,21 @@ const TaxSettings: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ color: '#1C0770' }}>
-                Country-Specific Rates
+                {t('tax.countryRates')}
               </Typography>
 
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <TextField
                   size="small"
-                  label="Country"
+                  label={t('tax.country')}
                   value={newCountry}
                   onChange={(e) => setNewCountry(e.target.value)}
-                  placeholder="e.g., Germany"
+                  placeholder={t('tax.countryPlaceholder')}
                   sx={{ flex: 2 }}
                 />
                 <TextField
                   size="small"
-                  label="Rate %"
+                  label={t('tax.ratePercent')}
                   type="number"
                   value={newRate}
                   onChange={(e) => setNewRate(e.target.value)}
@@ -234,9 +236,9 @@ const TaxSettings: React.FC = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Country</TableCell>
-                      <TableCell>Rate (%)</TableCell>
-                      <TableCell align="right">Action</TableCell>
+                      <TableCell>{t('tax.country')}</TableCell>
+                      <TableCell>{t('tax.rate')}</TableCell>
+                      <TableCell align="right">{t('tax.action')}</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -258,7 +260,7 @@ const TaxSettings: React.FC = () => {
                     {settings.countryRates.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={3} align="center">
-                          No country-specific rates configured
+                          {t('tax.noCountryRates')}
                         </TableCell>
                       </TableRow>
                     )}

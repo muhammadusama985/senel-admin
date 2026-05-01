@@ -130,18 +130,18 @@ const ProductCreate: React.FC = () => {
       navigate(`/products/${data.product._id}`);
     },
     onError: (mutationError: any) => {
-      setError(mutationError.response?.data?.message || 'Failed to create product');
+      setError(mutationError.response?.data?.message || t('products.failedCreate'));
     },
   });
 
   const tierValidationError = useMemo(() => {
     if (!form.priceTiers.length) {
-      return 'At least one price tier is required.';
+      return t('products.atLeastOneTier');
     }
 
     const smallestTier = Math.min(...form.priceTiers.map((tier) => tier.minQty));
     if (form.moq > smallestTier) {
-      return `MOQ cannot be greater than the smallest tier minimum quantity (${smallestTier}).`;
+      return t('products.moqGreaterThanTier', { qty: smallestTier });
     }
 
     return '';
@@ -149,16 +149,16 @@ const ProductCreate: React.FC = () => {
 
   const variantValidationError = useMemo(() => {
     if (!form.hasVariants) return '';
-    if (!form.variants.length) return 'Please add at least one variant.';
+    if (!form.variants.length) return t('products.variantRequired');
     const normalizedSkus = form.variants.map((variant) => String(variant.sku || '').trim().toUpperCase());
-    if (normalizedSkus.some((sku) => !sku)) return 'Each variant must include a SKU.';
-    if (new Set(normalizedSkus).size !== normalizedSkus.length) return 'Variant SKUs must be unique.';
+    if (normalizedSkus.some((sku) => !sku)) return t('products.variantSkuRequired');
+    if (new Set(normalizedSkus).size !== normalizedSkus.length) return t('products.variantSkuUnique');
     const hasInvalidAttributes = form.variants.some((variant) =>
       Object.entries(variant.attributes || {}).some(([key, value]) => !String(key || '').trim() || !String(value || '').trim())
     );
-    if (hasInvalidAttributes) return 'Each variant attribute must include both a name and a value.';
+    if (hasInvalidAttributes) return t('products.variantAttributesRequired');
     return '';
-  }, [form.hasVariants, form.variants]);
+  }, [form.hasVariants, form.variants, t]);
 
   const canSubmit = useMemo(() => {
     return (
@@ -237,7 +237,7 @@ const ProductCreate: React.FC = () => {
         imageUrls: [...prev.imageUrls, ...imageUrls],
       }));
     } catch (uploadError: any) {
-      setError(uploadError.response?.data?.message || 'Failed to upload product images');
+      setError(uploadError.response?.data?.message || t('products.failedUploadImages'));
     } finally {
       setUploadingImages(false);
       if (fileInputRef.current) {
@@ -253,7 +253,7 @@ const ProductCreate: React.FC = () => {
       const response = await api.post('/products/admin/images', formData);
       return response.data?.imageUrl || null;
     } catch (uploadError: any) {
-      setError(uploadError.response?.data?.message || 'Failed to upload variant image');
+      setError(uploadError.response?.data?.message || t('products.failedUploadVariantImage'));
       return null;
     }
   };
@@ -285,7 +285,7 @@ const ProductCreate: React.FC = () => {
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
-              label="English Title"
+              label={t('products.englishTitle')}
               value={form.titleML.en}
               onChange={(e) => {
                 updateML('titleML', 'en', e.target.value);
@@ -294,10 +294,10 @@ const ProductCreate: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="German Title" value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
+            <TextField fullWidth label={t('products.germanTitle')} value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label="Turkish Title" value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
+            <TextField fullWidth label={t('products.turkishTitle')} value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -305,7 +305,7 @@ const ProductCreate: React.FC = () => {
               fullWidth
               multiline
               minRows={4}
-              label="English Description"
+              label={t('products.englishDescription')}
               value={form.descriptionML.en}
               onChange={(e) => {
                 updateML('descriptionML', 'en', e.target.value);
@@ -314,14 +314,14 @@ const ProductCreate: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} label="German Description" value={form.descriptionML.de} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} label={t('products.germanDescription')} value={form.descriptionML.de} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} label="Turkish Description" value={form.descriptionML.tr} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} label={t('products.turkishDescription')} value={form.descriptionML.tr} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField select fullWidth label="Category" value={form.categoryId} onChange={(e) => updateField('categoryId', e.target.value)}>
+            <TextField select fullWidth label={t('products.category')} value={form.categoryId} onChange={(e) => updateField('categoryId', e.target.value)}>
               {categories.map((category: Category) => (
                 <MenuItem key={category._id} value={category._id}>
                   {category.name}
@@ -330,8 +330,8 @@ const ProductCreate: React.FC = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField select fullWidth label="Vendor (optional)" value={form.vendorId} onChange={(e) => updateField('vendorId', e.target.value)}>
-              <MenuItem value="">Senel Platform Storefront</MenuItem>
+            <TextField select fullWidth label={t('products.vendorOptional')} value={form.vendorId} onChange={(e) => updateField('vendorId', e.target.value)}>
+              <MenuItem value="">{t('products.platformStorefront')}</MenuItem>
               {vendorList.map((vendor: Vendor) => (
                 <MenuItem key={vendor._id} value={vendor._id}>
                   {vendor.storeName}
@@ -340,10 +340,10 @@ const ProductCreate: React.FC = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <TextField fullWidth label="Country" value={form.country} onChange={(e) => updateField('country', e.target.value)} />
+            <TextField fullWidth label={t('products.country')} value={form.country} onChange={(e) => updateField('country', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField select fullWidth label="Currency" value={form.currency} onChange={(e) => updateField('currency', e.target.value)}>
+            <TextField select fullWidth label={t('products.currency')} value={form.currency} onChange={(e) => updateField('currency', e.target.value)}>
               <MenuItem value="EUR">EUR (Euro)</MenuItem>
               <MenuItem value="TRY">TRY (Turkish Lira)</MenuItem>
               <MenuItem value="USD">USD (US Dollar)</MenuItem>
@@ -357,11 +357,11 @@ const ProductCreate: React.FC = () => {
               label="MOQ"
               value={form.moq}
               onChange={(e) => updateMOQ(Number(e.target.value))}
-              helperText="The first price tier minimum quantity must be at least the MOQ."
+              helperText={t('products.moqHelp')}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField type="number" fullWidth label="Stock Qty" value={form.stockQty} onChange={(e) => updateField('stockQty', Number(e.target.value))} />
+            <TextField type="number" fullWidth label={t('products.stockQty')} value={form.stockQty} onChange={(e) => updateField('stockQty', Number(e.target.value))} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
@@ -410,7 +410,7 @@ const ProductCreate: React.FC = () => {
                   <TextField
                     type="number"
                     fullWidth
-                    label="Minimum Quantity"
+                    label={t('products.minQuantity')}
                     value={tier.minQty}
                     onChange={(e) => updateTier(index, 'minQty', Number(e.target.value))}
                   />
@@ -419,7 +419,7 @@ const ProductCreate: React.FC = () => {
                   <TextField
                     type="number"
                     fullWidth
-                    label="Unit Price"
+                    label={t('products.unitPrice')}
                     value={tier.unitPrice}
                     onChange={(e) => updateTier(index, 'unitPrice', Number(e.target.value))}
                   />
@@ -432,7 +432,7 @@ const ProductCreate: React.FC = () => {
                     disabled={form.priceTiers.length === 1}
                     onClick={() => updateField('priceTiers', form.priceTiers.filter((_, tierIndex) => tierIndex !== index))}
                   >
-                    Remove
+                    {t('products.remove')}
                   </Button>
                 </Grid>
               </Grid>
@@ -441,7 +441,7 @@ const ProductCreate: React.FC = () => {
               variant="text"
               onClick={() => updateField('priceTiers', [...form.priceTiers, { ...emptyTier, minQty: Math.max(form.moq, 1) }])}
             >
-              Add Tier
+              {t('products.addTier')}
             </Button>
           </Stack>
         </Paper>
@@ -450,7 +450,7 @@ const ProductCreate: React.FC = () => {
           <Stack spacing={2}>
             <FormControlLabel
               control={<Checkbox checked={form.hasVariants} onChange={(e) => updateField('hasVariants', e.target.checked)} />}
-              label="This product has attributes and options"
+              label={t('products.hasAttributesOptions')}
             />
             {form.hasVariants ? (
               <VariantEditor
@@ -476,11 +476,11 @@ const ProductCreate: React.FC = () => {
               <Box>
                 <Typography variant="h6">Product Images</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Upload one or more images before creating the product.
+                  {t('products.uploadBeforeCreate')}
                 </Typography>
               </Box>
               <Button variant="contained" onClick={() => fileInputRef.current?.click()} disabled={uploadingImages}>
-                {uploadingImages ? 'Uploading...' : 'Upload Images'}
+                {uploadingImages ? t('products.uploading') : t('products.uploadImages')}
               </Button>
             </Stack>
 
@@ -490,7 +490,7 @@ const ProductCreate: React.FC = () => {
               <Stack direction="row" spacing={1} alignItems="center">
                 <CircularProgress size={18} />
                 <Typography variant="body2" color="text.secondary">
-                  Uploading product images...
+                  {t('products.uploadingProductImages')}
                 </Typography>
               </Stack>
             )}
@@ -530,7 +530,7 @@ const ProductCreate: React.FC = () => {
         </Paper>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-          <FormControlLabel control={<Checkbox checked={form.trackInventory} onChange={(e) => updateField('trackInventory', e.target.checked)} />} label="Track Inventory" />
+          <FormControlLabel control={<Checkbox checked={form.trackInventory} onChange={(e) => updateField('trackInventory', e.target.checked)} />} label={t('products.trackInventory')} />
           <FormControlLabel control={<Checkbox checked={form.autoApprove} onChange={(e) => updateField('autoApprove', e.target.checked)} />} label={t('products.autoApprove')} />
           <FormControlLabel control={<Checkbox checked={form.isFeatured} onChange={(e) => updateField('isFeatured', e.target.checked)} />} label={t('products.featureHomepage')} />
           <FormControlLabel
@@ -541,7 +541,7 @@ const ProductCreate: React.FC = () => {
 
         <Stack direction="row" spacing={2} justifyContent="flex-end">
           <Button variant="outlined" onClick={() => navigate('/products')}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button variant="contained" disabled={!canSubmit || createMutation.isPending || uploadingImages} onClick={() => createMutation.mutate()}>
             {createMutation.isPending ? `${t('common.create')}...` : t('products.createAction')}
