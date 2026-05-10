@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const apiBaseUrl = import.meta.env.VITE_API_URL || 'https://exemption-mark-confirmed-guaranteed.trycloudflare.com/api/v1';
 
 const api = axios.create({
   baseURL: apiBaseUrl,
