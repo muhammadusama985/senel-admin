@@ -21,7 +21,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
-import { Add, CloudUpload, Delete, Edit, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Add, CloudUpload, Delete, Edit } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
@@ -160,20 +160,6 @@ const Categories: React.FC = () => {
     },
   });
 
-  const toggleActiveMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const response = await api.patch(`/catalog/admin/categories/${id}`, { isActive });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'categories'] });
-      setError(null);
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.message || t('catalog.failedCategoryStatus'));
-    },
-  });
-
   const buildCategoryTree = (cats: Category[]): Category[] => {
     const map = new Map<string, Category>();
     const roots: Category[] = [];
@@ -203,17 +189,22 @@ const Categories: React.FC = () => {
   };
 
   const handleOpenEdit = (category: Category) => {
+    const imageUrl = typeof category.imageUrl === 'string' ? category.imageUrl : '';
     setEditingCategory(category);
     setFormData({
       name: category.name,
       parentId: category.parentId || '',
       sortOrder: category.sortOrder,
       isActive: category.isActive,
-      imageUrl: category.imageUrl || '',
+      imageUrl: imageUrl,
     });
     setSelectedImagePreview(null);
     setError(null);
     setDialogOpen(true);
+    // Reset file input for potential new upload
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleCloseDialog = () => {
@@ -291,7 +282,7 @@ const Categories: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 {node.imageUrl && node.imageUrl.trim() && (
                   <img 
-                    src={resolveMediaUrl(node.imageUrl)} 
+                    src={resolveMediaUrl(node.imageUrl) || ''} 
                     alt={node.name}
                     style={{ width: 30, height: 30, objectFit: 'cover', borderRadius: 4 }}
                   />
@@ -301,17 +292,6 @@ const Categories: React.FC = () => {
                 {!node.isActive && <Chip label={t('catalog.inactive')} size="small" />}
               </Box>
               <Box>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleActiveMutation.mutate({ id: node._id, isActive: !node.isActive });
-                  }}
-                  disabled={toggleActiveMutation.isPending}
-                  sx={{ '&:hover': { backgroundColor: hover } }}
-                >
-                  {node.isActive ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
                 <IconButton
                   size="small"
                   onClick={(e) => {
@@ -472,7 +452,7 @@ const Categories: React.FC = () => {
                   <CardMedia
                     component="img"
                     height="120"
-                    image={resolveMediaUrl(formData.imageUrl) || selectedImagePreview}
+                    image={(resolveMediaUrl(formData.imageUrl) || selectedImagePreview || '')}
                     alt="Category"
                     sx={{ objectFit: 'cover' }}
                   />

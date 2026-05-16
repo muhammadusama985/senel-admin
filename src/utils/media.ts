@@ -9,12 +9,16 @@ export function getApiOrigin(): string {
   }
 }
 
-export function resolveMediaUrl(url?: string): string {
+export function resolveMediaUrl(url?: string): string | undefined {
   const raw = (url || '').trim();
-  if (!raw) return '';
+  if (!raw) return undefined;
   
-  // If already a full URL, return it
+  // If already a full URL, check if it's a localhost URL
   if (raw.startsWith('http://') || raw.startsWith('https://')) {
+    // If it's a localhost URL, replace it with the current origin
+    if (raw.includes('localhost') || raw.includes('127.0.0.1')) {
+      return `${getApiOrigin()}${raw.substring(raw.indexOf('/uploads'))}`;
+    }
     return raw;
   }
   
