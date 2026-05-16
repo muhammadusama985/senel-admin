@@ -67,7 +67,16 @@ const menuItems: MenuItem[] = [
       { text: 'Bank Transfers', textKey: 'nav.ordersBankTransfers', icon: null, path: '/payments/bank-transfers' },
     ],
   },
-  { text: 'Shipping', textKey: 'nav.shipping', icon: <LocalShippingIcon />, path: '/shipping' },
+  {
+    text: 'Shipping',
+    textKey: 'nav.shipping',
+    icon: <LocalShippingIcon />,
+    path: '/shipping',
+    children: [
+      { text: 'Shipping Dashboard', textKey: 'nav.shippingDashboard', icon: null, path: '/shipping' },
+      { text: 'Shipping Companies', textKey: 'nav.shippingCompanies', icon: null, path: '/shipping/companies' },
+    ],
+  },
   { text: 'Payouts', textKey: 'nav.payouts', icon: <PaymentsIcon />, path: '/payouts' },
   { text: 'Coupons', textKey: 'nav.coupons', icon: <DiscountIcon />, path: '/coupons' },
   { text: 'Notifications', textKey: 'nav.notifications', icon: <NotificationsActiveIcon />, path: '/notifications' },
@@ -117,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onClose }) => {
     Orders: true,
     CMS: true,
     Settings: true,
+    Shipping: true,
   });
 
   const drawerWidth = 260;

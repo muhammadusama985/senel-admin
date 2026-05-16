@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Alert,
   Box,
@@ -26,13 +26,13 @@ interface Props {
   onSuccess: () => void;
 }
 
-const carriers = ['DHL', 'UPS', 'FedEx', 'DPD', 'GLS', 'Hermes', 'Other'];
-
 const AssignShippingDialog: React.FC<Props> = ({ open, onClose, order, onSuccess }) => {
   const muiTheme = useMuiTheme();
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [shippingCompanies, setShippingCompanies] = useState<any[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [formData, setFormData] = useState({
     partnerName: '',
     trackingCode: '',
@@ -53,6 +53,25 @@ const AssignShippingDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
       '&.Mui-focused fieldset': { borderColor: accent },
     },
     '& .MuiInputLabel-root': { color: textSecondary },
+  };
+
+  // Fetch shipping companies when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchShippingCompanies();
+    }
+  }, [open]);
+
+  const fetchShippingCompanies = async () => {
+    setLoadingCompanies(true);
+    try {
+      const response = await api.get('/admin/shipping-companies?activeOnly=true');
+      setShippingCompanies(response.data.shippingCompanies || []);
+    } catch (err) {
+      console.error('Failed to fetch shipping companies:', err);
+    } finally {
+      setLoadingCompanies(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,12 +137,23 @@ const AssignShippingDialog: React.FC<Props> = ({ open, onClose, order, onSuccess
               label={t('shipping.carrier')}
               onChange={(e) => setFormData({ ...formData, partnerName: e.target.value })}
               required
+              disabled={loadingCompanies}
             >
-              {carriers.map((carrier) => (
-                <MenuItem key={carrier} value={carrier}>
-                  {carrier}
+              {loadingCompanies ? (
+                <MenuItem value="">
+                  <CircularProgress size={20} />
                 </MenuItem>
-              ))}
+              ) : shippingCompanies.length === 0 ? (
+                <MenuItem value="" disabled>
+                  No shipping companies available
+                </MenuItem>
+              ) : (
+                shippingCompanies.map((company) => (
+                  <MenuItem key={company._id} value={company.name}>
+                    {company.name}
+                  </MenuItem>
+                ))
+              )}
             </Select>
           </FormControl>
 

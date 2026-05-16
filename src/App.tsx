@@ -24,6 +24,7 @@ import PickupQueue from './pages/Shipping/PickupQueue';
 import VendorOrderList from './pages/Orders/VendorOrderList';
 import AdminProductOrderList from './pages/Orders/AdminProductOrderList';
 import ShippingDashboard from './pages/Shipping/ShippingDashboard';
+import ShippingCompanies from './pages/Shipping/ShippingCompanies';
 import Handover from './pages/Shipping/Handover';
 import PayoutList from './pages/Payouts/PayoutList';
 import Coupons from './pages/Marketing/Coupons';
@@ -79,6 +80,7 @@ function App() {
               <Route path="/payments/bank-transfers" element={<PrivateRoute><BankTransfers /></PrivateRoute>} />
 
               <Route path="/shipping" element={<PrivateRoute><ShippingDashboard /></PrivateRoute>} />
+              <Route path="/shipping/companies" element={<PrivateRoute><ShippingCompanies /></PrivateRoute>} />
               <Route path="/payouts" element={<PrivateRoute><PayoutList /></PrivateRoute>} />
               <Route path="/coupons" element={<PrivateRoute><Coupons /></PrivateRoute>} />
               <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
