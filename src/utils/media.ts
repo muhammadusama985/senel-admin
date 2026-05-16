@@ -1,33 +1,28 @@
 export function getApiOrigin(): string {
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+  // Use the same URL as the API base
+  const baseUrl = import.meta.env.VITE_API_URL || 'https://modes-supervisor-approach-barbie.trycloudflare.com/api/v1';
   try {
     const parsed = new URL(baseUrl);
     return `${parsed.protocol}//${parsed.host}`;
   } catch {
-    return 'http://localhost:4000';
+    return 'https://modes-supervisor-approach-barbie.trycloudflare.com';
   }
 }
 
 export function resolveMediaUrl(url?: string): string {
   const raw = (url || '').trim();
   if (!raw) return '';
-
-  if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('blob:')) {
-    try {
-      const mediaUrl = new URL(raw);
-      const apiUrl = new URL(getApiOrigin());
-      if (mediaUrl.hostname === 'localhost' || mediaUrl.hostname === '127.0.0.1') {
-        mediaUrl.protocol = apiUrl.protocol;
-        mediaUrl.hostname = apiUrl.hostname;
-        mediaUrl.port = apiUrl.port;
-        return mediaUrl.toString();
-      }
-    } catch {
-      return raw;
-    }
+  
+  // If already a full URL, return it
+  if (raw.startsWith('http://') || raw.startsWith('https://')) {
     return raw;
   }
-
-  if (raw.startsWith('/')) return `${getApiOrigin()}${raw}`;
+  
+  // If it's a path starting with /, prepend the origin
+  if (raw.startsWith('/')) {
+    return `${getApiOrigin()}${raw}`;
+  }
+  
+  // Otherwise, treat as a relative path
   return `${getApiOrigin()}/${raw}`;
 }

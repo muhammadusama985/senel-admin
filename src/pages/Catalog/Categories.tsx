@@ -29,6 +29,7 @@ import { TreeItem } from '@mui/x-tree-view/TreeItem';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface Category {
   _id: string;
@@ -290,7 +291,7 @@ const Categories: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
                 {node.imageUrl && node.imageUrl.trim() && (
                   <img 
-                    src={node.imageUrl} 
+                    src={resolveMediaUrl(node.imageUrl)} 
                     alt={node.name}
                     style={{ width: 30, height: 30, objectFit: 'cover', borderRadius: 4 }}
                   />
@@ -471,7 +472,7 @@ const Categories: React.FC = () => {
                   <CardMedia
                     component="img"
                     height="120"
-                    image={formData.imageUrl || selectedImagePreview || ''}
+                    image={resolveMediaUrl(formData.imageUrl) || selectedImagePreview}
                     alt="Category"
                     sx={{ objectFit: 'cover' }}
                   />
