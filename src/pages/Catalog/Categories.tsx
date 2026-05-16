@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Alert,
   Box,
   Button,
+  Card,
+  CardMedia,
   Chip,
   CircularProgress,
   Dialog,
@@ -19,7 +21,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
-import { Add, Delete, Edit, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Add, CloudUpload, Delete, Edit, Visibility, VisibilityOff } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
@@ -35,6 +37,7 @@ interface Category {
   parentId: string | null;
   isActive: boolean;
   sortOrder: number;
+  imageUrl?: string;
   children?: Category[];
 }
 
@@ -43,6 +46,7 @@ const Categories: React.FC = () => {
   const { t } = useTranslation();
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery('(max-width:600px)');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -51,8 +55,11 @@ const Categories: React.FC = () => {
     parentId: '',
     sortOrder: 0,
     isActive: true,
+    imageUrl: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
 
   const isLight = muiTheme.palette.mode === 'light';
   const surface = muiTheme.palette.background.paper;
@@ -81,6 +88,30 @@ const Categories: React.FC = () => {
         setError(err.response?.data?.message || t('catalog.failedFetchCategories'));
         return [];
       }
+    },
+  });
+
+  const uploadImageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('categoryImage', file);
+      
+      const response = await api.post('/catalog/admin/categories/upload-image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setFormData((prev) => ({ ...prev, imageUrl: data.imageUrl }));
+      setSelectedImagePreview(null); // Clear preview once uploaded
+      setUploadingImage(false);
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.message || 'Failed to upload image');
+      setSelectedImagePreview(null); // Clear preview on error
+      setUploadingImage(false);
     },
   });
 
@@ -164,7 +195,8 @@ const Categories: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingCategory(null);
-    setFormData({ name: '', parentId: '', sortOrder: 0, isActive: true });
+    setFormData({ name: '', parentId: '', sortOrder: 0, isActive: true, imageUrl: '' });
+    setSelectedImagePreview(null);
     setError(null);
     setDialogOpen(true);
   };
@@ -176,7 +208,9 @@ const Categories: React.FC = () => {
       parentId: category.parentId || '',
       sortOrder: category.sortOrder,
       isActive: category.isActive,
+      imageUrl: category.imageUrl || '',
     });
+    setSelectedImagePreview(null);
     setError(null);
     setDialogOpen(true);
   };
@@ -185,6 +219,30 @@ const Categories: React.FC = () => {
     setDialogOpen(false);
     setEditingCategory(null);
     setError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Show preview immediately
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setSelectedImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      // Upload the image
+      setUploadingImage(true);
+      uploadImageMutation.mutate(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, imageUrl: '' }));
+    setSelectedImagePreview(null);
   };
 
   const handleSubmit = () => {
@@ -198,6 +256,7 @@ const Categories: React.FC = () => {
       parentId: formData.parentId || null,
       sortOrder: Number(formData.sortOrder),
       isActive: formData.isActive,
+      imageUrl: formData.imageUrl,
     };
 
     if (editingCategory) {
@@ -229,6 +288,13 @@ const Categories: React.FC = () => {
           label={
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', py: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                {node.imageUrl && node.imageUrl.trim() && (
+                  <img 
+                    src={node.imageUrl} 
+                    alt={node.name}
+                    style={{ width: 30, height: 30, objectFit: 'cover', borderRadius: 4 }}
+                  />
+                )}
                 <Typography>{node.name}</Typography>
                 <Chip label={t('catalog.sortLabel', { value: node.sortOrder })} size="small" variant="outlined" />
                 {!node.isActive && <Chip label={t('catalog.inactive')} size="small" />}
@@ -393,6 +459,91 @@ const Categories: React.FC = () => {
               control={<Switch checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} />}
               label={t('catalog.active')}
             />
+
+            {/* Image Upload Section */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: muiTheme.palette.text.secondary }}>
+                {t('catalog.categoryImage')}
+              </Typography>
+              
+              {(formData.imageUrl || selectedImagePreview) && !uploadingImage && (
+                <Card sx={{ maxWidth: 200, position: 'relative' }}>
+                  <CardMedia
+                    component="img"
+                    height="120"
+                    image={formData.imageUrl || selectedImagePreview || ''}
+                    alt="Category"
+                    sx={{ objectFit: 'cover' }}
+                  />
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={handleRemoveImage}
+                    sx={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      backgroundColor: 'rgba(255,255,255,0.8)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,1)' }
+                    }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Card>
+              )}
+              
+              {(uploadingImage || (!formData.imageUrl && !selectedImagePreview)) && (
+                <Box
+                  sx={{
+                    border: `2px dashed ${border}`,
+                    borderRadius: 2,
+                    p: 3,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    '&:hover': { borderColor: accent, backgroundColor: hover },
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploadingImage ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      {selectedImagePreview && (
+                        <Box
+                          component="img"
+                          src={selectedImagePreview}
+                          alt="Preview"
+                          sx={{ 
+                            width: 120, 
+                            height: 80,
+                            objectFit: 'cover', 
+                            borderRadius: 1,
+                            opacity: 0.7
+                          }}
+                        />
+                      )}
+                      <CircularProgress size={24} sx={{ color: muiTheme.palette.primary.main }} />
+                      <Typography variant="caption" color="text.secondary">
+                        Uploading...
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <>
+                      <CloudUpload sx={{ fontSize: 40, color: muiTheme.palette.text.secondary, mb: 1 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        {t('catalog.uploadImagePrompt')}
+                      </Typography>
+                    </>
+                  )}
+                </Box>
+              )}
+              
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={handleImageSelect}
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>

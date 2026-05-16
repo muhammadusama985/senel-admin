@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   MenuItem,
   Paper,
   Stack,
@@ -14,6 +15,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { Delete } from '@mui/icons-material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -84,6 +86,18 @@ const Coupons: React.FC = () => {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
+      // Validate dates
+      if (form.startsAt && form.endsAt) {
+        const startDate = new Date(form.startsAt);
+        const endDate = new Date(form.endsAt);
+        if (startDate >= endDate) {
+          throw new Error('End date must be after start date');
+        }
+      }
+      if (!form.startsAt && form.endsAt) {
+        throw new Error('Start date is required when setting an end date');
+      }
+
       const payload = {
         ...form,
         code: form.code.trim().toUpperCase(),
@@ -106,7 +120,19 @@ const Coupons: React.FC = () => {
       setError('');
     },
     onError: (mutationError: any) => {
-      setError(mutationError.response?.data?.message || 'Failed to save coupon');
+      setError(mutationError.response?.data?.message || mutationError.message || 'Failed to save coupon');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/admin/coupons/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] });
+    },
+    onError: (mutationError: any) => {
+      setError(mutationError.response?.data?.message || 'Failed to delete coupon');
     },
   });
 
@@ -148,34 +174,48 @@ const Coupons: React.FC = () => {
       {
         field: 'actions',
         headerName: t('common.actions'),
-        minWidth: 140,
+        minWidth: 160,
         sortable: false,
         renderCell: (params) => (
-          <Button
-            size="small"
-            onClick={() => {
-              const coupon = params.row as Coupon;
-              setEditing(coupon);
-              setForm({
-                code: coupon.code || '',
-                scope: coupon.scope || 'global',
-                vendorId: coupon.vendorId || '',
-                discountType: coupon.discountType || 'percent',
-                value: coupon.value || 0,
-                minSubtotal: coupon.minSubtotal || 0,
-                maxDiscount: coupon.maxDiscount || 0,
-                usageLimitTotal: coupon.usageLimitTotal || 0,
-                usageLimitPerUser: coupon.usageLimitPerUser || 0,
-                startsAt: toInputDateTime(coupon.startsAt),
-                endsAt: toInputDateTime(coupon.endsAt),
-                isActive: coupon.isActive ?? true,
-              });
-              setError('');
-              setOpen(true);
-            }}
-          >
-            {t('common.edit')}
-          </Button>
+          <Stack direction="row" spacing={0.5}>
+            <Button
+              size="small"
+              onClick={() => {
+                const coupon = params.row as Coupon;
+                setEditing(coupon);
+                setForm({
+                  code: coupon.code || '',
+                  scope: coupon.scope || 'global',
+                  vendorId: coupon.vendorId || '',
+                  discountType: coupon.discountType || 'percent',
+                  value: coupon.value || 0,
+                  minSubtotal: coupon.minSubtotal || 0,
+                  maxDiscount: coupon.maxDiscount || 0,
+                  usageLimitTotal: coupon.usageLimitTotal || 0,
+                  usageLimitPerUser: coupon.usageLimitPerUser || 0,
+                  startsAt: toInputDateTime(coupon.startsAt),
+                  endsAt: toInputDateTime(coupon.endsAt),
+                  isActive: coupon.isActive ?? true,
+                });
+                setError('');
+                setOpen(true);
+              }}
+            >
+              {t('common.edit')}
+            </Button>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => {
+                if (window.confirm(t('coupons.deleteConfirm', 'Are you sure you want to delete this coupon?'))) {
+                  deleteMutation.mutate(params.row._id);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Stack>
         ),
       },
     ],
@@ -328,6 +368,12 @@ const Coupons: React.FC = () => {
               <Switch checked={form.isActive} onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))} />
               <Typography>{t('coupons.active')}</Typography>
             </Stack>
+
+            {(form.startsAt && form.endsAt) && new Date(form.startsAt) >= new Date(form.endsAt) && (
+              <Alert severity="error">
+                End date must be after start date
+              </Alert>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>

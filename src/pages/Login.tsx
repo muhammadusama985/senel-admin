@@ -108,14 +108,22 @@ const Login: React.FC = () => {
       useAuthStore.getState().setUser(user);
       navigate('/');
     } catch (err: any) {
+      console.log('Login error caught:', err);
+      console.log('Response status:', err.response?.status);
+      console.log('Response data:', err.response?.data);
+      
       if (err.response?.status === 401) {
         setError(t('login.invalidCredentials'));
       } else if (err.response?.status === 403) {
         setError(t('login.accessDeniedAdmin'));
-      } else if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
+      } else if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {
         setError(t('login.cannotConnect'));
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        setError(err.response?.data?.message || t('login.failed'));
+        setError(t('login.failed'));
       }
     } finally {
       setLoading(false);

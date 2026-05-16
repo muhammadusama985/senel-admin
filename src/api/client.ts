@@ -58,6 +58,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Log error details
     console.error('❌ API Error:', {
       status: error.response?.status,
       data: error.response?.data,
@@ -66,13 +67,19 @@ api.interceptors.response.use(
       language: error.config?.headers?.['Accept-Language'],
     });
     
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized - ONLY redirect if NOT on login page
     if (error.response?.status === 401) {
-      console.log('🔐 Unauthorized - clearing token and redirecting to login');
-      localStorage.removeItem('adminToken');
-      // Clear language preference? Keep it - user might want same language after login
-      // localStorage.removeItem('language'); 
-      window.location.href = '/login';
+      const currentPath = window.location.pathname;
+      const isLoginPage = currentPath === '/login' || currentPath === '/login/';
+      
+      // If on login page, let the error propagate so the login form can handle it
+      if (!isLoginPage) {
+        console.log('🔐 Unauthorized - clearing token and redirecting to login');
+        localStorage.removeItem('adminToken');
+        window.location.href = '/login';
+      } else {
+        console.log('🔐 401 on login page - letting login form handle the error');
+      }
     }
     
     // Handle 403 Forbidden

@@ -34,6 +34,7 @@ import {
   Add,
   Archive,
   Clear,
+  Delete,
   Edit,
   FilterList,
   Inventory,
@@ -41,6 +42,7 @@ import {
   Search,
   Star,
   StarBorder,
+  Unarchive,
   Visibility,
 } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -152,6 +154,26 @@ const ProductList: React.FC = () => {
     },
   });
 
+  const unarchiveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.patch(`/products/admin/products/${id}`, { status: 'approved' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+      handleMenuClose();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/products/admin/products/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
+      handleMenuClose();
+    },
+  });
+
   const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
@@ -170,6 +192,18 @@ const ProductList: React.FC = () => {
   const handleArchive = () => {
     if (selectedProduct && window.confirm(t('products.archiveConfirm'))) {
       archiveMutation.mutate(selectedProduct._id);
+    }
+  };
+
+  const handleUnarchive = () => {
+    if (selectedProduct && window.confirm(t('products.unarchiveConfirm'))) {
+      unarchiveMutation.mutate(selectedProduct._id);
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedProduct && window.confirm(t('products.deleteConfirm', 'Are you sure you want to delete this product? This action cannot be undone.'))) {
+      deleteMutation.mutate(selectedProduct._id);
     }
   };
 
@@ -459,6 +493,14 @@ const ProductList: React.FC = () => {
         ) : null}
         <MenuItem onClick={handleArchive}>
           <Archive sx={{ mr: 1, fontSize: 20 }} /> {t('products.archive')}
+        </MenuItem>
+        {selectedProduct?.status === 'archived' && (
+          <MenuItem onClick={handleUnarchive}>
+            <Unarchive sx={{ mr: 1, fontSize: 20 }} /> {t('products.unarchive')}
+          </MenuItem>
+        )}
+        <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+          <Delete sx={{ mr: 1, fontSize: 20 }} /> {t('common.delete')}
         </MenuItem>
       </Menu>
     </Box>

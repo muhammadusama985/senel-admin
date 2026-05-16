@@ -57,14 +57,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     setAnchorEl(null);
   };
 
-  const handleProfile = () => {
-    handleClose();
-    navigate('/settings/password-reset');
-  };
-
   const handleMyAccount = () => {
     handleClose();
-    navigate('/settings/tax');
+    navigate('/settings/password-reset');
   };
 
   const handleNotifications = () => {
@@ -168,7 +163,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </IconButton>
 
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-          <MenuItem onClick={handleProfile}>{t('header.profile')}</MenuItem>
           <MenuItem onClick={handleMyAccount}>{t('header.myAccount')}</MenuItem>
           <Divider />
           <MenuItem onClick={handleLogout}>{t('header.logout')}</MenuItem>
