@@ -41,6 +41,8 @@ import SalesReport from './pages/Analytics/SalesReport';
 import TaxSettings from './pages/Settings/TaxSettings';
 import EmailTemplates from './pages/Settings/EmailTemplates';
 import PasswordResetManagement from './pages/Settings/PasswordResetManagement';
+import BulkOffersMonitor from './pages/Negotiations/BulkOffersMonitor';
+import CustomProductionMonitor from './pages/Negotiations/CustomProductionMonitor';
 
 const queryClient = new QueryClient();
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -98,6 +100,9 @@ function App() {
               <Route path="/settings/tax" element={<PrivateRoute><TaxSettings /></PrivateRoute>} />
               <Route path="/settings/email-templates" element={<PrivateRoute><EmailTemplates /></PrivateRoute>} />
               <Route path="/settings/password-reset" element={<PrivateRoute><PasswordResetManagement /></PrivateRoute>} />
+
+              <Route path="/negotiations/bulk-offers" element={<PrivateRoute><BulkOffersMonitor /></PrivateRoute>} />
+              <Route path="/negotiations/custom-production" element={<PrivateRoute><CustomProductionMonitor /></PrivateRoute>} />
             </Routes>
           </BrowserRouter>
         </ThemeProvider>

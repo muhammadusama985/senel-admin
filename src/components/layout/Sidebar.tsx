@@ -27,6 +27,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import GavelIcon from '@mui/icons-material/Gavel';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import HandshakeIcon from '@mui/icons-material/Handshake';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 
@@ -83,6 +85,16 @@ const menuItems: MenuItem[] = [
   { text: 'Reviews', textKey: 'nav.reviews', icon: <RateReviewIcon />, path: '/reviews' },
   { text: 'Support Tickets', textKey: 'nav.supportTickets', icon: <MailOutlineIcon />, path: '/support/tickets' },
   { text: 'Disputes', textKey: 'nav.disputes', icon: <GavelIcon />, path: '/disputes' },
+  {
+    text: 'Negotiations',
+    textKey: 'nav.negotiations',
+    icon: <HandshakeIcon />,
+    path: '/negotiations/bulk-offers',
+    children: [
+      { text: 'Bulk Offers', icon: null, path: '/negotiations/bulk-offers' },
+      { text: 'Custom Production', icon: null, path: '/negotiations/custom-production' },
+    ],
+  },
   { text: 'Email Templates', textKey: 'nav.emailTemplates', icon: <MailOutlineIcon />, path: '/settings/email-templates' },
   {
     text: 'CMS',
