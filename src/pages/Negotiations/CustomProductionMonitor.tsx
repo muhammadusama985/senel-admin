@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { Box, Chip, MenuItem, Paper, Select, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Chip,
+  Paper,
+  Stack,
+  Typography,
+  MenuItem,
+  Select,
+  TextField,
+} from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/client';
@@ -30,12 +40,19 @@ const statusColors: Record<string, 'default' | 'primary' | 'success' | 'warning'
   completed: 'success',
 };
 
+const formatDate = (value?: string) => {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString();
+};
+
 const CustomProductionMonitor: React.FC = () => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'custom-production', status, search],
     queryFn: async () => {
       const r = await api.get('/custom-production/admin', {
@@ -53,54 +70,70 @@ const CustomProductionMonitor: React.FC = () => {
       : true
   );
 
-  const columns: GridColDef[] = [
-    { field: 'product', headerName: 'Product', flex: 1.2, valueGetter: (p: any) => p.row.productSnapshot?.title || '-' },
-    { field: 'vendor', headerName: 'Vendor', flex: 1, valueGetter: (p: any) => p.row.vendorSnapshot?.storeName || '-' },
-    { field: 'buyer', headerName: 'Buyer', flex: 1, valueGetter: (p: any) => p.row.buyerSnapshot?.companyName || p.row.buyerSnapshot?.email || '-' },
+  const columns: GridColDef<RFQ>[] = [
+    {
+      field: 'productTitle',
+      headerName: 'Product',
+      flex: 1.2,
+      valueGetter: (_value, row) => row?.productSnapshot?.title || '-',
+    },
+    {
+      field: 'vendorName',
+      headerName: 'Vendor',
+      flex: 1,
+      valueGetter: (_value, row) => row?.vendorSnapshot?.storeName || '-',
+    },
+    {
+      field: 'buyerLabel',
+      headerName: 'Buyer',
+      flex: 1,
+      valueGetter: (_value, row) =>
+        row?.buyerSnapshot?.companyName || row?.buyerSnapshot?.email || '-',
+    },
     { field: 'qty', headerName: 'Qty', width: 90 },
     {
       field: 'quotation',
       headerName: 'Quotation',
       flex: 1,
-      valueGetter: (p: any) =>
-        p.row.quotation
-          ? `${p.row.quotation.unitPrice} ${p.row.quotation.currency} / unit (total ${p.row.quotation.totalPrice})`
+      valueGetter: (_value, row) =>
+        row?.quotation
+          ? `${row.quotation.unitPrice} ${row.quotation.currency} / unit (total ${row.quotation.totalPrice})`
           : '-',
     },
     {
       field: 'status',
       headerName: 'Status',
       width: 150,
-      renderCell: (p: any) => (
-        <Chip label={p.row.status} color={statusColors[p.row.status] || 'default'} size="small" />
-      ),
+      renderCell: (params) => {
+        const status = (params.row?.status as string) || '';
+        return (
+          <Chip label={status} color={statusColors[status] || 'default'} size="small" />
+        );
+      },
     },
     {
       field: 'paymentLink',
       headerName: 'Payment / Order',
       width: 160,
-      renderCell: (p: any) =>
-        p.row.paymentLink?.usedAt ? (
-          <Chip label="Paid" color="success" size="small" />
-        ) : p.row.orderId ? (
-          <Chip label="Order Created" color="primary" size="small" />
-        ) : p.row.paymentLink?.token ? (
-          <Chip label="Link Issued" color="warning" size="small" />
-        ) : (
-          <Chip label="—" size="small" />
-        ),
+      renderCell: (params) => {
+        const link = params.row?.paymentLink;
+        if (link?.usedAt) return <Chip label="Paid" color="success" size="small" />;
+        if (params.row?.orderId) return <Chip label="Order Created" color="primary" size="small" />;
+        if (link?.token) return <Chip label="Link Issued" color="warning" size="small" />;
+        return <Chip label="—" size="small" />;
+      },
     },
     {
       field: 'validUntil',
       headerName: 'Valid Until',
       width: 170,
-      valueFormatter: (p: any) => (p.value ? new Date(p.value).toLocaleString() : '-'),
+      valueGetter: (_value, row) => formatDate(row?.validUntil),
     },
     {
       field: 'createdAt',
       headerName: 'Created',
       width: 160,
-      valueFormatter: (p: any) => (p.value ? new Date(p.value).toLocaleString() : '-'),
+      valueGetter: (_value, row) => formatDate(row?.createdAt),
     },
   ];
 
@@ -109,6 +142,12 @@ const CustomProductionMonitor: React.FC = () => {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h4">Custom Production Requests</Typography>
       </Stack>
+
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load custom production requests.
+        </Alert>
+      ) : null}
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
         <TextField
@@ -138,10 +177,11 @@ const CustomProductionMonitor: React.FC = () => {
       </Stack>
 
       <Paper sx={{ height: 'calc(100vh - 240px)', minHeight: 500 }}>
-        <DataGrid
+        <DataGrid<RFQ>
           rows={rows}
           columns={columns}
           loading={isLoading}
+          getRowId={(row) => row._id}
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
           disableRowSelectionOnClick

@@ -1,5 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Chip, Paper, Stack, Typography, MenuItem, Select, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Box,
+  Chip,
+  Paper,
+  Stack,
+  Typography,
+  MenuItem,
+  Select,
+  TextField,
+} from '@mui/material';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api/client';
@@ -29,12 +39,19 @@ const statusColors: Record<string, 'default' | 'primary' | 'success' | 'warning'
   cancelled: 'default',
 };
 
+const formatDate = (value?: string) => {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '-';
+  return d.toLocaleString();
+};
+
 const BulkOffersMonitor: React.FC = () => {
   const { t } = useTranslation();
   const [status, setStatus] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'bulk-offers', status, search],
     queryFn: async () => {
       const r = await api.get('/bulk-offers/admin', {
@@ -52,48 +69,68 @@ const BulkOffersMonitor: React.FC = () => {
       : true
   );
 
-  const columns: GridColDef[] = [
-    { field: 'product', headerName: 'Product', flex: 1.2, valueGetter: (p: any) => p.row.productSnapshot?.title || '-' },
-    { field: 'vendor', headerName: 'Vendor', flex: 1, valueGetter: (p: any) => p.row.vendorSnapshot?.storeName || '-' },
-    { field: 'buyer', headerName: 'Buyer', flex: 1, valueGetter: (p: any) => p.row.buyerSnapshot?.companyName || p.row.buyerSnapshot?.email || '-' },
+  // v8-compatible DataGrid columns:
+  // valueGetter/valueFormatter/renderCell use (value, row) or (params) signature.
+  const columns: GridColDef<BulkOffer>[] = [
+    {
+      field: 'productTitle',
+      headerName: 'Product',
+      flex: 1.2,
+      valueGetter: (_value, row) => row?.productSnapshot?.title || '-',
+    },
+    {
+      field: 'vendorName',
+      headerName: 'Vendor',
+      flex: 1,
+      valueGetter: (_value, row) => row?.vendorSnapshot?.storeName || '-',
+    },
+    {
+      field: 'buyerLabel',
+      headerName: 'Buyer',
+      flex: 1,
+      valueGetter: (_value, row) =>
+        row?.buyerSnapshot?.companyName || row?.buyerSnapshot?.email || '-',
+    },
     {
       field: 'terms',
       headerName: 'Terms',
       flex: 1.2,
-      valueGetter: (p: any) => `${p.row.currentQty} @ ${p.row.currentUnitPrice} ${p.row.currency}`,
+      valueGetter: (_value, row) =>
+        row ? `${row.currentQty} @ ${row.currentUnitPrice} ${row.currency}` : '-',
     },
     {
       field: 'status',
       headerName: 'Status',
       width: 130,
-      renderCell: (p: any) => (
-        <Chip label={p.row.status} color={statusColors[p.row.status] || 'default'} size="small" />
-      ),
+      renderCell: (params) => {
+        const status = (params.row?.status as string) || '';
+        return (
+          <Chip label={status} color={statusColors[status] || 'default'} size="small" />
+        );
+      },
     },
     {
       field: 'validUntil',
       headerName: 'Valid Until',
       width: 170,
-      valueFormatter: (p: any) => (p.value ? new Date(p.value).toLocaleString() : '-'),
+      valueGetter: (_value, row) => formatDate(row?.validUntil),
     },
     {
       field: 'paymentLink',
       headerName: 'Payment Link',
       width: 140,
-      renderCell: (p: any) =>
-        p.row.paymentLink?.usedAt ? (
-          <Chip label="Paid" color="success" size="small" />
-        ) : p.row.paymentLink?.token ? (
-          <Chip label="Link Issued" color="warning" size="small" />
-        ) : (
-          <Chip label="—" size="small" />
-        ),
+      renderCell: (params) => {
+        const link = params.row?.paymentLink;
+        if (link?.usedAt) return <Chip label="Paid" color="success" size="small" />;
+        if (link?.token) return <Chip label="Link Issued" color="warning" size="small" />;
+        return <Chip label="—" size="small" />;
+      },
     },
     {
       field: 'createdAt',
       headerName: 'Created',
       width: 160,
-      valueFormatter: (p: any) => (p.value ? new Date(p.value).toLocaleString() : '-'),
+      valueGetter: (_value, row) => formatDate(row?.createdAt),
     },
   ];
 
@@ -102,6 +139,12 @@ const BulkOffersMonitor: React.FC = () => {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <Typography variant="h4">Bulk Offers & Negotiations</Typography>
       </Stack>
+
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load bulk offers.
+        </Alert>
+      ) : null}
 
       <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
         <TextField
@@ -129,10 +172,11 @@ const BulkOffersMonitor: React.FC = () => {
       </Stack>
 
       <Paper sx={{ height: 'calc(100vh - 240px)', minHeight: 500 }}>
-        <DataGrid
+        <DataGrid<BulkOffer>
           rows={rows}
           columns={columns}
           loading={isLoading}
+          getRowId={(row) => row._id}
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
           disableRowSelectionOnClick

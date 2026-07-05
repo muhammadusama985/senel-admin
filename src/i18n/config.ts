@@ -37,6 +37,9 @@ const resources = {
       'nav.tax': 'Tax',
       'nav.passwordReset': 'Password Reset',
       'nav.supportTickets': 'Support Tickets',
+      'nav.negotiations': 'Negotiations',
+      'nav.bulkOffers': 'Bulk Offers',
+      'nav.customProduction': 'Custom Production',
 
       'header.adminDashboard': 'Admin Dashboard',
       'header.profile': 'Profile',
@@ -888,6 +891,9 @@ const resources = {
       'nav.tax': 'Steuer',
       'nav.passwordReset': 'Passwort-Reset',
       'nav.supportTickets': 'Support-Tickets',
+      'nav.negotiations': 'Verhandlungen',
+      'nav.bulkOffers': 'Sammelbestellungen',
+      'nav.customProduction': 'Sonderanfertigung',
 
       'header.adminDashboard': 'Admin-Dashboard',
       'header.profile': 'Profil',
@@ -1739,6 +1745,9 @@ const resources = {
       'nav.tax': 'Vergi',
       'nav.passwordReset': 'Sifre Sifirlama',
       'nav.supportTickets': 'Destek Talepleri',
+      'nav.negotiations': 'Pazarlıklar',
+      'nav.bulkOffers': 'Toplu Teklifler',
+      'nav.customProduction': 'Özel Üretim',
 
       'header.adminDashboard': 'Admin Paneli',
       'header.profile': 'Profil',

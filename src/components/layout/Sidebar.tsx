@@ -91,8 +91,8 @@ const menuItems: MenuItem[] = [
     icon: <HandshakeIcon />,
     path: '/negotiations/bulk-offers',
     children: [
-      { text: 'Bulk Offers', icon: null, path: '/negotiations/bulk-offers' },
-      { text: 'Custom Production', icon: null, path: '/negotiations/custom-production' },
+      { text: 'Bulk Offers', textKey: 'nav.bulkOffers', icon: null, path: '/negotiations/bulk-offers' },
+      { text: 'Custom Production', textKey: 'nav.customProduction', icon: null, path: '/negotiations/custom-production' },
     ],
   },
   { text: 'Email Templates', textKey: 'nav.emailTemplates', icon: <MailOutlineIcon />, path: '/settings/email-templates' },
