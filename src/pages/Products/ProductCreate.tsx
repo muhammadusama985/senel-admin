@@ -86,7 +86,7 @@ const ProductCreate: React.FC = () => {
     titleML: { en: '', de: '', tr: '' },
     descriptionML: { en: '', de: '', tr: '' },
     priceTiers: [{ ...emptyTier }],
-    attributeAdjustments: {} as Record<string, Record<string, number>>,
+    priceAdjustment: 0,
     imageUrls: [] as string[],
   });
 
@@ -116,7 +116,6 @@ const ProductCreate: React.FC = () => {
         description: form.descriptionML.en || form.description,
         vendorId: form.vendorId || undefined,
         stockQty: form.stockQty,
-        attributeAdjustments: form.attributeAdjustments,
         variants: form.hasVariants
           ? form.variants.map((variant) => ({
               ...variant,
@@ -467,8 +466,6 @@ const ProductCreate: React.FC = () => {
                   )
                 }
                 uploadImage={uploadVariantImage}
-                attributeAdjustments={form.attributeAdjustments}
-                onAttributeAdjustmentsChange={(value) => updateField('attributeAdjustments', value)}
               />
             ) : null}
           </Stack>

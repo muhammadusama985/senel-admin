@@ -48,6 +48,7 @@ type ProductForm = {
   stockQty: number;
   hasVariants: boolean;
   variants: ProductVariant[];
+  attributeAdjustments: Record<string, Record<string, number>>;
   trackInventory: boolean;
   lowStockThreshold: number;
   lengthCm: number;
@@ -73,6 +74,7 @@ const createInitialForm = (): ProductForm => ({
   stockQty: 0,
   hasVariants: false,
   variants: [],
+  attributeAdjustments: {},
   trackInventory: true,
   lowStockThreshold: 5,
   lengthCm: 0,
@@ -114,6 +116,10 @@ const normalizeProductToForm = (product: any): ProductForm => ({
         imageUrls: Array.isArray(variant?.imageUrls) ? variant.imageUrls : [],
       }))
     : [],
+  attributeAdjustments:
+    product?.attributeAdjustments && typeof product.attributeAdjustments === 'object'
+      ? product.attributeAdjustments
+      : {},
   trackInventory: product?.trackInventory ?? true,
   lowStockThreshold: Number(product?.lowStockThreshold ?? 5),
   lengthCm: Number(product?.lengthCm) || 0,
@@ -364,6 +370,7 @@ const ProductEdit: React.FC = () => {
               stockQty: Number(form.stockQty),
             }))
           : form.variants,
+        attributeAdjustments: form.attributeAdjustments,
         lengthCm: Number(form.lengthCm),
         widthCm: Number(form.widthCm),
         heightCm: Number(form.heightCm),
@@ -702,6 +709,8 @@ const ProductEdit: React.FC = () => {
                       )
                     }
                     uploadImage={uploadVariantImage}
+                    attributeAdjustments={form.attributeAdjustments}
+                    onAttributeAdjustmentsChange={(value) => updateField('attributeAdjustments', value)}
                   />
                 </Paper>
               ) : null}
