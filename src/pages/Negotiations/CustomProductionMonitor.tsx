@@ -25,7 +25,7 @@ interface RFQ {
   validUntil: string;
   createdAt?: string;
   quotation?: { unitPrice: number; totalPrice?: number; currency: string };
-  paymentLink?: { usedAt?: string; orderId?: string };
+  paymentLink?: { token?: string; usedAt?: string; orderId?: string };
   orderId?: string;
 }
 

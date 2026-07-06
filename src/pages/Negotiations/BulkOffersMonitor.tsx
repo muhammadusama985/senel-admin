@@ -26,7 +26,7 @@ interface BulkOffer {
   status: string;
   validUntil: string;
   createdAt?: string;
-  paymentLink?: { usedAt?: string; orderId?: string };
+  paymentLink?: { token?: string; usedAt?: string; orderId?: string };
   orderId?: string;
 }
 

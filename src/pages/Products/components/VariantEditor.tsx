@@ -25,6 +25,8 @@ interface VariantEditorProps {
   variants: ProductVariant[];
   onChange: (variants: ProductVariant[]) => void;
   uploadImage: (file: File) => Promise<string | null>;
+  attributeAdjustments?: Record<string, Record<string, number>>;
+  onAttributeAdjustmentsChange?: (next: Record<string, Record<string, number>>) => void;
 }
 
 type AttributeGroup = {
@@ -101,7 +103,13 @@ const getVariantAttributeTitle = (variant: ProductVariant, fallbackIndex: number
   return keys[0] || `Attribute ${fallbackIndex + 1}`;
 };
 
-const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploadImage }) => {
+const VariantEditor: React.FC<VariantEditorProps> = ({
+  variants,
+  onChange,
+  uploadImage,
+  attributeAdjustments = {},
+  onAttributeAdjustmentsChange,
+}) => {
   const muiTheme = useMuiTheme();
   const isLight = muiTheme.palette.mode === 'light';
   const border = muiTheme.palette.divider;
@@ -122,6 +130,12 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
 
   const updateVariants = (updater: (current: ProductVariant[]) => ProductVariant[]) => {
     onChange(updater(variants));
+  };
+
+  const updateAdjustments = (
+    updater: (current: Record<string, Record<string, number>>) => Record<string, Record<string, number>>
+  ) => {
+    onAttributeAdjustmentsChange?.(updater(attributeAdjustments));
   };
 
   const createOption = (attributeTitle: string, optionValue = ''): ProductVariant => ({
@@ -157,6 +171,14 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
         return { ...variant, attributes: nextAttributes };
       }),
     );
+    if (attributeAdjustments[oldTitle]) {
+      updateAdjustments((current) => {
+        const next = { ...current };
+        next[cleanTitle] = next[oldTitle] || {};
+        delete next[oldTitle];
+        return next;
+      });
+    }
   };
 
   const removeAttributeGroup = (title: string) => {
@@ -166,6 +188,13 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
       delete next[title];
       return next;
     });
+    if (attributeAdjustments[title]) {
+      updateAdjustments((current) => {
+        const next = { ...current };
+        delete next[title];
+        return next;
+      });
+    }
   };
 
   const addOptionToGroup = (title: string) => {
@@ -173,11 +202,73 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
   };
 
   const removeOption = (variantIndex: number) => {
+    const removedVariant = variants[variantIndex];
+    const removedAttrTitle = Object.keys(removedVariant.attributes || {})[0];
+    const removedAttrValue = removedVariant.attributes?.[removedAttrTitle];
     updateVariants((current) => current.filter((_, index) => index !== variantIndex));
+    if (removedAttrTitle && removedAttrValue != null && removedAttrValue !== '') {
+      const stillUsed = variants.some(
+        (v, idx) => idx !== variantIndex && v.attributes?.[removedAttrTitle] === removedAttrValue
+      );
+      if (!stillUsed) {
+        updateAdjustments((current) => {
+          const next = { ...current };
+          if (next[removedAttrTitle]) {
+            const attrMap = { ...next[removedAttrTitle] };
+            delete attrMap[removedAttrValue];
+            next[removedAttrTitle] = attrMap;
+          }
+          return next;
+        });
+      }
+    }
   };
 
   const updateOption = (variantIndex: number, updater: (variant: ProductVariant) => ProductVariant) => {
     updateVariants((current) => current.map((variant, index) => (index === variantIndex ? updater(variant) : variant)));
+  };
+
+  const updateAdjustmentForOption = (attrTitle: string, attrValue: string, raw: string) => {
+    const num = parseFloat(raw);
+    updateAdjustments((current) => {
+      const next = { ...current };
+      const attrMap = { ...(next[attrTitle] || {}) };
+      if (raw === '' || isNaN(num)) {
+        delete attrMap[attrValue];
+      } else {
+        attrMap[attrValue] = num;
+      }
+      next[attrTitle] = attrMap;
+      return next;
+    });
+  };
+
+  const updateOptionName = (variantIndex: number, attrTitle: string, newValue: string) => {
+    const oldValue = variants[variantIndex].attributes?.[attrTitle];
+    updateOption(variantIndex, (variant) => ({
+      ...variant,
+      attributes: { [attrTitle]: newValue },
+    }));
+    if (oldValue != null && oldValue !== '' && oldValue !== newValue) {
+      const stillUsedOld = variants.some(
+        (v, idx) => idx !== variantIndex && v.attributes?.[attrTitle] === oldValue
+      );
+      updateAdjustments((current) => {
+        const next = { ...current };
+        const attrMap = { ...(next[attrTitle] || {}) };
+        if (!stillUsedOld) {
+          delete attrMap[oldValue];
+        }
+        if (newValue !== '' && attrMap[newValue] == null) {
+          const existing = attrMap[oldValue];
+          if (existing != null) {
+            attrMap[newValue] = existing;
+          }
+        }
+        next[attrTitle] = attrMap;
+        return next;
+      });
+    }
   };
 
   const handleOptionImages = async (variantIndex: number, files: FileList | null) => {
@@ -268,7 +359,10 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                 <Stack spacing={1.5}>
                   {group.indexes.map((variantIndex, optionOffset) => {
                     const option = variants[variantIndex];
-                    const optionValue = option.attributes?.[group.title] ?? '';
+                    const optionValue = String(option.attributes?.[group.title] ?? '');
+                    const currentAdj = attributeAdjustments?.[group.title]?.[optionValue];
+                    const adjValue =
+                      currentAdj === undefined || currentAdj === null ? '' : String(currentAdj);
 
                     return (
                       <Card key={`${group.title}-${variantIndex}`} variant="outlined" sx={{ borderColor: border, backgroundColor: surface }}>
@@ -286,20 +380,17 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                             <Grid container spacing={1.5} alignItems="flex-end">
                               {colorMode ? (
                                 <>
-                                  <Grid size={{ xs: 12, md: 3 }}>
-                                    <TextField fullWidth label="Option Name" value={String(optionValue || '')} placeholder="Color name" InputProps={{ readOnly: true }} />
+                                  <Grid size={{ xs: 12, md: 2.5 }}>
+                                    <TextField fullWidth label="Option Name" value={optionValue} placeholder="Color name" InputProps={{ readOnly: true }} />
                                   </Grid>
-                                  <Grid size={{ xs: 12, md: 2 }}>
+                                  <Grid size={{ xs: 6, md: 1.5 }}>
                                     <TextField
                                       fullWidth
                                       type="color"
                                       label="Palette"
-                                      value={colorHexFromValue(String(optionValue || ''))}
+                                      value={colorHexFromValue(optionValue)}
                                       onChange={(event) =>
-                                        updateOption(variantIndex, (variant) => ({
-                                          ...variant,
-                                          attributes: { [group.title]: colorNameFromHex(event.target.value) },
-                                        }))
+                                        updateOptionName(variantIndex, group.title, colorNameFromHex(event.target.value))
                                       }
                                       sx={{
                                         '& .MuiInputBase-input': {
@@ -309,43 +400,52 @@ const VariantEditor: React.FC<VariantEditorProps> = ({ variants, onChange, uploa
                                       }}
                                     />
                                   </Grid>
-                                  <Grid size={{ xs: 12, md: 1 }}>
+                                  <Grid size={{ xs: 6, md: 0.8 }}>
                                     <Box
-                                      title={String(optionValue || '')}
+                                      title={optionValue}
                                       sx={{
                                         width: 40,
                                         height: 40,
                                         borderRadius: '50%',
                                         border: `1px solid ${border}`,
-                                        backgroundColor: colorHexFromValue(String(optionValue || '')),
+                                        backgroundColor: colorHexFromValue(optionValue),
                                         boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.35)',
                                       }}
                                     />
                                   </Grid>
                                 </>
                               ) : (
-                                <Grid size={{ xs: 12, md: 4 }}>
+                                <Grid size={{ xs: 12, md: 3 }}>
                                   <TextField
                                     fullWidth
                                     label="Option Name"
-                                    value={String(optionValue || '')}
+                                    value={optionValue}
                                     placeholder={group.title.trim().toLowerCase() === 'size' ? 'e.g. Small, Medium, Large' : 'e.g. Yellow, Blue'}
-                                    onChange={(event) =>
-                                      updateOption(variantIndex, (variant) => ({
-                                        ...variant,
-                                        attributes: { [group.title]: event.target.value },
-                                      }))
-                                    }
+                                    onChange={(event) => updateOptionName(variantIndex, group.title, event.target.value)}
                                   />
                                 </Grid>
                               )}
 
-                              <Grid size={{ xs: 12, md: colorMode ? 4 : 4 }}>
+                              <Grid size={{ xs: 12, md: colorMode ? 2.5 : 2.5 }}>
                                 <TextField
                                   fullWidth
                                   label="SKU"
                                   value={option.sku}
                                   onChange={(event) => updateOption(variantIndex, (variant) => ({ ...variant, sku: event.target.value }))}
+                                />
+                              </Grid>
+                              <Grid size={{ xs: 12, md: 2 }}>
+                                <TextField
+                                  fullWidth
+                                  size="small"
+                                  type="number"
+                                  label="Adjust Price"
+                                  placeholder="0"
+                                  inputProps={{ step: 0.01 }}
+                                  value={adjValue}
+                                  disabled={!optionValue}
+                                  helperText="+/- per option"
+                                  onChange={(event) => updateAdjustmentForOption(group.title, optionValue, event.target.value)}
                                 />
                               </Grid>
                               <Grid size={{ xs: 12, md: colorMode ? 2 : 3 }}>
