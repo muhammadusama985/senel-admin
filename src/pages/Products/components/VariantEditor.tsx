@@ -229,15 +229,36 @@ const VariantEditor: React.FC<VariantEditorProps> = ({
   };
 
   const updateAdjustmentForOption = (attrTitle: string, attrValue: string, raw: string) => {
-    const num = parseFloat(raw);
+    const trimmed = typeof raw === 'string' ? raw.trim() : '';
+    // Ignore intermediate/invalid keystrokes so we never wipe the saved value
+    // (e.g. "-" while starting a negative, "5." while typing decimals, "abc" paste, etc.)
+    if (trimmed !== '' && !/^-?\d*\.?\d*$/.test(trimmed)) {
+      return;
+    }
+
+    if (trimmed === '') {
+      updateAdjustments((current) => {
+        const next = { ...current };
+        const attrMap = { ...(next[attrTitle] || {}) };
+        delete attrMap[attrValue];
+        if (Object.keys(attrMap).length === 0) {
+          delete next[attrTitle];
+        } else {
+          next[attrTitle] = attrMap;
+        }
+        return next;
+      });
+      return;
+    }
+
+    const num = parseFloat(trimmed);
+    if (isNaN(num)) {
+      return;
+    }
     updateAdjustments((current) => {
       const next = { ...current };
       const attrMap = { ...(next[attrTitle] || {}) };
-      if (raw === '' || isNaN(num)) {
-        delete attrMap[attrValue];
-      } else {
-        attrMap[attrValue] = num;
-      }
+      attrMap[attrValue] = num;
       next[attrTitle] = attrMap;
       return next;
     });
@@ -438,7 +459,8 @@ const VariantEditor: React.FC<VariantEditorProps> = ({
                                 <TextField
                                   fullWidth
                                   size="small"
-                                  type="number"
+                                  type="text"
+                                  inputMode="decimal"
                                   label="Adjust Price"
                                   placeholder="0"
                                   inputProps={{ step: 0.01, style: { cursor: 'pointer' } }}
