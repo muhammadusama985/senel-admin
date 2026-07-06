@@ -441,9 +441,8 @@ const VariantEditor: React.FC<VariantEditorProps> = ({
                                   type="number"
                                   label="Adjust Price"
                                   placeholder="0"
-                                  inputProps={{ step: 0.01 }}
+                                  inputProps={{ step: 0.01, style: { cursor: 'pointer' } }}
                                   value={adjValue}
-                                  disabled={!optionValue}
                                   helperText="+/- per option"
                                   onChange={(event) => updateAdjustmentForOption(group.title, optionValue, event.target.value)}
                                 />
