@@ -15,6 +15,7 @@ import {
   IconButton,
   MenuItem,
   Paper,
+  Stack,
   Switch,
   TextField,
   Typography,
@@ -22,6 +23,7 @@ import {
 } from '@mui/material';
 import { alpha, useTheme as useMuiTheme } from '@mui/material/styles';
 import { Add, CloudUpload, Delete, Edit } from '@mui/icons-material';
+import { Link as RouterLink } from 'react-router-dom';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { SimpleTreeView } from '@mui/x-tree-view/SimpleTreeView';
@@ -358,9 +360,14 @@ const Categories: React.FC = () => {
         <Typography variant="h4" sx={{ fontSize: isMobile ? '1.5rem' : '2rem' }}>
           {t('catalog.categoriesTitle')}
         </Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
-          {t('catalog.addCategory')}
-        </Button>
+        <Stack direction="row" spacing={1.5}>
+          <Button component={RouterLink} to="/categories/requests" variant="outlined">
+            Vendor Requests
+          </Button>
+          <Button variant="contained" startIcon={<Add />} onClick={handleOpenCreate}>
+            {t('catalog.addCategory')}
+          </Button>
+        </Stack>
       </Box>
 
       {error && (

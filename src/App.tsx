@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import VendorList from './pages/Vendors/VendorList';
 import VendorDetail from './pages/Vendors/VendorDetail';
 import Categories from './pages/Catalog/Categories';
+import CategoryRequests from './pages/Catalog/CategoryRequests';
 import Attributes from './pages/Catalog/Attributes';
 import ProductList from './pages/Products/ProductList';
 import ProductCreate from './pages/Products/ProductCreate';
@@ -65,6 +66,7 @@ function App() {
               <Route path="/vendors/:id" element={<PrivateRoute><VendorDetail /></PrivateRoute>} />
 
               <Route path="/categories" element={<PrivateRoute><Categories /></PrivateRoute>} />
+              <Route path="/categories/requests" element={<PrivateRoute><CategoryRequests /></PrivateRoute>} />
               <Route path="/attributes" element={<PrivateRoute><Attributes /></PrivateRoute>} />
 
               <Route path="/products" element={<PrivateRoute><ProductList /></PrivateRoute>} />
