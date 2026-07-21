@@ -19,7 +19,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
-import VariantEditor, { ProductVariant } from './components/VariantEditor';
+import { VariantEditor } from './components/VariantEditor';
+import { PriceTierEditor } from './components/PriceTierEditor';
+
+// Local mirror of the vendor's variant shape (the vendor's VariantEditor
+// uses its own internal `Variant` type but accepts plain objects with
+// sku / stockQty / attributes / imageUrls via the same prop contract).
+interface ProductVariant {
+  sku: string;
+  stockQty: number;
+  attributes: Record<string, string>;
+  imageUrls?: string[];
+}
 
 interface Category {
   _id: string;
@@ -494,50 +505,14 @@ const ProductCreate: React.FC = () => {
           </Grid>
         </Grid>
 
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          <Stack spacing={2}>
-            <Typography variant="h6">{t('products.priceTiers')}</Typography>
-            {form.priceTiers.map((tier, index) => (
-              <Grid container spacing={2} key={`tier-${index}`}>
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <TextField
-                    type="number"
-                    fullWidth
-                    label={t('products.minQuantity')}
-                    value={tier.minQty}
-                    onChange={(e) => updateTier(index, 'minQty', Number(e.target.value))}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <TextField
-                    type="number"
-                    fullWidth
-                    label={t('products.unitPrice')}
-                    value={tier.unitPrice}
-                    onChange={(e) => updateTier(index, 'unitPrice', Number(e.target.value))}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
-                  <Button
-                    color="error"
-                    variant="outlined"
-                    fullWidth
-                    disabled={form.priceTiers.length === 1}
-                    onClick={() => updateField('priceTiers', form.priceTiers.filter((_, tierIndex) => tierIndex !== index))}
-                  >
-                    {t('products.remove')}
-                  </Button>
-                </Grid>
-              </Grid>
-            ))}
-            <Button
-              variant="text"
-              onClick={() => updateField('priceTiers', [...form.priceTiers, { ...emptyTier, minQty: form.moq === "" ? 1 : Math.max(Number(form.moq), 1) }])}
-            >
-              {t('products.addTier')}
-            </Button>
-          </Stack>
-        </Paper>
+        {/* Pricing Tiers & MOQ section - now uses the vendor's PriceTierEditor
+            so the design, validation cues and add/remove behaviour match the
+            vendor product form 1:1. */}
+        <PriceTierEditor
+          tiers={form.priceTiers as any}
+          onChange={(tiers) => updateField('priceTiers', tiers)}
+          moq={form.moq === '' ? undefined : Number(form.moq)}
+        />
 
         <Paper variant="outlined" sx={{ p: 2 }}>
           <Stack spacing={2}>
@@ -546,14 +521,9 @@ const ProductCreate: React.FC = () => {
               label={t('products.hasAttributesOptions')}
             />
             {form.hasVariants ? (
-              // Combination-pricing props are passed through (the admin's
-                // VariantEditor may not consume every one of them yet, but
-                // they're wired so the state stays in sync with the payload).
-              <VariantEditor {...({} as any)}
-                variants={form.variants}
-                onChange={(variants: any) =>
-                  updateField('variants', variants)
-                }
+              <VariantEditor
+                variants={form.variants as any}
+                onChange={(variants: any) => updateField('variants', variants)}
                 uploadImage={uploadVariantImage}
                 baseCombination={(form as any).baseCombination}
                 onBaseCombinationChange={(v: string) =>
@@ -567,7 +537,7 @@ const ProductCreate: React.FC = () => {
                   )
                 }
                 minEffectiveUnitPrice={(form as any).minEffectiveUnitPrice}
-                priceTiers={form.priceTiers}
+                priceTiers={form.priceTiers as any}
               />
             ) : null}
           </Stack>

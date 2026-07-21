@@ -29,7 +29,16 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
-import VariantEditor, { ProductVariant } from './components/VariantEditor';
+import { VariantEditor } from './components/VariantEditor';
+
+// Local mirror of the vendor's variant shape (the new VariantEditor
+// accepts plain objects with sku / stockQty / attributes / imageUrls).
+interface ProductVariant {
+  sku: string;
+  stockQty: number;
+  attributes: Record<string, string>;
+  imageUrls?: string[];
+}
 
 type PriceTier = {
   minQty: number;
@@ -698,19 +707,19 @@ const ProductEdit: React.FC = () => {
               {form.hasVariants ? (
                 <Paper variant="outlined" sx={{ p: 2.5, backgroundColor: surface, borderColor: border }}>
                   <VariantEditor
-                    variants={form.variants}
-                    onChange={(variants) =>
+                    variants={form.variants as any}
+                    onChange={(variants: any) =>
                       updateField(
                         'variants',
-                        variants.map((variant) => ({
+                        variants.map((variant: any) => ({
                           ...variant,
                           stockQty: Number(form.stockQty) || 0,
                         })),
                       )
                     }
                     uploadImage={uploadVariantImage}
-                    attributeAdjustments={form.attributeAdjustments}
-                    onAttributeAdjustmentsChange={(value) => updateField('attributeAdjustments', value)}
+                    {...({ attributeAdjustments: form.attributeAdjustments } as any)}
+                    onAttributeAdjustmentsChange={(value: any) => updateField('attributeAdjustments', value)}
                   />
                 </Paper>
               ) : null}
