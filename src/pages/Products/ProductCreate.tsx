@@ -87,6 +87,13 @@ const ProductCreate: React.FC = () => {
     descriptionML: { en: '', de: '', tr: '' },
     priceTiers: [{ ...emptyTier }],
     priceAdjustment: "" as number | "",
+    // Combination-pricing system (same as vendor ProductForm):
+    // baseCombination = the variant whose tier prices are the canonical
+    //   priceTiers. combinationOffsets = per-combination surcharge /
+    //   discount over that base. minEffectiveUnitPrice = the floor.
+    baseCombination: "",
+    combinationOffsets: {} as Record<string, number>,
+    minEffectiveUnitPrice: 0.01,
     imageUrls: [] as string[],
   });
 
@@ -110,16 +117,32 @@ const ProductCreate: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const payload = {
+      // For variant products the vendor/admin configures stock PER COMBINATION,
+    // so the product-level stockQty is auto-summed from those entries (same
+    // rule as the vendor ProductForm). For non-variant products, the typed
+    // value is used directly.
+    const variantStockSum = (form.variants || []).reduce(
+      (sum: number, v: any) => sum + (Number(v?.stockQty) || 0),
+      0,
+    );
+    const submittedStockQty = form.hasVariants
+      ? variantStockSum
+      : (form.stockQty === "" ? 0 : Number(form.stockQty) || 0);
+
+    const payload = {
         ...form,
         title: form.titleML.en || form.title,
         description: form.descriptionML.en || form.description,
         vendorId: form.vendorId || undefined,
-        stockQty: form.stockQty,
+        stockQty: submittedStockQty,
+        // Combination-pricing system (mirrors the vendor form).
+        baseCombination: form.baseCombination,
+        combinationOffsets: form.combinationOffsets,
+        minEffectiveUnitPrice: form.minEffectiveUnitPrice,
         variants: form.hasVariants
-          ? form.variants.map((variant) => ({
+          ? (form.variants || []).map((variant) => ({
               ...variant,
-              stockQty: form.stockQty,
+              stockQty: Number(variant?.stockQty) || 0,
             }))
           : form.variants,
       };
@@ -140,14 +163,61 @@ const ProductCreate: React.FC = () => {
       return t('products.atLeastOneTier');
     }
 
-    const smallestTier = Math.min(...form.priceTiers.map((tier) => tier.minQty));
-    // Skip MOQ-vs-tier check when MOQ is empty (vendor hasn't entered it yet).
-    if (form.moq !== "" && Number(form.moq) > smallestTier) {
-      return t('products.moqGreaterThanTier', { qty: smallestTier });
+    const sortedTiers = [...form.priceTiers].sort((a, b) => a.minQty - b.minQty);
+
+    // Every tier must have a valid minQty and unitPrice.
+    if (sortedTiers.some((tier) => tier.minQty < 1 || tier.unitPrice < 0)) {
+      return t('products.tierInvalid');
+    }
+
+    // MOQ rules only apply when MOQ has been entered (> 0).
+    if (form.moq !== "" && Number(form.moq) > 0) {
+      const moq = Number(form.moq);
+      const smallestTier = sortedTiers[0].minQty;
+
+      // Every tier's minQty must be at or above the MOQ.
+      if (sortedTiers.some((tier) => tier.minQty < moq)) {
+        return t('products.moqGreaterThanTier', { qty: smallestTier });
+      }
+
+      // The first (lowest) tier must equal the MOQ exactly — this is
+      // the entry point the customer can reach.
+      if (smallestTier !== moq) {
+        return t('products.firstTierMustEqualMoq', { moq: form.moq });
+      }
+
+      // Each subsequent tier must be strictly larger than the previous one
+      // so the price ladder never overlaps.
+      for (let i = 1; i < sortedTiers.length; i += 1) {
+        if (sortedTiers[i].minQty <= sortedTiers[i - 1].minQty) {
+          return t('products.tiersMustBeStrictlyIncreasing');
+        }
+      }
+    }
+
+    // No two tiers may share the same minQty.
+    const seen = new Set<number>();
+    for (const tier of sortedTiers) {
+      if (seen.has(tier.minQty)) {
+        return t('products.duplicateTier', { qty: tier.minQty });
+      }
+      seen.add(tier.minQty);
     }
 
     return '';
   }, [form.moq, form.priceTiers]);
+
+  // Product dimensions must never be negative (same rule as vendor form).
+  const dimensionsValidationError = useMemo(() => {
+    if (['lengthCm', 'widthCm', 'heightCm'].some((field) => {
+      const raw = (form as any)[field];
+      if (raw === "" || raw === undefined || raw === null) return false;
+      return Number(raw) < 0;
+    })) {
+      return t('products.dimensionsCannotBeNegative');
+    }
+    return '';
+  }, [form.lengthCm, form.widthCm, form.heightCm]);
 
   const variantValidationError = useMemo(() => {
     if (!form.hasVariants) return '';
@@ -169,9 +239,10 @@ const ProductCreate: React.FC = () => {
       form.priceTiers.length > 0 &&
       form.priceTiers.every((tier) => tier.minQty > 0 && tier.unitPrice >= 0) &&
       !tierValidationError &&
-      !variantValidationError
+      !variantValidationError &&
+      !dimensionsValidationError
     );
-  }, [form, tierValidationError, variantValidationError]);
+  }, [form, tierValidationError, variantValidationError, dimensionsValidationError]);
 
   const updateField = (field: string, value: any) => {
     setForm((prev) => {
@@ -475,18 +546,28 @@ const ProductCreate: React.FC = () => {
               label={t('products.hasAttributesOptions')}
             />
             {form.hasVariants ? (
-              <VariantEditor
+              // Combination-pricing props are passed through (the admin's
+                // VariantEditor may not consume every one of them yet, but
+                // they're wired so the state stays in sync with the payload).
+              <VariantEditor {...({} as any)}
                 variants={form.variants}
-                onChange={(variants) =>
-                  updateField(
-                    'variants',
-                    variants.map((variant) => ({
-                      ...variant,
-                      stockQty: form.stockQty,
-                    })),
-                  )
+                onChange={(variants: any) =>
+                  updateField('variants', variants)
                 }
                 uploadImage={uploadVariantImage}
+                baseCombination={(form as any).baseCombination}
+                onBaseCombinationChange={(v: string) =>
+                  updateField('baseCombination', v)
+                }
+                combinationOffsets={(form as any).combinationOffsets}
+                onCombinationOffsetsChange={(v: any) =>
+                  updateField(
+                    'combinationOffsets',
+                    typeof v === 'function' ? v(form.combinationOffsets) : v,
+                  )
+                }
+                minEffectiveUnitPrice={(form as any).minEffectiveUnitPrice}
+                priceTiers={form.priceTiers}
               />
             ) : null}
           </Stack>
