@@ -71,22 +71,22 @@ const ProductCreate: React.FC = () => {
     vendorId: '',
     country: '',
     currency: 'EUR',
-    moq: 1,
-    stockQty: 0,
+    moq: "" as number | "",
+    stockQty: "" as number | "",
     hasVariants: false,
     variants: [] as ProductVariant[],
     trackInventory: true,
-    lowStockThreshold: 5,
-    lengthCm: 0,
-    widthCm: 0,
-    heightCm: 0,
+    lowStockThreshold: "" as number | "",
+    lengthCm: "" as number | "",
+    widthCm: "" as number | "",
+    heightCm: "" as number | "",
     autoApprove: true,
     isFeatured: false,
     requiresManualShipping: false,
     titleML: { en: '', de: '', tr: '' },
     descriptionML: { en: '', de: '', tr: '' },
     priceTiers: [{ ...emptyTier }],
-    priceAdjustment: 0,
+    priceAdjustment: "" as number | "",
     imageUrls: [] as string[],
   });
 
@@ -141,7 +141,8 @@ const ProductCreate: React.FC = () => {
     }
 
     const smallestTier = Math.min(...form.priceTiers.map((tier) => tier.minQty));
-    if (form.moq > smallestTier) {
+    // Skip MOQ-vs-tier check when MOQ is empty (vendor hasn't entered it yet).
+    if (form.moq !== "" && Number(form.moq) > smallestTier) {
       return t('products.moqGreaterThanTier', { qty: smallestTier });
     }
 
@@ -188,11 +189,13 @@ const ProductCreate: React.FC = () => {
     });
   };
 
-  const updateMOQ = (value: number) => {
+  const updateMOQ = (value: number | "") => {
     setForm((prev) => {
-      const moq = Number.isFinite(value) && value > 0 ? value : 1;
+      // Empty input is allowed and stays empty (vendor types the value).
+      const moq: number | "" =
+        value === "" ? "" : Number.isFinite(value) && value > 0 ? value : 1;
       const priceTiers = prev.priceTiers.map((tier, index) =>
-        index === 0 && tier.minQty < moq ? { ...tier, minQty: moq } : tier
+        index === 0 && moq !== "" && tier.minQty < moq ? { ...tier, minQty: moq } : tier
       );
 
       return { ...prev, moq, priceTiers };
@@ -286,6 +289,8 @@ const ProductCreate: React.FC = () => {
           <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
+              multiline
+              maxRows={2}
               label={t('products.englishTitle')}
               value={form.titleML.en}
               onChange={(e) => {
@@ -295,10 +300,10 @@ const ProductCreate: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label={t('products.germanTitle')} value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
+            <TextField fullWidth multiline maxRows={2} label={t('products.germanTitle')} value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth label={t('products.turkishTitle')} value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
+            <TextField fullWidth multiline maxRows={2} label={t('products.turkishTitle')} value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -306,6 +311,7 @@ const ProductCreate: React.FC = () => {
               fullWidth
               multiline
               minRows={4}
+              maxRows={8}
               label={t('products.englishDescription')}
               value={form.descriptionML.en}
               onChange={(e) => {
@@ -315,10 +321,10 @@ const ProductCreate: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} label={t('products.germanDescription')} value={form.descriptionML.de} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.germanDescription')} value={form.descriptionML.de} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} label={t('products.turkishDescription')} value={form.descriptionML.tr} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.turkishDescription')} value={form.descriptionML.tr} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
@@ -357,12 +363,15 @@ const ProductCreate: React.FC = () => {
               fullWidth
               label="MOQ"
               value={form.moq}
-              onChange={(e) => updateMOQ(Number(e.target.value))}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateMOQ(v === "" ? "" : Number(v));
+              }}
               helperText={t('products.moqHelp')}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField type="number" fullWidth label={t('products.stockQty')} value={form.stockQty} onChange={(e) => updateField('stockQty', Number(e.target.value))} />
+            <TextField type="number" fullWidth label={t('products.stockQty')} value={form.stockQty} onChange={(e) => { const v = e.target.value; updateField('stockQty', v === "" ? "" : Number(v)); }} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
@@ -370,7 +379,10 @@ const ProductCreate: React.FC = () => {
               fullWidth
               label="Low Stock Threshold"
               value={form.lowStockThreshold}
-              onChange={(e) => updateField('lowStockThreshold', Math.max(0, Number(e.target.value) || 0))}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateField('lowStockThreshold', v === "" ? "" : Math.max(0, Number(v) || 0));
+              }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -379,7 +391,10 @@ const ProductCreate: React.FC = () => {
               fullWidth
               label="Length (cm)"
               value={form.lengthCm}
-              onChange={(e) => updateField('lengthCm', Math.max(0, Number(e.target.value) || 0))}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateField('lengthCm', v === "" ? "" : Math.max(0, Number(v) || 0));
+              }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -388,7 +403,10 @@ const ProductCreate: React.FC = () => {
               fullWidth
               label="Width (cm)"
               value={form.widthCm}
-              onChange={(e) => updateField('widthCm', Math.max(0, Number(e.target.value) || 0))}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateField('widthCm', v === "" ? "" : Math.max(0, Number(v) || 0));
+              }}
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -397,7 +415,10 @@ const ProductCreate: React.FC = () => {
               fullWidth
               label="Height (cm)"
               value={form.heightCm}
-              onChange={(e) => updateField('heightCm', Math.max(0, Number(e.target.value) || 0))}
+              onChange={(e) => {
+                const v = e.target.value;
+                updateField('heightCm', v === "" ? "" : Math.max(0, Number(v) || 0));
+              }}
             />
           </Grid>
         </Grid>
@@ -440,7 +461,7 @@ const ProductCreate: React.FC = () => {
             ))}
             <Button
               variant="text"
-              onClick={() => updateField('priceTiers', [...form.priceTiers, { ...emptyTier, minQty: Math.max(form.moq, 1) }])}
+              onClick={() => updateField('priceTiers', [...form.priceTiers, { ...emptyTier, minQty: form.moq === "" ? 1 : Math.max(Number(form.moq), 1) }])}
             >
               {t('products.addTier')}
             </Button>

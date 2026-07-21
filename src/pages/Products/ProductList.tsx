@@ -360,7 +360,16 @@ const ProductList: React.FC = () => {
             {products?.products?.map((product: any) => (
               (() => {
                 const displaySku = product.sku || product.variants?.[0]?.sku || t('products.notAvailable');
-                const displayStock = Number(product.stockQty || 0);
+                // For variant products, derive the displayed stock from the
+                // sum of per-option stocks so the table can never show a
+                // stale product.stockQty that no longer matches reality.
+                const variantStocks = Array.isArray(product.variants)
+                  ? product.variants.map((v: any) => Number(v?.stockQty || 0))
+                  : [];
+                const hasVariantStock = Boolean(product.hasVariants) && variantStocks.length > 0;
+                const displayStock = hasVariantStock
+                  ? variantStocks.reduce((sum: number, n: number) => sum + n, 0)
+                  : Number(product.stockQty || 0);
 
                 return (
               <TableRow key={product._id} hover sx={{ '&:hover': { backgroundColor: hover } }}>
