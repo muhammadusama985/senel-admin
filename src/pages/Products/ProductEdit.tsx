@@ -58,6 +58,11 @@ type ProductForm = {
   hasVariants: boolean;
   variants: ProductVariant[];
   attributeAdjustments: Record<string, Record<string, number>>;
+  // Combination-pricing system (matches the vendor ProductForm so the
+  // VariantEditor's "Saved combinations" list re-populates on edit).
+  baseCombination: string;
+  combinationOffsets: Record<string, number>;
+  minEffectiveUnitPrice: number;
   trackInventory: boolean;
   lowStockThreshold: number;
   lengthCm: number;
@@ -84,6 +89,9 @@ const createInitialForm = (): ProductForm => ({
   hasVariants: false,
   variants: [],
   attributeAdjustments: {},
+  baseCombination: "",
+  combinationOffsets: {},
+  minEffectiveUnitPrice: 0.01,
   trackInventory: true,
   lowStockThreshold: 5,
   lengthCm: 0,
@@ -129,6 +137,18 @@ const normalizeProductToForm = (product: any): ProductForm => ({
     product?.attributeAdjustments && typeof product.attributeAdjustments === 'object'
       ? product.attributeAdjustments
       : {},
+  baseCombination:
+    typeof product?.baseCombination === 'string'
+      ? product.baseCombination
+      : '',
+  combinationOffsets:
+    product?.combinationOffsets && typeof product.combinationOffsets === 'object' && !Array.isArray(product.combinationOffsets)
+      ? product.combinationOffsets
+      : {},
+  minEffectiveUnitPrice:
+    Number.isFinite(Number(product?.minEffectiveUnitPrice))
+      ? Number(product.minEffectiveUnitPrice)
+      : 0.01,
   trackInventory: product?.trackInventory ?? true,
   lowStockThreshold: Number(product?.lowStockThreshold ?? 5),
   lengthCm: Number(product?.lengthCm) || 0,
@@ -380,6 +400,10 @@ const ProductEdit: React.FC = () => {
             }))
           : form.variants,
         attributeAdjustments: form.attributeAdjustments,
+        // Combination-pricing system (mirrors the vendor form).
+        baseCombination: form.baseCombination,
+        combinationOffsets: form.combinationOffsets,
+        minEffectiveUnitPrice: form.minEffectiveUnitPrice,
         lengthCm: Number(form.lengthCm),
         widthCm: Number(form.widthCm),
         heightCm: Number(form.heightCm),
@@ -718,6 +742,17 @@ const ProductEdit: React.FC = () => {
                       )
                     }
                     uploadImage={uploadVariantImage}
+                    baseCombination={form.baseCombination}
+                    onBaseCombinationChange={(value: string) => updateField('baseCombination', value)}
+                    combinationOffsets={form.combinationOffsets}
+                    onCombinationOffsetsChange={(value: any) =>
+                      updateField(
+                        'combinationOffsets',
+                        typeof value === 'function' ? value(form.combinationOffsets) : value,
+                      )
+                    }
+                    minEffectiveUnitPrice={form.minEffectiveUnitPrice}
+                    priceTiers={form.priceTiers as any}
                     {...({ attributeAdjustments: form.attributeAdjustments } as any)}
                     onAttributeAdjustmentsChange={(value: any) => updateField('attributeAdjustments', value)}
                   />
