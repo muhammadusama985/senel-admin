@@ -256,19 +256,7 @@ const ProductCreate: React.FC = () => {
   }, [form, tierValidationError, variantValidationError, dimensionsValidationError]);
 
   const updateField = (field: string, value: any) => {
-    setForm((prev) => {
-      if (field === 'stockQty' && prev.hasVariants) {
-        return {
-          ...prev,
-          stockQty: value,
-          variants: prev.variants.map((variant) => ({
-            ...variant,
-            stockQty: value,
-          })),
-        };
-      }
-      return { ...prev, [field]: value };
-    });
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateMOQ = (value: number | "") => {
@@ -453,7 +441,33 @@ const ProductCreate: React.FC = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <TextField type="number" fullWidth label={t('products.stockQty')} value={form.stockQty} onChange={(e) => { const v = e.target.value; updateField('stockQty', v === "" ? "" : Number(v)); }} />
+            {/* Stock quantity: when hasVariants is true, the field is read-only
+                and shows the auto-summed value of every combination (same as the
+                vendor ProductForm). For non-variant products the field is normal. */}
+            {form.hasVariants ? (
+              <TextField
+                type="number"
+                fullWidth
+                label={t('products.overallStockLabel', 'Overall stock (sum of all options)')}
+                value={(form.variants || []).reduce(
+                  (sum: number, v: any) => sum + (Number(v?.stockQty) || 0),
+                  0,
+                )}
+                InputProps={{ readOnly: true }}
+                helperText={t('products.overallStockHint', 'Auto-summed from each combination below')}
+              />
+            ) : (
+              <TextField
+                type="number"
+                fullWidth
+                label={t('products.stockQty')}
+                value={form.stockQty}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  updateField('stockQty', v === "" ? "" : Number(v));
+                }}
+              />
+            )}
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
