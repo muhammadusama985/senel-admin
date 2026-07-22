@@ -732,15 +732,7 @@ const ProductEdit: React.FC = () => {
                 <Paper variant="outlined" sx={{ p: 2.5, backgroundColor: surface, borderColor: border }}>
                   <VariantEditor
                     variants={form.variants as any}
-                    onChange={(variants: any) =>
-                      updateField(
-                        'variants',
-                        variants.map((variant: any) => ({
-                          ...variant,
-                          stockQty: Number(form.stockQty) || 0,
-                        })),
-                      )
-                    }
+                    onChange={(variants: any) => updateField('variants', variants)}
                     uploadImage={uploadVariantImage}
                     baseCombination={form.baseCombination}
                     onBaseCombinationChange={(value: string) => updateField('baseCombination', value)}
