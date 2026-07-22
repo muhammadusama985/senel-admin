@@ -2,16 +2,20 @@ import React, { useState } from 'react';
 import {
   Alert,
   Box,
+  Button,
   Chip,
+  IconButton,
   Paper,
   Stack,
+  Tooltip,
   Typography,
   MenuItem,
   Select,
   TextField,
 } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useQuery } from '@tanstack/react-query';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
 import { useTranslation } from 'react-i18next';
 
@@ -49,6 +53,7 @@ const formatDate = (value?: string) => {
 
 const CustomProductionMonitor: React.FC = () => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
@@ -135,7 +140,53 @@ const CustomProductionMonitor: React.FC = () => {
       width: 160,
       valueGetter: (_value, row) => formatDate(row?.createdAt),
     },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 110,
+      sortable: false,
+      filterable: false,
+      disableColumnMenu: true,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: GridRenderCellParams<RFQ>) => {
+        const id = params.row?._id;
+        if (!id) return null;
+        return (
+          <Tooltip title="Delete this request">
+            <span>
+              <IconButton
+                size="small"
+                color="error"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  if (window.confirm('Delete this custom production request? This also removes it from the vendor\'s negotiation list.')) {
+                    deleteMutation.mutate(id);
+                  }
+                }}
+              >
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        );
+      },
+    },
   ];
+
+  // Admin-only hard delete: removes the request from the system so it
+  // disappears from the vendor's negotiation list as well. The vendor can
+  // only respond / counter / accept / reject; only the admin can delete.
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/custom-production/admin/${id}`);
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'custom-production'] });
+      queryClient.removeQueries({ queryKey: ['admin', 'custom-production', id] });
+    },
+  });
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 } }}>
