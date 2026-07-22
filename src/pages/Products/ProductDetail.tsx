@@ -379,6 +379,7 @@ const ProductDetail: React.FC = () => {
                         <TableCell>SKU</TableCell>
                         <TableCell>{t('products.attributes')}</TableCell>
                         <TableCell>{t('products.price')}</TableCell>
+                        <TableCell>Stock</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -394,6 +395,9 @@ const ProductDetail: React.FC = () => {
                             <Typography sx={{ color: accent }}>
                               {formatMoney(Number(variant.price || product.priceTiers?.[0]?.unitPrice || 0), product.currency)}
                             </Typography>
+                          </TableCell>
+                          <TableCell sx={{ borderBottom: `1px solid ${border}` }}>
+                            {Number(variant.stockQty || 0)}
                           </TableCell>
                         </TableRow>
                       ))}
