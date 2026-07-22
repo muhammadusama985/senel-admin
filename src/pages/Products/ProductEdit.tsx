@@ -263,19 +263,7 @@ const ProductEdit: React.FC = () => {
   }, [form.hasVariants, form.variants]);
 
   const updateField = <K extends keyof ProductForm>(field: K, value: ProductForm[K]) => {
-    setForm((prev) => {
-      if (field === 'stockQty' && prev.hasVariants) {
-        return {
-          ...prev,
-          stockQty: value as number,
-          variants: prev.variants.map((variant) => ({
-            ...variant,
-            stockQty: Number(value) || 0,
-          })),
-        };
-      }
-      return { ...prev, [field]: value };
-    });
+    setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const updateML = (field: 'titleML' | 'descriptionML', lang: 'en' | 'de' | 'tr', value: string) => {
@@ -387,18 +375,24 @@ const ProductEdit: React.FC = () => {
         country: form.country,
         currency: form.currency,
         moq: Number(form.moq),
-        stockQty: Number(form.stockQty),
         isFeatured: form.isFeatured,
         requiresManualShipping: form.requiresManualShipping,
         trackInventory: form.trackInventory,
         lowStockThreshold: Number(form.lowStockThreshold),
         hasVariants: form.hasVariants,
+        // For variant products, auto-sum the per-combination stocks so the
+        // product-level stockQty never clobbers the per-option values the
+        // vendor set in the composer. For non-variant products, the typed
+        // stockQty is used directly.
         variants: form.hasVariants
           ? form.variants.map((variant) => ({
               ...variant,
-              stockQty: Number(form.stockQty),
+              stockQty: Number(variant?.stockQty) || 0,
             }))
           : form.variants,
+        stockQty: form.hasVariants
+          ? form.variants.reduce((sum, v) => sum + (Number(v?.stockQty) || 0), 0)
+          : Number(form.stockQty),
         attributeAdjustments: form.attributeAdjustments,
         // Combination-pricing system (mirrors the vendor form).
         baseCombination: form.baseCombination,
