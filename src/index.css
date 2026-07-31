@@ -53,3 +53,17 @@ a {
     min-width: 640px;
   }
 }
+
+.rich-text-editor-content ul,
+.rich-text-editor-content ol {
+  margin: 0.75rem 0;
+  padding-left: 1.75rem;
+}
+
+.rich-text-editor-content li {
+  margin-bottom: 0.3rem;
+}
+
+.rich-text-editor-content li:last-child {
+  margin-bottom: 0;
+}
