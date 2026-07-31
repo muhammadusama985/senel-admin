@@ -14,6 +14,8 @@ import {
   TextField,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useNavigate } from 'react-router-dom';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../api/client';
@@ -54,6 +56,7 @@ const formatDate = (value?: string) => {
 const CustomProductionMonitor: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<string>('');
   const [search, setSearch] = useState<string>('');
 
@@ -143,7 +146,7 @@ const CustomProductionMonitor: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 110,
+      width: 160,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -153,22 +156,37 @@ const CustomProductionMonitor: React.FC = () => {
         const id = params.row?._id;
         if (!id) return null;
         return (
-          <Tooltip title="Delete this request">
-            <span>
-              <IconButton
-                size="small"
-                color="error"
-                disabled={deleteMutation.isPending}
-                onClick={() => {
-                  if (window.confirm('Delete this custom production request? This also removes it from the vendor\'s negotiation list.')) {
-                    deleteMutation.mutate(id);
+          <Stack direction="row" spacing={0.5} justifyContent="center">
+            <Tooltip title="Open / reply">
+              <span>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() =>
+                    navigate(`/negotiations/custom-production/${id}`)
                   }
-                }}
-              >
-                <DeleteOutlineIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Delete this request">
+              <span>
+                <IconButton
+                  size="small"
+                  color="error"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm('Delete this custom production request? This also removes it from the vendor\'s negotiation list.')) {
+                      deleteMutation.mutate(id);
+                    }
+                  }}
+                >
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
         );
       },
     },
@@ -236,6 +254,10 @@ const CustomProductionMonitor: React.FC = () => {
           pageSizeOptions={[25, 50, 100]}
           initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
           disableRowSelectionOnClick
+          onRowClick={(params) =>
+            navigate(`/negotiations/custom-production/${params.row._id}`)
+          }
+          sx={{ cursor: 'pointer' }}
         />
       </Paper>
     </Box>

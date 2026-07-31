@@ -44,6 +44,8 @@ import EmailTemplates from './pages/Settings/EmailTemplates';
 import PasswordResetManagement from './pages/Settings/PasswordResetManagement';
 import BulkOffersMonitor from './pages/Negotiations/BulkOffersMonitor';
 import CustomProductionMonitor from './pages/Negotiations/CustomProductionMonitor';
+import AdminBulkOfferDetail from './pages/Negotiations/BulkOfferDetail';
+import AdminCustomProductionDetail from './pages/Negotiations/CustomProductionDetail';
 
 const queryClient = new QueryClient();
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -104,7 +106,9 @@ function App() {
               <Route path="/settings/password-reset" element={<PrivateRoute><PasswordResetManagement /></PrivateRoute>} />
 
               <Route path="/negotiations/bulk-offers" element={<PrivateRoute><BulkOffersMonitor /></PrivateRoute>} />
+              <Route path="/negotiations/bulk-offers/:offerId" element={<PrivateRoute><AdminBulkOfferDetail /></PrivateRoute>} />
               <Route path="/negotiations/custom-production" element={<PrivateRoute><CustomProductionMonitor /></PrivateRoute>} />
+              <Route path="/negotiations/custom-production/:rfqId" element={<PrivateRoute><AdminCustomProductionDetail /></PrivateRoute>} />
             </Routes>
           </BrowserRouter>
         </ThemeProvider>
