@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { useTheme } from '@mui/material/styles';
 
 interface RichTextEditorProps {
@@ -48,14 +48,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
   const theme = useTheme();
   const editorRef = useRef<HTMLDivElement>(null);
   const lastValueRef = useRef(value);
+  const initializedRef = useRef(false);
   const border = theme.palette.divider;
   const background = theme.palette.background.paper;
   const text = theme.palette.text.primary;
 
-  useEffect(() => {
-    if (editorRef.current && value !== lastValueRef.current) {
+  useLayoutEffect(() => {
+    if (editorRef.current && (!initializedRef.current || value !== lastValueRef.current)) {
       editorRef.current.innerHTML = sanitizeHtml(value);
       lastValueRef.current = value;
+      initializedRef.current = true;
     }
   }, [value]);
 
@@ -122,7 +124,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
           lastValueRef.current = html;
           onChange(html);
         }}
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
         style={{
           minHeight,
           padding: '0.75rem',
