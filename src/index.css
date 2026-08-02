@@ -178,6 +178,18 @@ a {
   padding-inline-start: 1.5rem;
 }
 
+/* Embedded images inside the rich text editor: pure visual, no inline
+   text content can leak out next to them. The image is rendered as a
+   block so the browser can never display the URL or any alt text as
+   visible text in the description. */
+.rte-content img.rte-embedded-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+}
+
 /* Text portion of the rendered description (after image extraction). */
 .admin-product-description-text {
   white-space: pre-wrap;
