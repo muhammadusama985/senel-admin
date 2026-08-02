@@ -299,6 +299,63 @@ const ProductEdit: React.FC = () => {
     );
   };
 
+  // Edit-form live preview: text on top, then a side-by-side image gallery
+  // where each image has a small (-/x) IconButton overlay that removes that
+  // exact image from the description markdown. This is the ONLY place the
+  // description is rendered visually -- there is no separate thumbnail strip
+  // above it, so the admin never sees the description twice.
+  const renderDescriptionPreview = (
+    text: string,
+    applyValue: (next: string) => void,
+  ): React.ReactNode => {
+    if (!text) return null;
+    const imageNodes: React.ReactNode[] = [];
+    let key = 0;
+    const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, _alt, url) => {
+      const resolved = resolveMediaUrl(url);
+      if (resolved) {
+        imageNodes.push(
+          React.createElement(
+            'div',
+            {
+              key: `desc-wrap-${key}`,
+              className: 'desc-preview-image-wrap',
+            },
+            React.createElement('img', {
+              src: resolved,
+              alt: 'description image',
+              className: 'desc-preview-image',
+              loading: 'lazy',
+            }),
+            React.createElement(
+              'button',
+              {
+                type: 'button',
+                'aria-label': 'Remove this image from the description',
+                className: 'desc-preview-image-remove',
+                onClick: () => removeDescriptionImage(applyValue, text, url),
+              },
+              '\u2212',
+            ),
+          ),
+        );
+      }
+      key += 1;
+      return '';
+    });
+    const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
+    return React.createElement(
+      React.Fragment,
+      null,
+      cleanedText
+        ? React.createElement('div', { className: 'desc-preview-text' }, cleanedText)
+        : null,
+      imageNodes.length > 0
+        ? React.createElement('div', { className: 'desc-preview-gallery' }, ...imageNodes)
+        : null,
+    );
+  };
+
   // Remove the first markdown image reference whose URL matches `urlToRemove`.
   // Used by the \xc3\x97 button on each description-image thumbnail so the
   // admin can drop an image without hand-editing the markdown source.
@@ -695,98 +752,30 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescEn ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {extractDescriptionImageUrls(form.descriptionML.en).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.75,
-                            maxHeight: 140,
-                            overflowY: 'auto',
-                            p: 0.5,
-                            border: '1px dashed',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => {
-                            const thumbSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`en-prev-${idx}`}
-                              sx={{
-                                position: 'relative',
-                                width: 64,
-                                height: 64,
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Box
-                                component="img"
-                                src={thumbSrc}
-                                alt=""
-                                sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  borderRadius: 1,
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  bgcolor: 'background.default',
-                                  display: 'block',
-                                }}
-                              />
-                              <IconButton
-                                size="small"
-                                aria-label="Remove description image"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'en', v),
-                                  form.descriptionML.en,
-                                  url,
-                                )}
-                                sx={{
-                                  position: 'absolute',
-                                  top: -8,
-                                  right: -8,
-                                  width: 22,
-                                  height: 22,
-                                  bgcolor: 'error.main',
-                                  color: 'common.white',
-                                  '&:hover': { bgcolor: 'error.dark' },
-                                  boxShadow: 1,
-                                }}
-                              >
-                                <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
-                      {/* Live preview of the rendered description (markdown +
-                          images). Helps the admin verify what customers will
-                          see. Scrolls internally so it never breaks the form
-                          layout when the description is long. */}
+                      {/* Live preview of the rendered description (text on top,
+                          ALL images in a single side-by-side row at the bottom
+                          with a delete button on each). This is the ONE place
+                          where the description is shown visually -- no
+                          duplicate thumbnail strip above. */}
                       {form.descriptionML.en && (
                         <Box
                           sx={{
                             mt: 1,
-                            maxHeight: 180,
+                            maxHeight: 220,
                             overflowY: 'auto',
                             p: 1,
                             border: '1px solid',
                             borderColor: 'divider',
                             borderRadius: 1,
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
                             fontSize: '0.85rem',
                             color: 'text.secondary',
                           }}
                         >
-                          {renderDescriptionWithImages(form.descriptionML.en)}
+                          {renderDescriptionPreview(
+                            form.descriptionML.en,
+                            (v) => updateML('descriptionML', 'en', v),
+                          )}
                         </Box>
                       )}
                     </Grid>
@@ -823,94 +812,25 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {extractDescriptionImageUrls(form.descriptionML.de).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.75,
-                            maxHeight: 140,
-                            overflowY: 'auto',
-                            p: 0.5,
-                            border: '1px dashed',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => {
-                            const thumbSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`de-prev-${idx}`}
-                              sx={{
-                                position: 'relative',
-                                width: 64,
-                                height: 64,
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Box
-                                component="img"
-                                src={thumbSrc}
-                                alt=""
-                                sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  borderRadius: 1,
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  bgcolor: 'background.default',
-                                  display: 'block',
-                                }}
-                              />
-                              <IconButton
-                                size="small"
-                                aria-label="Remove description image"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'de', v),
-                                  form.descriptionML.de,
-                                  url,
-                                )}
-                                sx={{
-                                  position: 'absolute',
-                                  top: -8,
-                                  right: -8,
-                                  width: 22,
-                                  height: 22,
-                                  bgcolor: 'error.main',
-                                  color: 'common.white',
-                                  '&:hover': { bgcolor: 'error.dark' },
-                                  boxShadow: 1,
-                                }}
-                              >
-                                <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
                       {form.descriptionML.de && (
                         <Box
                           sx={{
                             mt: 1,
-                            maxHeight: 180,
+                            maxHeight: 220,
                             overflowY: 'auto',
                             p: 1,
                             border: '1px solid',
                             borderColor: 'divider',
                             borderRadius: 1,
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
                             fontSize: '0.85rem',
                             color: 'text.secondary',
                           }}
                         >
-                          {renderDescriptionWithImages(form.descriptionML.de)}
+                          {renderDescriptionPreview(
+                            form.descriptionML.de,
+                            (v) => updateML('descriptionML', 'de', v),
+                          )}
                         </Box>
                       )}
                     </Grid>
@@ -947,94 +867,25 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {extractDescriptionImageUrls(form.descriptionML.tr).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 1,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.75,
-                            maxHeight: 140,
-                            overflowY: 'auto',
-                            p: 0.5,
-                            border: '1px dashed',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => {
-                            const thumbSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`tr-prev-${idx}`}
-                              sx={{
-                                position: 'relative',
-                                width: 64,
-                                height: 64,
-                                flexShrink: 0,
-                              }}
-                            >
-                              <Box
-                                component="img"
-                                src={thumbSrc}
-                                alt=""
-                                sx={{
-                                  width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  borderRadius: 1,
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  bgcolor: 'background.default',
-                                  display: 'block',
-                                }}
-                              />
-                              <IconButton
-                                size="small"
-                                aria-label="Remove description image"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'tr', v),
-                                  form.descriptionML.tr,
-                                  url,
-                                )}
-                                sx={{
-                                  position: 'absolute',
-                                  top: -8,
-                                  right: -8,
-                                  width: 22,
-                                  height: 22,
-                                  bgcolor: 'error.main',
-                                  color: 'common.white',
-                                  '&:hover': { bgcolor: 'error.dark' },
-                                  boxShadow: 1,
-                                }}
-                              >
-                                <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
                       {form.descriptionML.tr && (
                         <Box
                           sx={{
                             mt: 1,
-                            maxHeight: 180,
+                            maxHeight: 220,
                             overflowY: 'auto',
                             p: 1,
                             border: '1px solid',
                             borderColor: 'divider',
                             borderRadius: 1,
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
                             fontSize: '0.85rem',
                             color: 'text.secondary',
                           }}
                         >
-                          {renderDescriptionWithImages(form.descriptionML.tr)}
+                          {renderDescriptionPreview(
+                            form.descriptionML.tr,
+                            (v) => updateML('descriptionML', 'tr', v),
+                          )}
                         </Box>
                       )}
                     </Grid>

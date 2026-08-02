@@ -80,6 +80,46 @@ a {
   align-items: flex-start;
 }
 
+/* Wraps a single preview image so the remove button can sit on top of it. */
+.desc-preview-image-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+/* Tiny circular minus button anchored to the top-right of each preview image.
+   Clicking it removes that one image from the description markdown. */
+.desc-preview-image-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: #d32f2f;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.desc-preview-image-remove:hover {
+  background-color: #b71c1c;
+}
+
+.desc-preview-image-remove:focus-visible {
+  outline: 2px solid #5b2eff;
+  outline-offset: 2px;
+}
+
 .desc-preview-text {
   white-space: pre-wrap;
   word-break: break-word;
