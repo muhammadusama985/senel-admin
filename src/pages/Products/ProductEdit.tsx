@@ -636,7 +636,6 @@ const ProductEdit: React.FC = () => {
                         onChange={(next) => updateML('descriptionML', 'en', next)}
                         textareaRef={descEnInputRef}
                         minRows={4}
-                        maxRows={10}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input
@@ -714,7 +713,6 @@ const ProductEdit: React.FC = () => {
                         onChange={(next) => updateML('descriptionML', 'de', next)}
                         textareaRef={descDeInputRef}
                         minRows={4}
-                        maxRows={10}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input
@@ -786,7 +784,6 @@ const ProductEdit: React.FC = () => {
                         onChange={(next) => updateML('descriptionML', 'tr', next)}
                         textareaRef={descTrInputRef}
                         minRows={4}
-                        maxRows={10}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input

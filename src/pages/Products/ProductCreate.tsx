@@ -485,7 +485,6 @@ const ProductCreate: React.FC = () => {
               }}
               textareaRef={descEnInputRef}
               minRows={4}
-              maxRows={10}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input
@@ -545,7 +544,6 @@ const ProductCreate: React.FC = () => {
               onChange={(next) => updateML('descriptionML', 'de', next)}
               textareaRef={descDeInputRef}
               minRows={4}
-              maxRows={10}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input
@@ -600,7 +598,6 @@ const ProductCreate: React.FC = () => {
               onChange={(next) => updateML('descriptionML', 'tr', next)}
               textareaRef={descTrInputRef}
               minRows={4}
-              maxRows={10}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input

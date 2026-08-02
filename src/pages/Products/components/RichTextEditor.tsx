@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Box, Button, ButtonGroup, Tooltip } from '@mui/material';
+import React, { useCallback, useRef } from 'react';
+import { Box, Button, ButtonGroup, Tooltip, useTheme } from '@mui/material';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
@@ -16,14 +16,13 @@ interface RichTextEditorProps {
   placeholder?: string;
   disabled?: boolean;
   minRows?: number;
-  maxRows?: number;
 }
 
 /**
- * A lightweight rich-text editor that wraps a <textarea> with a formatting
- * toolbar. Buttons insert markdown-style syntax at the current caret /
- * around the current selection so the field stays a plain string the rest
- * of the app already understands:
+ * A lightweight rich-text editor that wraps a plain <textarea> with a
+ * formatting toolbar. Buttons insert markdown-style syntax at the current
+ * caret / around the current selection so the field stays a plain string
+ * the rest of the app already understands:
  *
  *   Bold            **text**
  *   Italic          *text*
@@ -41,19 +40,32 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   textareaRef,
   rows,
   minRows,
-  maxRows,
   placeholder,
   disabled,
 }) => {
-  const internalRef = useRef<HTMLTextAreaElement | null>(null);
-  const ref = (textareaRef as React.RefObject<HTMLTextAreaElement | null>) || internalRef;
+  const muiTheme = useTheme();
+
+  // Always keep our own ref so the toolbar handlers have a guaranteed node.
+  const localRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Combine: write the node into BOTH refs so the parent can still read
+  // selectionStart / value from its own ref after we mutate the DOM.
+  const setTextareaRef = useCallback(
+    (node: HTMLTextAreaElement | null) => {
+      localRef.current = node;
+      if (textareaRef) {
+        textareaRef.current = node;
+      }
+    },
+    [textareaRef],
+  );
 
   const applySyntax = (
     before: string,
     after: string,
     placeholderText?: string,
   ) => {
-    const ta = (ref as React.RefObject<HTMLTextAreaElement | null>).current;
+    const ta = localRef.current;
     if (!ta) {
       const insert = placeholderText ?? '';
       onChange((value || '') + before + insert + after);
@@ -66,30 +78,32 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     const next =
       current.substring(0, start) + before + selected + after + current.substring(end);
     onChange(next);
-    requestAnimationFrame(() => {
-      const el = (ref as React.RefObject<HTMLTextAreaElement | null>).current;
+    // Restore caret AFTER the inserted text on the next tick so React has
+    // committed the new value back into the DOM.
+    setTimeout(() => {
+      const el = localRef.current;
       if (!el) return;
       el.focus();
       const caret = start + before.length + selected.length;
       el.setSelectionRange(caret, caret);
-    });
+    }, 0);
   };
 
   const insertAtStartOfLine = (prefix: string) => {
-    const ta = (ref as React.RefObject<HTMLTextAreaElement | null>).current;
+    const ta = localRef.current;
     if (!ta) return;
     const start = ta.selectionStart ?? (ta.value || '').length;
     const current = ta.value || '';
     const lineStart = current.lastIndexOf('\n', start - 1) + 1;
     const next = current.substring(0, lineStart) + prefix + current.substring(lineStart);
     onChange(next);
-    requestAnimationFrame(() => {
-      const el = (ref as React.RefObject<HTMLTextAreaElement | null>).current;
+    setTimeout(() => {
+      const el = localRef.current;
       if (!el) return;
       el.focus();
       const caret = start + prefix.length;
       el.setSelectionRange(caret, caret);
-    });
+    }, 0);
   };
 
   const handleBold = () => applySyntax('**', '**', 'bold text');
@@ -98,30 +112,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const handleBullet = () => insertAtStartOfLine('- ');
   const handleNumber = () => insertAtStartOfLine('1. ');
 
-  const toolbarBtnSx = {
-    minWidth: 36,
-    height: 32,
-    px: 1,
-    border: '1px solid',
-    borderColor: 'divider',
-    backgroundColor: 'background.paper',
-    color: 'text.primary',
-    borderRadius: 1,
-    '&:hover': {
-      backgroundColor: 'action.hover',
-    },
-    '&.Mui-disabled': {
-      color: 'text.disabled',
-    },
-  };
+  // Visual row count for the textarea. Plain HTML <textarea> only supports
+  // `rows` so we use minRows (or rows) as the visible height to match the
+  // previous MUI TextField footprint.
+  const visualRows = rows ?? minRows ?? 4;
 
-  const toolbarButton = (
-    label: string,
+  const renderToolbarButton = (
+    title: string,
     ariaLabel: string,
     onClick: () => void,
     icon: React.ReactNode,
   ) => (
-    <Tooltip title={label} arrow>
+    <Tooltip title={title} arrow>
       <span>
         <Button
           type="button"
@@ -129,7 +131,22 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
           onClick={onClick}
           disabled={disabled}
           size="small"
-          sx={toolbarBtnSx}
+          variant="outlined"
+          sx={{
+            minWidth: 36,
+            height: 32,
+            px: 1,
+            color: 'text.primary',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+              borderColor: 'divider',
+            },
+            '&.Mui-disabled': {
+              color: 'text.disabled',
+            },
+          }}
         >
           {icon}
         </Button>
@@ -137,62 +154,49 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     </Tooltip>
   );
 
-  // Visual row count for the underlying textarea. Plain HTML <textarea>
-  // only understands `rows` (fixed), so we use minRows as the visible
-  // height so the field matches the previous MUI TextField footprint.
-  const visualRows = rows ?? minRows ?? 4;
+  const textareaStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '14px',
+    fontFamily: 'inherit',
+    fontSize: '1rem',
+    lineHeight: 1.5,
+    color: muiTheme.palette.text.primary,
+    backgroundColor: muiTheme.palette.background.paper,
+    border: `1px solid ${muiTheme.palette.divider}`,
+    borderRadius: 4,
+    resize: 'vertical',
+    outline: 'none',
+    boxSizing: 'border-box',
+    minHeight: `${visualRows * 1.5}em`,
+  };
 
   return (
     <Box sx={{ width: '100%' }}>
       <ButtonGroup
-        variant="outlined"
         size="small"
         sx={{
           mb: 0.5,
-          '& .MuiButtonGroup-grouped': {
-            borderColor: 'divider',
-          },
         }}
       >
-        {toolbarButton('Bold (Ctrl+B)', 'Bold', handleBold, <FormatBoldIcon fontSize="small" />)}
-        {toolbarButton('Italic', 'Italic', handleItalic, <FormatItalicIcon fontSize="small" />)}
-        {toolbarButton('Underline', 'Underline', handleUnderline, <FormatUnderlinedIcon fontSize="small" />)}
-        {toolbarButton('Bulleted list', 'Bulleted list', handleBullet, <FormatListBulletedIcon fontSize="small" />)}
-        {toolbarButton('Numbered list', 'Numbered list', handleNumber, <FormatListNumberedIcon fontSize="small" />)}
+        {renderToolbarButton('Bold', 'Bold', handleBold, <FormatBoldIcon fontSize="small" />)}
+        {renderToolbarButton('Italic', 'Italic', handleItalic, <FormatItalicIcon fontSize="small" />)}
+        {renderToolbarButton('Underline', 'Underline', handleUnderline, <FormatUnderlinedIcon fontSize="small" />)}
+        {renderToolbarButton('Bulleted list', 'Bulleted list', handleBullet, <FormatListBulletedIcon fontSize="small" />)}
+        {renderToolbarButton('Numbered list', 'Numbered list', handleNumber, <FormatListNumberedIcon fontSize="small" />)}
       </ButtonGroup>
-      <Box
-        component="textarea"
-        ref={ref as React.RefObject<HTMLTextAreaElement>}
+      <textarea
+        ref={setTextareaRef}
         value={value}
-        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         rows={visualRows}
         placeholder={placeholder}
         disabled={disabled}
-        sx={{
-          width: '100%',
-          padding: '14px',
-          fontFamily: 'inherit',
-          fontSize: '1rem',
-          lineHeight: 1.5,
-          color: 'text.primary',
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          resize: 'vertical',
-          outline: 'none',
-          boxSizing: 'border-box',
-          minHeight: `${visualRows * 1.5}em`,
-          '&:focus': {
-            borderColor: 'primary.main',
-          },
-          '&:focus-visible': {
-            outline: 'none',
-          },
-          '&.Mui-disabled': {
-            color: 'text.disabled',
-            backgroundColor: 'action.disabledBackground',
-          },
+        style={textareaStyle}
+        onFocus={(e) => {
+          e.currentTarget.style.borderColor = muiTheme.palette.primary.main;
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.borderColor = muiTheme.palette.divider;
         }}
       />
     </Box>
