@@ -75,6 +75,76 @@ const ProductCreate: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState('');
   const [uploadingImages, setUploadingImages] = useState(false);
+
+  // ----- Description image insertion (admin create) -----
+  const descEnInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const descDeInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const descTrInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const descEnFileRef = useRef<HTMLInputElement | null>(null);
+  const descDeFileRef = useRef<HTMLInputElement | null>(null);
+  const descTrFileRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingDescEn, setUploadingDescEn] = useState(false);
+  const [uploadingDescDe, setUploadingDescDe] = useState(false);
+  const [uploadingDescTr, setUploadingDescTr] = useState(false);
+
+  const insertAtTextareaCursor = (
+    ta: HTMLTextAreaElement | null,
+    value: string,
+    markdown: string,
+    applyValue: (next: string) => void
+  ) => {
+    if (!ta) {
+      applyValue((value || '') + markdown);
+      return;
+    }
+    const start = ta.selectionStart ?? (ta.value || '').length;
+    const end = ta.selectionEnd ?? start;
+    const current = ta.value || '';
+    const next = current.substring(0, start) + markdown + current.substring(end);
+    applyValue(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const caret = start + markdown.length;
+      ta.setSelectionRange(caret, caret);
+    });
+  };
+
+  const handleDescriptionImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    taRef: React.MutableRefObject<HTMLTextAreaElement | null>,
+    fileRef: React.MutableRefObject<HTMLInputElement | null>,
+    setUploading: (v: boolean) => void,
+    currentValue: string,
+    applyValue: (next: string) => void,
+    lang: 'en' | 'de' | 'tr'
+  ) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('attachment', f);
+      const r = await api.post('/attachments/upload', fd);
+      const url: string = r.data.url;
+      const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
+      const markdown = `\n![${alt}](${url})\n`;
+      insertAtTextareaCursor(taRef.current, currentValue, markdown, applyValue);
+      if (lang === 'en') {
+        // English description drives the legacy `description` field too
+        const newDesc = insertAtDescriptionMarkdown(currentValue, markdown);
+        updateField('description', newDesc);
+      }
+    } catch (err: any) {
+      alert(`Image upload failed: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const insertAtDescriptionMarkdown = (current: string, markdown: string): string => {
+    return (current || '') + markdown;
+  };
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -384,17 +454,86 @@ const ProductCreate: React.FC = () => {
               maxRows={8}
               label={t('products.englishDescription')}
               value={form.descriptionML.en}
+              inputRef={descEnInputRef}
               onChange={(e) => {
                 updateML('descriptionML', 'en', e.target.value);
                 updateField('description', e.target.value);
               }}
             />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+              <input
+                ref={descEnFileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => handleDescriptionImageUpload(
+                  e,
+                  descEnInputRef,
+                  descEnFileRef,
+                  setUploadingDescEn,
+                  form.descriptionML.en,
+                  (v) => updateML('descriptionML', 'en', v),
+                  'en',
+                )}
+                disabled={uploadingDescEn}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={uploadingDescEn}
+                onClick={() => descEnFileRef.current?.click()}
+              >
+                {uploadingDescEn ? 'Uploading...' : '+ Insert Image'}
+              </Button>
+            </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.germanDescription')} value={form.descriptionML.de} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.germanDescription')} value={form.descriptionML.de} inputRef={descDeInputRef} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+              <input
+                ref={descDeFileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => handleDescriptionImageUpload(
+                  e,
+                  descDeInputRef,
+                  descDeFileRef,
+                  setUploadingDescDe,
+                  form.descriptionML.de,
+                  (v) => updateML('descriptionML', 'de', v),
+                  'de',
+                )}
+                disabled={uploadingDescDe}
+              />
+              <Button size="small" variant="outlined" disabled={uploadingDescDe} onClick={() => descDeFileRef.current?.click()}>
+                {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
+              </Button>
+            </Box>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.turkishDescription')} value={form.descriptionML.tr} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
+            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.turkishDescription')} value={form.descriptionML.tr} inputRef={descTrInputRef} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+              <input
+                ref={descTrFileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => handleDescriptionImageUpload(
+                  e,
+                  descTrInputRef,
+                  descTrFileRef,
+                  setUploadingDescTr,
+                  form.descriptionML.tr,
+                  (v) => updateML('descriptionML', 'tr', v),
+                  'tr',
+                )}
+                disabled={uploadingDescTr}
+              />
+              <Button size="small" variant="outlined" disabled={uploadingDescTr} onClick={() => descTrFileRef.current?.click()}>
+                {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
+              </Button>
+            </Box>
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
