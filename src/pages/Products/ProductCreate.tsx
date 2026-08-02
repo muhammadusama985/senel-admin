@@ -118,22 +118,36 @@ const ProductCreate: React.FC = () => {
     applyValue: (next: string) => void,
     lang: 'en' | 'de' | 'tr'
   ) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('attachment', f);
-      const r = await api.post('/attachments/upload', fd);
-      const url: string = r.data.url;
-      const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
-      const markdown = `\n![${alt}](${url})\n`;
-      insertAtTextareaCursor(taRef.current, currentValue, markdown, applyValue);
-      if (lang === 'en') {
-        // English description drives the legacy `description` field too
-        const newDesc = insertAtDescriptionMarkdown(currentValue, markdown);
-        updateField('description', newDesc);
+      // Upload each file sequentially and insert each one at the cursor so
+      // multi-file picks produce a row of inline images in the description.
+      let inserted = 0;
+      let latestValue = currentValue;
+      for (const f of files) {
+        const fd = new FormData();
+        fd.append('attachment', f);
+        const r = await api.post('/attachments/upload', fd);
+        const url: string = r.data.url;
+        const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
+        const markdown = `\n![${alt}](${url})\n`;
+        insertAtTextareaCursor(taRef.current, latestValue, markdown, applyValue);
+        // Re-read the live textarea value so the next image inserts AFTER
+        // the one we just placed.
+        latestValue = taRef.current?.value ?? latestValue;
+        inserted += 1;
       }
+      if (lang === 'en') {
+        // English description drives the legacy `description` field too.
+        updateField('description', latestValue);
+      }
+      alert(
+        inserted === 1
+          ? 'Image inserted into description'
+          : `${inserted} images inserted into description`
+      );
     } catch (err: any) {
       alert(`Image upload failed: ${err.response?.data?.message || err.message}`);
     } finally {
@@ -144,6 +158,18 @@ const ProductCreate: React.FC = () => {
 
   const insertAtDescriptionMarkdown = (current: string, markdown: string): string => {
     return (current || '') + markdown;
+  };
+
+  // Extract every image URL embedded in a markdown description so the admin
+  // can preview the images they have inserted so far.
+  const extractDescriptionImageUrls = (text: string): string[] => {
+    const urls: string[] = [];
+    const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text || '')) !== null) {
+      urls.push(m[2]);
+    }
+    return urls;
   };
   const [form, setForm] = useState({
     title: '',
@@ -466,6 +492,7 @@ const ProductCreate: React.FC = () => {
                 type="file"
                 accept="image/*"
                 hidden
+                multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
                   descEnInputRef,
@@ -486,6 +513,27 @@ const ProductCreate: React.FC = () => {
                 {uploadingDescEn ? 'Uploading...' : '+ Insert Image'}
               </Button>
             </Box>
+            {extractDescriptionImageUrls(form.descriptionML.en).length > 0 && (
+              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => (
+                  <Box
+                    key={`en-prev-${idx}`}
+                    component="img"
+                    src={url}
+                    alt=""
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.default',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.germanDescription')} value={form.descriptionML.de} inputRef={descDeInputRef} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
@@ -495,6 +543,7 @@ const ProductCreate: React.FC = () => {
                 type="file"
                 accept="image/*"
                 hidden
+                multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
                   descDeInputRef,
@@ -510,6 +559,27 @@ const ProductCreate: React.FC = () => {
                 {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
               </Button>
             </Box>
+            {extractDescriptionImageUrls(form.descriptionML.de).length > 0 && (
+              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => (
+                  <Box
+                    key={`de-prev-${idx}`}
+                    component="img"
+                    src={url}
+                    alt=""
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.default',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.turkishDescription')} value={form.descriptionML.tr} inputRef={descTrInputRef} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
@@ -519,6 +589,7 @@ const ProductCreate: React.FC = () => {
                 type="file"
                 accept="image/*"
                 hidden
+                multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
                   descTrInputRef,
@@ -534,6 +605,27 @@ const ProductCreate: React.FC = () => {
                 {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
               </Button>
             </Box>
+            {extractDescriptionImageUrls(form.descriptionML.tr).length > 0 && (
+              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => (
+                  <Box
+                    key={`tr-prev-${idx}`}
+                    component="img"
+                    src={url}
+                    alt=""
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      bgcolor: 'background.default',
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>

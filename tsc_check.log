@@ -1,0 +1,7 @@
+src/components/common/ImageUpload.tsx(41,9): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/CMS/Banners.tsx(129,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/CMS/BlogPosts.tsx(139,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/pages/Shipping/Handover.tsx(250,22): error TS2339: Property 'ready_for_pickup' does not exist on type '{ picked_up: string; in_transit: string; delivered: string; }'.
