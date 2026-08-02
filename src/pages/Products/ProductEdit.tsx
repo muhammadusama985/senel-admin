@@ -674,14 +674,19 @@ const ProductEdit: React.FC = () => {
                             gap: 0.5,
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => {
+                            const chipSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`en-chip-${idx}`}
                               className="desc-image-chip"
                             >
-                              <span className="desc-image-chip-label">
-                                image {idx + 1}
-                              </span>
+                              <Box
+                                component="img"
+                                src={chipSrc}
+                                alt={`description image ${idx + 1}`}
+                                className="desc-image-chip-thumb"
+                              />
                               <button
                                 type="button"
                                 aria-label="Remove this image from the description"
@@ -695,7 +700,8 @@ const ProductEdit: React.FC = () => {
                                 &#8722;
                               </button>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                     </Grid>
@@ -741,14 +747,19 @@ const ProductEdit: React.FC = () => {
                             gap: 0.5,
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => {
+                            const chipSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`de-chip-${idx}`}
                               className="desc-image-chip"
                             >
-                              <span className="desc-image-chip-label">
-                                image {idx + 1}
-                              </span>
+                              <Box
+                                component="img"
+                                src={chipSrc}
+                                alt={`description image ${idx + 1}`}
+                                className="desc-image-chip-thumb"
+                              />
                               <button
                                 type="button"
                                 aria-label="Remove this image from the description"
@@ -762,7 +773,8 @@ const ProductEdit: React.FC = () => {
                                 &#8722;
                               </button>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                     </Grid>
@@ -808,14 +820,19 @@ const ProductEdit: React.FC = () => {
                             gap: 0.5,
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => {
+                            const chipSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`tr-chip-${idx}`}
                               className="desc-image-chip"
                             >
-                              <span className="desc-image-chip-label">
-                                image {idx + 1}
-                              </span>
+                              <Box
+                                component="img"
+                                src={chipSrc}
+                                alt={`description image ${idx + 1}`}
+                                className="desc-image-chip-thumb"
+                              />
                               <button
                                 type="button"
                                 aria-label="Remove this image from the description"
@@ -829,7 +846,8 @@ const ProductEdit: React.FC = () => {
                                 &#8722;
                               </button>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                     </Grid>
