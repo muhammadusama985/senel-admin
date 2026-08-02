@@ -54,76 +54,53 @@ a {
   }
 }
 
-/* Live description preview (admin edit form). The text block renders
-   normally and ALL images extracted from the markdown are pushed to a
-   single side-by-side flex row at the bottom so the copy stays continuous
-   instead of being broken apart by inline photos. */
-.desc-preview-image {
-  display: inline-block;
-  max-width: 180px;
-  max-height: 140px;
-  width: auto;
-  height: auto;
-  margin: 0;
-  border-radius: 6px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background-color: rgba(0, 0, 0, 0.02);
-  object-fit: contain;
-  flex: 0 0 auto;
+/* Compact image-management chip: a tiny pill that lists "image 1",
+   "image 2", etc. with a - button. NOT a preview -- just an inline list
+   of images embedded in the description so the admin can remove any of
+   them without rendering the full description below the TextField. */
+.desc-image-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.35rem 0.2rem 0.6rem;
+  border-radius: 999px;
+  background-color: rgba(91, 46, 255, 0.08);
+  border: 1px solid rgba(91, 46, 255, 0.25);
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
-.desc-preview-gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-  align-items: flex-start;
+.desc-image-chip-label {
+  color: #5b2eff;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-/* Wraps a single preview image so the remove button can sit on top of it. */
-.desc-preview-image-wrap {
-  position: relative;
-  display: inline-block;
-  line-height: 0;
-}
-
-/* Tiny circular minus button anchored to the top-right of each preview image.
-   Clicking it removes that one image from the description markdown. */
-.desc-preview-image-remove {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 22px;
-  height: 22px;
+.desc-image-chip-remove {
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: none;
   border-radius: 50%;
   background-color: #d32f2f;
   color: #fff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 18px;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background-color 0.15s ease;
 }
 
-.desc-preview-image-remove:hover {
+.desc-image-chip-remove:hover {
   background-color: #b71c1c;
 }
 
-.desc-preview-image-remove:focus-visible {
+.desc-image-chip-remove:focus-visible {
   outline: 2px solid #5b2eff;
   outline-offset: 2px;
-}
-
-.desc-preview-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: inherit;
 }
 
 /* Static description rendering on the admin product detail page. */

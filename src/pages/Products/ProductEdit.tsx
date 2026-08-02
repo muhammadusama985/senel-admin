@@ -261,100 +261,7 @@ const ProductEdit: React.FC = () => {
     return urls;
   };
 
-  // Render a markdown description (with `![alt](url)` image references) so
-  // the admin can SEE the actual images they have embedded. All text is
-  // rendered as one continuous block (with the image references stripped),
-  // and ALL extracted images are pushed to a single side-by-side flex row
-  // at the bottom so the copy stays continuous instead of being divided by
-  // inline photos.
-  const renderDescriptionWithImages = (text: string): React.ReactNode => {
-    if (!text) return null;
-    const imageNodes: React.ReactNode[] = [];
-    let key = 0;
-    const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
-      const resolved = resolveMediaUrl(url);
-      if (resolved) {
-        imageNodes.push(
-          React.createElement('img', {
-            key: `desc-img-${key++}`,
-            src: resolved,
-            alt: alt || 'product image',
-            className: 'desc-preview-image',
-            loading: 'lazy',
-          }),
-        );
-      }
-      return '';
-    });
-    const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
-    return React.createElement(
-      React.Fragment,
-      null,
-      cleanedText
-        ? React.createElement('div', { className: 'desc-preview-text' }, cleanedText)
-        : null,
-      imageNodes.length > 0
-        ? React.createElement('div', { className: 'desc-preview-gallery' }, ...imageNodes)
-        : null,
-    );
-  };
 
-  // Edit-form live preview: text on top, then a side-by-side image gallery
-  // where each image has a small (-/x) IconButton overlay that removes that
-  // exact image from the description markdown. This is the ONLY place the
-  // description is rendered visually -- there is no separate thumbnail strip
-  // above it, so the admin never sees the description twice.
-  const renderDescriptionPreview = (
-    text: string,
-    applyValue: (next: string) => void,
-  ): React.ReactNode => {
-    if (!text) return null;
-    const imageNodes: React.ReactNode[] = [];
-    let key = 0;
-    const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, _alt, url) => {
-      const resolved = resolveMediaUrl(url);
-      if (resolved) {
-        imageNodes.push(
-          React.createElement(
-            'div',
-            {
-              key: `desc-wrap-${key}`,
-              className: 'desc-preview-image-wrap',
-            },
-            React.createElement('img', {
-              src: resolved,
-              alt: 'description image',
-              className: 'desc-preview-image',
-              loading: 'lazy',
-            }),
-            React.createElement(
-              'button',
-              {
-                type: 'button',
-                'aria-label': 'Remove this image from the description',
-                className: 'desc-preview-image-remove',
-                onClick: () => removeDescriptionImage(applyValue, text, url),
-              },
-              '\u2212',
-            ),
-          ),
-        );
-      }
-      key += 1;
-      return '';
-    });
-    const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
-    return React.createElement(
-      React.Fragment,
-      null,
-      cleanedText
-        ? React.createElement('div', { className: 'desc-preview-text' }, cleanedText)
-        : null,
-      imageNodes.length > 0
-        ? React.createElement('div', { className: 'desc-preview-gallery' }, ...imageNodes)
-        : null,
-    );
-  };
 
   // Remove the first markdown image reference whose URL matches `urlToRemove`.
   // Used by the \xc3\x97 button on each description-image thumbnail so the
@@ -752,30 +659,43 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescEn ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {/* Live preview of the rendered description (text on top,
-                          ALL images in a single side-by-side row at the bottom
-                          with a delete button on each). This is the ONE place
-                          where the description is shown visually -- no
-                          duplicate thumbnail strip above. */}
-                      {form.descriptionML.en && (
+                      {/* Compact image-chip strip. Each chip is one image the
+                          admin has inserted into THIS description; the small
+                          "-" button removes that single image from the
+                          markdown. This is NOT a description preview -- it is
+                          a tiny management row only. The description itself
+                          is edited entirely inside the TextField above. */}
+                      {extractDescriptionImageUrls(form.descriptionML.en).length > 0 && (
                         <Box
                           sx={{
-                            mt: 1,
-                            maxHeight: 220,
-                            overflowY: 'auto',
-                            p: 1,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            fontSize: '0.85rem',
-                            color: 'text.secondary',
+                            mt: 0.75,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
                           }}
                         >
-                          {renderDescriptionPreview(
-                            form.descriptionML.en,
-                            (v) => updateML('descriptionML', 'en', v),
-                          )}
+                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => (
+                            <Box
+                              key={`en-chip-${idx}`}
+                              className="desc-image-chip"
+                            >
+                              <span className="desc-image-chip-label">
+                                image {idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label="Remove this image from the description"
+                                className="desc-image-chip-remove"
+                                onClick={() => removeDescriptionImage(
+                                  (v) => updateML('descriptionML', 'en', v),
+                                  form.descriptionML.en,
+                                  url,
+                                )}
+                              >
+                                &#8722;
+                              </button>
+                            </Box>
+                          ))}
                         </Box>
                       )}
                     </Grid>
@@ -812,25 +732,37 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {form.descriptionML.de && (
+                      {extractDescriptionImageUrls(form.descriptionML.de).length > 0 && (
                         <Box
                           sx={{
-                            mt: 1,
-                            maxHeight: 220,
-                            overflowY: 'auto',
-                            p: 1,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            fontSize: '0.85rem',
-                            color: 'text.secondary',
+                            mt: 0.75,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
                           }}
                         >
-                          {renderDescriptionPreview(
-                            form.descriptionML.de,
-                            (v) => updateML('descriptionML', 'de', v),
-                          )}
+                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => (
+                            <Box
+                              key={`de-chip-${idx}`}
+                              className="desc-image-chip"
+                            >
+                              <span className="desc-image-chip-label">
+                                image {idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label="Remove this image from the description"
+                                className="desc-image-chip-remove"
+                                onClick={() => removeDescriptionImage(
+                                  (v) => updateML('descriptionML', 'de', v),
+                                  form.descriptionML.de,
+                                  url,
+                                )}
+                              >
+                                &#8722;
+                              </button>
+                            </Box>
+                          ))}
                         </Box>
                       )}
                     </Grid>
@@ -867,25 +799,37 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {form.descriptionML.tr && (
+                      {extractDescriptionImageUrls(form.descriptionML.tr).length > 0 && (
                         <Box
                           sx={{
-                            mt: 1,
-                            maxHeight: 220,
-                            overflowY: 'auto',
-                            p: 1,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
-                            fontSize: '0.85rem',
-                            color: 'text.secondary',
+                            mt: 0.75,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
                           }}
                         >
-                          {renderDescriptionPreview(
-                            form.descriptionML.tr,
-                            (v) => updateML('descriptionML', 'tr', v),
-                          )}
+                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => (
+                            <Box
+                              key={`tr-chip-${idx}`}
+                              className="desc-image-chip"
+                            >
+                              <span className="desc-image-chip-label">
+                                image {idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                aria-label="Remove this image from the description"
+                                className="desc-image-chip-remove"
+                                onClick={() => removeDescriptionImage(
+                                  (v) => updateML('descriptionML', 'tr', v),
+                                  form.descriptionML.tr,
+                                  url,
+                                )}
+                              >
+                                &#8722;
+                              </button>
+                            </Box>
+                          ))}
                         </Box>
                       )}
                     </Grid>
