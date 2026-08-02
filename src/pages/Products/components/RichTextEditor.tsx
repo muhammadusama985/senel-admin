@@ -5,6 +5,7 @@ import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import { resolveMediaUrl } from '../../../utils/media';
 
 export interface RichTextEditorHandle {
   /**
@@ -81,11 +82,15 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           if (!el) return;
           el.focus();
 
-          // Build the <img> with src and a generic alt. Setting src on
-          // the detached element is required so the image actually loads
-          // once it is inserted into the contentEditable.
+          // The src must be a FULL absolute URL (not the raw
+          // `/uploads/foo.png` the backend returns), otherwise the browser
+          // tries to load the image from the editor's own origin (e.g. the
+          // admin/vite dev server) and silently 404s -- which looks exactly
+          // like "the image vanished". Resolving with resolveMediaUrl
+          // prepends the backend origin so the picture actually loads.
+          const resolvedSrc = resolveMediaUrl(url) || url;
           const img = document.createElement('img');
-          img.src = url;
+          img.src = resolvedSrc;
           img.className = 'rte-embedded-image';
           img.style.maxWidth = '100%';
           img.style.height = 'auto';
@@ -93,21 +98,20 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           img.style.margin = '0.5rem 0';
           img.style.borderRadius = '4px';
           img.setAttribute('loading', 'lazy');
-          // Use a generic alt (no URL, no filename) so the description
-          // never shows the image address as visible text on hover or
-          // when the image fails to load.
+          // Empty alt: no URL, no filename shows on hover or when the
+          // image fails to load.
           img.setAttribute('alt', '');
 
-          // Browser quirk: some engines wrap the freshly-assigned src in
-          // a sibling TEXT NODE inside the contentEditable so the URL
-          // appears as visible text right next to the image. We sweep
-          // any such node out AFTER the image is in the DOM so only
+          // Browser quirk cleanup: some engines wrap the freshly-assigned
+          // src in a sibling TEXT NODE inside the contentEditable, making
+          // the URL appear as visible text right next to the image. We
+          // sweep any such node out AFTER the image is in the DOM so only
           // the visual <img> remains.
           const stripUrlTextNode = (sibling: ChildNode | null): ChildNode | null => {
             let cur = sibling;
             while (cur && cur.nodeType === Node.TEXT_NODE) {
               const text = cur.textContent || '';
-              if (text.includes(url)) {
+              if (text.includes(url) || text.includes(resolvedSrc)) {
                 const toRemove = cur;
                 cur = cur.nextSibling;
                 toRemove.parentNode?.removeChild(toRemove);
