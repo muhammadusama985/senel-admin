@@ -80,6 +80,36 @@ const AdminBulkOfferDetail: React.FC = () => {
   const [validDays, setValidDays] = useState<number | ''>(7);
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState('');
+  const [counterAttachmentUrls, setCounterAttachmentUrls] = useState<string[]>([]);
+  const [messageAttachmentUrls, setMessageAttachmentUrls] = useState<string[]>([]);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+
+  const handleAttachmentUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setUploadingAttachment(true);
+    try {
+      const fd = new FormData();
+      fd.append('attachment', f);
+      const r = await api.post('/attachments/upload', fd);
+      setter((prev) => [...prev, r.data.url]);
+    } catch (err: any) {
+      alert(`Upload failed: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setUploadingAttachment(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (
+    url: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setter((prev) => prev.filter((u) => u !== url));
+  };
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['admin', 'bulk-offers', offerId],
@@ -102,9 +132,16 @@ const AdminBulkOfferDetail: React.FC = () => {
 
   const counterMutation = useMutation({
     mutationFn: async () =>
-      api.post(`/bulk-offers/admin/${offerId}/counter`, { qty, unitPrice, notes, validDays }),
+      api.post(`/bulk-offers/admin/${offerId}/counter`, {
+        qty,
+        unitPrice,
+        notes,
+        validDays,
+        attachments: counterAttachmentUrls.map((u) => ({ url: u, filename: u.split('/').pop() })),
+      }),
     onSuccess: () => {
       setNotes('');
+      setCounterAttachmentUrls([]);
       refetch();
       invalidate();
     },
@@ -129,9 +166,13 @@ const AdminBulkOfferDetail: React.FC = () => {
 
   const messageMutation = useMutation({
     mutationFn: async () =>
-      api.post(`/bulk-offers/admin/${offerId}/messages`, { message }),
+      api.post(`/bulk-offers/admin/${offerId}/messages`, {
+        message,
+        attachments: messageAttachmentUrls.map((u) => ({ url: u, filename: u.split('/').pop() })),
+      }),
     onSuccess: () => {
       setMessage('');
+      setMessageAttachmentUrls([]);
       refetch();
       invalidate();
     },
@@ -207,19 +248,6 @@ const AdminBulkOfferDetail: React.FC = () => {
           Summary
         </Typography>
         <Stack spacing={0.5}>
-          {(() => {
-            const _productImage = resolveMediaUrl(offer.productSnapshot?.imageUrl);
-            if (!_productImage) return null;
-            return (
-              <Box sx={{ mb: 1 }}>
-                <img
-                  src={_productImage}
-                  alt={offer.productSnapshot?.title || 'Product'}
-                  style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 8, border: '1px solid', borderColor: 'divider' }}
-                />
-              </Box>
-            );
-          })()}
           <Typography>
             <strong>Product:</strong> {offer.productSnapshot?.title || '-'}
           </Typography>
@@ -301,6 +329,50 @@ const AdminBulkOfferDetail: React.FC = () => {
                     {m.notes}
                   </Typography>
                 ) : null}
+                {m.attachments && m.attachments.length > 0 && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                      gap: 1,
+                    }}
+                  >
+                    {m.attachments.map((a: any, idx: number) => {
+                      const _url = resolveMediaUrl(a.url);
+                      if (!_url) return null;
+                      const _isImage = (a.mimeType ? a.mimeType.startsWith('image/') : true) && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                      return (
+                        <a
+                          key={idx}
+                          href={_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            display: 'block',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            overflow: 'hidden',
+                            background: 'background.default',
+                          }}
+                        >
+                          {_isImage ? (
+                            <img
+                              src={_url}
+                              alt={a.filename || a.url}
+                              style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                            />
+                          ) : (
+                            <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                              {a.filename || a.url}
+                            </Box>
+                          )}
+                        </a>
+                      );
+                    })}
+                  </Box>
+                )}
               </Paper>
             ))}
           </Stack>
@@ -359,6 +431,78 @@ const AdminBulkOfferDetail: React.FC = () => {
             fullWidth
             sx={{ mb: 2 }}
           />
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ mb: 0.5 }}>
+              Attachments (images, optional)
+            </Typography>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleAttachmentUpload(e, setCounterAttachmentUrls)}
+              disabled={uploadingAttachment}
+            />
+            {counterAttachmentUrls.length > 0 && (
+              <Box
+                sx={{
+                  mt: 1,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: 1,
+                }}
+              >
+                {counterAttachmentUrls.map((u) => {
+                  const _url = resolveMediaUrl(u);
+                  if (!_url) return null;
+                  const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                  return (
+                    <Box
+                      key={u}
+                      sx={{
+                        position: 'relative',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        background: 'background.default',
+                      }}
+                    >
+                      <a href={_url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+                        {_isImage ? (
+                          <img
+                            src={_url}
+                            alt={u.split('/').pop()}
+                            style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                          />
+                        ) : (
+                          <Box sx={{ p: 1, fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                            {u.split('/').pop()}
+                          </Box>
+                        )}
+                      </a>
+                      <Button
+                        size="small"
+                        onClick={() => removeAttachment(u, setCounterAttachmentUrls)}
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          minWidth: 0,
+                          padding: '2px 6px',
+                          background: 'rgba(0,0,0,0.6)',
+                          color: '#fff',
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          '&:hover': { background: 'rgba(0,0,0,0.8)' },
+                        }}
+                      >
+                        ×
+                      </Button>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button
               variant="contained"
@@ -430,9 +574,81 @@ const AdminBulkOfferDetail: React.FC = () => {
           fullWidth
           sx={{ mb: 1 }}
         />
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="body2" sx={{ mb: 0.5 }}>
+            Attachments (images, optional)
+          </Typography>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleAttachmentUpload(e, setMessageAttachmentUrls)}
+            disabled={uploadingAttachment}
+          />
+          {messageAttachmentUrls.length > 0 && (
+            <Box
+              sx={{
+                mt: 1,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                gap: 1,
+              }}
+            >
+              {messageAttachmentUrls.map((u) => {
+                const _url = resolveMediaUrl(u);
+                if (!_url) return null;
+                const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                return (
+                  <Box
+                    key={u}
+                    sx={{
+                      position: 'relative',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      background: 'background.default',
+                    }}
+                  >
+                    <a href={_url} target="_blank" rel="noreferrer" style={{ display: 'block' }}>
+                      {_isImage ? (
+                        <img
+                          src={_url}
+                          alt={u.split('/').pop()}
+                          style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                        />
+                      ) : (
+                        <Box sx={{ p: 1, fontSize: '0.8rem', wordBreak: 'break-all' }}>
+                          {u.split('/').pop()}
+                        </Box>
+                      )}
+                    </a>
+                    <Button
+                      size="small"
+                      onClick={() => removeAttachment(u, setMessageAttachmentUrls)}
+                      sx={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        minWidth: 0,
+                        padding: '2px 6px',
+                        background: 'rgba(0,0,0,0.6)',
+                        color: '#fff',
+                        fontSize: '0.75rem',
+                        lineHeight: 1,
+                        '&:hover': { background: 'rgba(0,0,0,0.8)' },
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
         <Button
           variant="outlined"
-          disabled={!isAdminManaged || !message.trim() || messageMutation.isPending}
+          disabled={!isAdminManaged || (!message.trim() && messageAttachmentUrls.length === 0) || messageMutation.isPending}
           onClick={() =>
             messageMutation.mutate(undefined, { onError: handleError('Message') })
           }
