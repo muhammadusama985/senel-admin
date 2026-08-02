@@ -174,6 +174,10 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       outline: 'none',
       boxSizing: 'border-box',
       minHeight: `${visualRows * 1.5}em`,
+      // Cap the editor area and scroll internally when the content grows,
+      // so the surrounding form grid never stretches to infinity.
+      maxHeight: 360,
+      overflowY: 'auto',
     };
 
     return (
@@ -187,6 +191,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         </ButtonGroup>
         <div
           ref={contentRef}
+          className="rte-content"
           contentEditable={disabled ? false : true}
           suppressContentEditableWarning
           onInput={syncToState}

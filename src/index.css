@@ -118,11 +118,14 @@ a {
   word-break: break-word;
 }
 
-/* Lists produced by the rich text editor. */
+/* Lists produced by the rich text editor. The padding-inline-start
+   reserves room on the LEFT so the bullet (\xe2\x80\xa2) or number
+   (1., 2., 3.) markers are visible -- without it the markers render
+   flush against the description edge. */
 .admin-product-description ul,
 .admin-product-description ol {
-  margin: 0.5rem 0 0.5rem 1.5rem;
-  padding: 0;
+  margin: 0.5rem 0;
+  padding-inline-start: 2rem;
 }
 
 .admin-product-description ul {
@@ -135,6 +138,44 @@ a {
 
 .admin-product-description li {
   margin: 0.2rem 0;
+}
+
+/* Nested lists get an additional left indent. */
+.admin-product-description ul ul,
+.admin-product-description ol ol,
+.admin-product-description ul ol,
+.admin-product-description ol ul {
+  margin: 0.2rem 0;
+  padding-inline-start: 1.5rem;
+}
+
+/* The rich text editor itself (admin + vendor forms). Inside the
+   contentEditable area, lists need the same left padding so the user
+   actually SEES the bullet / number marker when typing. */
+.rte-content ul,
+.rte-content ol {
+  margin: 0.5rem 0;
+  padding-inline-start: 2rem;
+}
+
+.rte-content ul {
+  list-style-type: disc;
+}
+
+.rte-content ol {
+  list-style-type: decimal;
+}
+
+.rte-content li {
+  margin: 0.2rem 0;
+}
+
+.rte-content ul ul,
+.rte-content ol ol,
+.rte-content ul ol,
+.rte-content ol ul {
+  margin: 0.2rem 0;
+  padding-inline-start: 1.5rem;
 }
 
 /* Text portion of the rendered description (after image extraction). */
