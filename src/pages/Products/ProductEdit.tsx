@@ -30,7 +30,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
-import { RichTextEditor } from '../../components/common/RichTextEditor';
 
 // Local mirror of the vendor's variant shape (the new VariantEditor
 // accepts plain objects with sku / stockQty / attributes / imageUrls).
@@ -518,27 +517,36 @@ const ProductEdit: React.FC = () => {
                       <TextField fullWidth label="Turkish Title" value={form.titleML.tr} onChange={(event) => updateML('titleML', 'tr', event.target.value)} sx={fieldSx} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <RichTextEditor
-                        value={form.descriptionML.en}
-                        onChange={(value) => updateML('descriptionML', 'en', value)}
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={4}
                         label="English Description"
-                        minHeight="132px"
+                        value={form.descriptionML.en}
+                        onChange={(event) => updateML('descriptionML', 'en', event.target.value)}
+                        sx={fieldSx}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <RichTextEditor
-                        value={form.descriptionML.de}
-                        onChange={(value) => updateML('descriptionML', 'de', value)}
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={4}
                         label="German Description"
-                        minHeight="132px"
+                        value={form.descriptionML.de}
+                        onChange={(event) => updateML('descriptionML', 'de', event.target.value)}
+                        sx={fieldSx}
                       />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <RichTextEditor
-                        value={form.descriptionML.tr}
-                        onChange={(value) => updateML('descriptionML', 'tr', value)}
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={4}
                         label="Turkish Description"
-                        minHeight="132px"
+                        value={form.descriptionML.tr}
+                        onChange={(event) => updateML('descriptionML', 'tr', event.target.value)}
+                        sx={fieldSx}
                       />
                     </Grid>
                   </Grid>

@@ -43,7 +43,6 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
-import { sanitizeHtml } from '../../components/common/RichTextEditor';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -272,11 +271,9 @@ const ProductDetail: React.FC = () => {
               <Typography variant="h5" gutterBottom sx={{ color: muiTheme.palette.text.primary }}>
                 {product.title}
               </Typography>
-              <Box
-                component="div"
-                sx={{ color: muiTheme.palette.text.secondary, '& p': { margin: 0 }, '& ul, & ol': { pl: 3 } }}
-                dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description || '') }}
-              />
+              <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }} paragraph>
+                {product.description}
+              </Typography>
 
               <Divider sx={{ my: 2, borderColor: border }} />
 

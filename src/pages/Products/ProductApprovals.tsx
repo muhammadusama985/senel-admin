@@ -45,7 +45,6 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
-import { sanitizeHtml } from '../../components/common/RichTextEditor';
 
 const ProductApprovals: React.FC = () => {
   const muiTheme = useMuiTheme();
@@ -301,11 +300,9 @@ const ProductApprovals: React.FC = () => {
                       <Typography variant="h5" gutterBottom sx={{ color: muiTheme.palette.text.primary }}>
                         {selectedProduct.title}
                       </Typography>
-                      <Box
-                        component="div"
-                        sx={{ color: muiTheme.palette.text.secondary, '& p': { margin: 0 }, '& ul, & ol': { pl: 3 } }}
-                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedProduct.description || '') }}
-                      />
+                      <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }} paragraph>
+                        {selectedProduct.description}
+                      </Typography>
 
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 6 }}>

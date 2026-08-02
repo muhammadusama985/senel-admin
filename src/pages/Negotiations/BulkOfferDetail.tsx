@@ -73,10 +73,10 @@ const AdminBulkOfferDetail: React.FC = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  const [qty, setQty] = useState<number>(0);
-  const [unitPrice, setUnitPrice] = useState<number>(0);
+  const [qty, setQty] = useState<number | ''>(0);
+  const [unitPrice, setUnitPrice] = useState<number | ''>(0);
   const [notes, setNotes] = useState('');
-  const [validDays, setValidDays] = useState<number>(7);
+  const [validDays, setValidDays] = useState<number | ''>(7);
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState('');
 
@@ -315,7 +315,7 @@ const AdminBulkOfferDetail: React.FC = () => {
               type="number"
               label="Quantity"
               value={qty}
-              onChange={(e) => setQty(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              onChange={(e) => setQty(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10)))}
               inputProps={{ min: 1 }}
               fullWidth
             />
@@ -323,7 +323,7 @@ const AdminBulkOfferDetail: React.FC = () => {
               type="number"
               label={`Unit Price (${offer.currency})`}
               value={unitPrice}
-              onChange={(e) => setUnitPrice(Math.max(0, parseFloat(e.target.value) || 0))}
+              onChange={(e) => setUnitPrice(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value)))}
               inputProps={{ min: 0, step: 0.01 }}
               fullWidth
             />
@@ -331,7 +331,7 @@ const AdminBulkOfferDetail: React.FC = () => {
               type="number"
               label="Extend validity (days)"
               value={validDays}
-              onChange={(e) => setValidDays(Math.max(1, parseInt(e.target.value, 10) || 7))}
+              onChange={(e) => setValidDays(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10)))}
               inputProps={{ min: 1, max: 90 }}
               fullWidth
             />

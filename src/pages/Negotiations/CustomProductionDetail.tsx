@@ -78,12 +78,12 @@ const AdminCustomProductionDetail: React.FC = () => {
   const { t } = useTranslation();
 
   // Quotation form
-  const [unitPrice, setUnitPrice] = useState<number>(0);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
-  const [leadTimeDays, setLeadTimeDays] = useState<number>(0);
+  const [unitPrice, setUnitPrice] = useState<number | ''>(0);
+  const [totalPrice, setTotalPrice] = useState<number | ''>(0);
+  const [leadTimeDays, setLeadTimeDays] = useState<number | ''>(0);
   const [productionNotes, setProductionNotes] = useState('');
   const [termsAndConditions, setTermsAndConditions] = useState('');
-  const [validDays, setValidDays] = useState<number>(14);
+  const [validDays, setValidDays] = useState<number | ''>(14);
   const [quotationMessage, setQuotationMessage] = useState('');
   const [conversationMessage, setConversationMessage] = useState('');
 
@@ -391,7 +391,12 @@ const AdminCustomProductionDetail: React.FC = () => {
               label="Unit Price"
               value={unitPrice}
               onChange={(e) => {
-                const v = Math.max(0, parseFloat(e.target.value) || 0);
+                if (e.target.value === '') {
+                  setUnitPrice('');
+                  setTotalPrice('');
+                  return;
+                }
+                const v = Math.max(0, parseFloat(e.target.value));
                 setUnitPrice(v);
                 setTotalPrice(Number((v * rfq.qty).toFixed(2)));
               }}
@@ -402,7 +407,7 @@ const AdminCustomProductionDetail: React.FC = () => {
               type="number"
               label="Total Price (auto)"
               value={totalPrice}
-              onChange={(e) => setTotalPrice(Math.max(0, parseFloat(e.target.value) || 0))}
+              onChange={(e) => setTotalPrice(e.target.value === '' ? '' : Math.max(0, parseFloat(e.target.value)))}
               inputProps={{ min: 0, step: 0.01 }}
               fullWidth
             />
@@ -410,7 +415,7 @@ const AdminCustomProductionDetail: React.FC = () => {
               type="number"
               label="Lead time (days)"
               value={leadTimeDays}
-              onChange={(e) => setLeadTimeDays(Math.max(0, parseInt(e.target.value, 10) || 0))}
+              onChange={(e) => setLeadTimeDays(e.target.value === '' ? '' : Math.max(0, parseInt(e.target.value, 10)))}
               inputProps={{ min: 0 }}
               fullWidth
             />
@@ -419,7 +424,7 @@ const AdminCustomProductionDetail: React.FC = () => {
               label="Validity (days)"
               value={validDays}
               onChange={(e) =>
-                setValidDays(Math.max(1, parseInt(e.target.value, 10) || 14))
+                setValidDays(e.target.value === '' ? '' : Math.max(1, parseInt(e.target.value, 10)))
               }
               inputProps={{ min: 1, max: 180 }}
               fullWidth
