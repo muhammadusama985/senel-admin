@@ -44,6 +44,46 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
 
+/**
+ * Render a product description that may contain markdown-style image
+ * references (e.g. `![alt](https://example.com/image.png)`). Splits the
+ * text into segments so each image becomes a real <img> element and the
+ * surrounding text keeps its original whitespace and line breaks.
+ */
+const renderDescriptionWithImages = (text: string): React.ReactNode[] => {
+  const nodes: React.ReactNode[] = [];
+  if (!text) return nodes;
+  const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(
+        React.createElement('span', { key: `desc-t-${key++}` }, text.substring(lastIndex, match.index))
+      );
+    }
+    const alt = match[1] || 'product image';
+    const url = match[2];
+    nodes.push(
+      React.createElement('img', {
+        key: `desc-i-${key++}`,
+        src: url,
+        alt,
+        className: 'admin-product-description-image',
+        loading: 'lazy',
+      }),
+    );
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(
+      React.createElement('span', { key: `desc-t-${key++}` }, text.substring(lastIndex))
+    );
+  }
+  return nodes;
+};
+
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -271,9 +311,16 @@ const ProductDetail: React.FC = () => {
               <Typography variant="h5" gutterBottom sx={{ color: muiTheme.palette.text.primary }}>
                 {product.title}
               </Typography>
-              <Typography variant="body2" sx={{ color: muiTheme.palette.text.secondary }} paragraph>
-                {product.description}
-              </Typography>
+              <Box
+                className="admin-product-description"
+                sx={{
+                  color: muiTheme.palette.text.secondary,
+                  fontSize: '0.9rem',
+                  lineHeight: 1.6,
+                }}
+              >
+                {renderDescriptionWithImages(product.description)}
+              </Box>
 
               <Divider sx={{ my: 2, borderColor: border }} />
 
