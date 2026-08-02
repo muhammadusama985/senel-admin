@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface RFQ {
   _id: string;
@@ -223,6 +224,19 @@ const AdminCustomProductionDetail: React.FC = () => {
           Request Summary
         </Typography>
         <Stack spacing={0.5}>
+          {(() => {
+            const _productImage = resolveMediaUrl(rfq.productSnapshot?.imageUrl);
+            if (!_productImage) return null;
+            return (
+              <Box sx={{ mb: 1 }}>
+                <img
+                  src={_productImage}
+                  alt={rfq.productSnapshot?.title || 'Product'}
+                  style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 8, border: '1px solid', borderColor: 'divider' }}
+                />
+              </Box>
+            );
+          })()}
           <Typography>
             <strong>Product:</strong> {rfq.productSnapshot?.title || '-'}
           </Typography>
@@ -277,15 +291,48 @@ const AdminCustomProductionDetail: React.FC = () => {
           <>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1">Attachments</Typography>
-            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-              {rfq.attachments.map((a: any, idx: number) => (
-                <Typography key={idx} variant="body2">
-                  <a href={a.url} target="_blank" rel="noreferrer">
-                    {a.filename || a.url}
+            <Box
+              sx={{
+                mt: 0.5,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                gap: 1,
+              }}
+            >
+              {rfq.attachments.map((a: any, idx: number) => {
+                const _url = resolveMediaUrl(a.url);
+                if (!_url) return null;
+                const _isImage = (a.mimeType ? a.mimeType.startsWith('image/') : true) && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                return (
+                  <a
+                    key={idx}
+                    href={_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'block',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      background: 'background.default',
+                    }}
+                  >
+                    {_isImage ? (
+                      <img
+                        src={_url}
+                        alt={a.filename || a.url}
+                        style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                        {a.filename || a.url}
+                      </Box>
+                    )}
                   </a>
-                </Typography>
-              ))}
-            </Stack>
+                );
+              })}
+            </Box>
           </>
         )}
 

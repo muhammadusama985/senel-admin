@@ -18,6 +18,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
+import { resolveMediaUrl } from '../../utils/media';
 
 interface BulkOffer {
   _id: string;
@@ -206,6 +207,19 @@ const AdminBulkOfferDetail: React.FC = () => {
           Summary
         </Typography>
         <Stack spacing={0.5}>
+          {(() => {
+            const _productImage = resolveMediaUrl(offer.productSnapshot?.imageUrl);
+            if (!_productImage) return null;
+            return (
+              <Box sx={{ mb: 1 }}>
+                <img
+                  src={_productImage}
+                  alt={offer.productSnapshot?.title || 'Product'}
+                  style={{ width: 96, height: 96, objectFit: 'cover', borderRadius: 8, border: '1px solid', borderColor: 'divider' }}
+                />
+              </Box>
+            );
+          })()}
           <Typography>
             <strong>Product:</strong> {offer.productSnapshot?.title || '-'}
           </Typography>
