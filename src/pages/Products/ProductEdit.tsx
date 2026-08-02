@@ -30,6 +30,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
+import { resolveMediaUrl } from '../../utils/media';
 
 // Local mirror of the vendor's variant shape (the new VariantEditor
 // accepts plain objects with sku / stockQty / attributes / imageUrls).
@@ -280,16 +281,18 @@ const ProductEdit: React.FC = () => {
     while ((match = regex.exec(text)) !== null) {
       pushText(text.substring(lastIndex, match.index));
       const alt = match[1] || 'product image';
-      const url = match[2];
-      nodes.push(
-        React.createElement('img', {
-          key: `desc-img-${key++}`,
-          src: url,
-          alt,
-          className: 'desc-preview-image',
-          loading: 'lazy',
-        }),
-      );
+      const resolved = resolveMediaUrl(match[2]);
+      if (resolved) {
+        nodes.push(
+          React.createElement('img', {
+            key: `desc-img-${key++}`,
+            src: resolved,
+            alt,
+            className: 'desc-preview-image',
+            loading: 'lazy',
+          }),
+        );
+      }
       lastIndex = regex.lastIndex;
     }
     pushText(text.substring(lastIndex));
@@ -708,7 +711,9 @@ const ProductEdit: React.FC = () => {
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => {
+                            const thumbSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`en-prev-${idx}`}
                               sx={{
@@ -720,7 +725,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={thumbSrc}
                                 alt=""
                                 sx={{
                                   width: '100%',
@@ -756,7 +761,8 @@ const ProductEdit: React.FC = () => {
                                 <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                       {/* Live preview of the rendered description (markdown +
@@ -833,7 +839,9 @@ const ProductEdit: React.FC = () => {
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => {
+                            const thumbSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`de-prev-${idx}`}
                               sx={{
@@ -845,7 +853,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={thumbSrc}
                                 alt=""
                                 sx={{
                                   width: '100%',
@@ -881,7 +889,8 @@ const ProductEdit: React.FC = () => {
                                 <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                       {form.descriptionML.de && (
@@ -954,7 +963,9 @@ const ProductEdit: React.FC = () => {
                             bgcolor: alpha(muiTheme.palette.text.primary, isLight ? 0.02 : 0.06),
                           }}
                         >
-                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => (
+                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => {
+                            const thumbSrc = resolveMediaUrl(url) || url;
+                            return (
                             <Box
                               key={`tr-prev-${idx}`}
                               sx={{
@@ -966,7 +977,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={thumbSrc}
                                 alt=""
                                 sx={{
                                   width: '100%',
@@ -1002,7 +1013,8 @@ const ProductEdit: React.FC = () => {
                                 <RemoveCircleOutlineIcon sx={{ fontSize: 16 }} />
                               </IconButton>
                             </Box>
-                          ))}
+                            );
+                          })}
                         </Box>
                       )}
                       {form.descriptionML.tr && (

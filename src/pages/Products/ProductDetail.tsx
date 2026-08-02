@@ -43,6 +43,7 @@ import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { formatMoney } from '../../utils/currency';
+import { resolveMediaUrl } from '../../utils/media';
 
 /**
  * Render a product description that may contain markdown-style image
@@ -64,16 +65,18 @@ const renderDescriptionWithImages = (text: string): React.ReactNode[] => {
       );
     }
     const alt = match[1] || 'product image';
-    const url = match[2];
-    nodes.push(
-      React.createElement('img', {
-        key: `desc-i-${key++}`,
-        src: url,
-        alt,
-        className: 'admin-product-description-image',
-        loading: 'lazy',
-      }),
-    );
+    const resolved = resolveMediaUrl(match[2]);
+    if (resolved) {
+      nodes.push(
+        React.createElement('img', {
+          key: `desc-i-${key++}`,
+          src: resolved,
+          alt,
+          className: 'admin-product-description-image',
+          loading: 'lazy',
+        }),
+      );
+    }
     lastIndex = regex.lastIndex;
   }
   if (lastIndex < text.length) {
