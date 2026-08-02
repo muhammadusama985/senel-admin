@@ -30,7 +30,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
-import { RichTextEditor } from './components/RichTextEditor';
+import { RichTextEditor, RichTextEditorHandle } from './components/RichTextEditor';
 import { resolveMediaUrl } from '../../utils/media';
 
 // Local mirror of the vendor's variant shape (the new VariantEditor
@@ -176,9 +176,9 @@ const ProductEdit: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // ----- Description image insertion (admin edit) -----
-  const descEnInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const descDeInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const descTrInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const descEnRef = useRef<RichTextEditorHandle | null>(null);
+  const descDeRef = useRef<RichTextEditorHandle | null>(null);
+  const descTrRef = useRef<RichTextEditorHandle | null>(null);
   const descEnFileRef = useRef<HTMLInputElement | null>(null);
   const descDeFileRef = useRef<HTMLInputElement | null>(null);
   const descTrFileRef = useRef<HTMLInputElement | null>(null);
@@ -210,31 +210,26 @@ const ProductEdit: React.FC = () => {
 
   const handleDescriptionImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    taRef: React.MutableRefObject<HTMLTextAreaElement | null>,
+    editorRef: React.RefObject<RichTextEditorHandle | null>,
     fileRef: React.MutableRefObject<HTMLInputElement | null>,
     setUploading: (v: boolean) => void,
-    currentValue: string,
-    applyValue: (next: string) => void
+    _currentValue: string,
+    _applyValue: (next: string) => void
   ) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setUploading(true);
     try {
-      // Upload each file sequentially and insert each one at the cursor so
-      // multi-file picks produce a row of inline images in the description.
+      // Upload each file sequentially and drop each one into the rich text
+      // editor at the current cursor position (WYSIWYG <img>).
       let inserted = 0;
-      let latestValue = currentValue;
       for (const f of files) {
         const fd = new FormData();
         fd.append('attachment', f);
         const r = await api.post('/attachments/upload', fd);
         const url: string = r.data.url;
         const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
-        const markdown = `\n![${alt}](${url})\n`;
-        insertAtTextareaCursor(taRef.current, latestValue, markdown, applyValue);
-        // Re-read the live textarea value so the next image inserts AFTER
-        // the one we just placed.
-        latestValue = taRef.current?.value ?? latestValue;
+        editorRef.current?.insertImage(url, alt);
         inserted += 1;
       }
       alert(
@@ -250,14 +245,21 @@ const ProductEdit: React.FC = () => {
     }
   };
 
-  // Extract every image URL embedded in a markdown description so the admin
-  // can preview the images they have inserted so far.
+  // Extract every image URL embedded in the description so the admin can
+  // preview them in the chip strip. Matches BOTH legacy markdown
+  // `![alt](url)` references AND the WYSIWYG <img src="..."> tags that the
+  // rich text editor now produces.
   const extractDescriptionImageUrls = (text: string): string[] => {
     const urls: string[] = [];
-    const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    if (!text) return urls;
+    const md = /!\[([^\]]*)\]\(([^)]+)\)/g;
     let m: RegExpExecArray | null;
-    while ((m = regex.exec(text || '')) !== null) {
+    while ((m = md.exec(text)) !== null) {
       urls.push(m[2]);
+    }
+    const img = /<img[^>]+src=["\']([^"\']+)["\'][^>]*>/g;
+    while ((m = img.exec(text)) !== null) {
+      urls.push(m[1]);
     }
     return urls;
   };
@@ -634,7 +636,7 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.en}
                         onChange={(next) => updateML('descriptionML', 'en', next)}
-                        textareaRef={descEnInputRef}
+                        editorRef={descEnRef}
                         minRows={4}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -646,7 +648,7 @@ const ProductEdit: React.FC = () => {
                           multiple
                           onChange={(e) => handleDescriptionImageUpload(
                             e,
-                            descEnInputRef,
+                            descEnRef,
                             descEnFileRef,
                             setUploadingDescEn,
                             form.descriptionML.en,
@@ -711,7 +713,7 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.de}
                         onChange={(next) => updateML('descriptionML', 'de', next)}
-                        textareaRef={descDeInputRef}
+                        editorRef={descDeRef}
                         minRows={4}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -723,7 +725,7 @@ const ProductEdit: React.FC = () => {
                           multiple
                           onChange={(e) => handleDescriptionImageUpload(
                             e,
-                            descDeInputRef,
+                            descDeRef,
                             descDeFileRef,
                             setUploadingDescDe,
                             form.descriptionML.de,
@@ -782,7 +784,7 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.tr}
                         onChange={(next) => updateML('descriptionML', 'tr', next)}
-                        textareaRef={descTrInputRef}
+                        editorRef={descTrRef}
                         minRows={4}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -794,7 +796,7 @@ const ProductEdit: React.FC = () => {
                           multiple
                           onChange={(e) => handleDescriptionImageUpload(
                             e,
-                            descTrInputRef,
+                            descTrRef,
                             descTrFileRef,
                             setUploadingDescTr,
                             form.descriptionML.tr,

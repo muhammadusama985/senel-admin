@@ -46,55 +46,36 @@ import { formatMoney } from '../../utils/currency';
 import { resolveMediaUrl } from '../../utils/media';
 
 /**
- * Render a product description with markdown-style image references
- * (`![alt](url)`) so that:
- *   1. ALL text segments (with the image references stripped) render at the
- *      top of the output, in their original order, preserving line breaks.
- *   2. ALL extracted images render in a SINGLE side-by-side flex row at
- *      the bottom â never interleaved with the text.
- * The previous version rendered text and images in document order, which made
- * the description card "look divided" by the photos; this version keeps the
- * copy continuous and groups the visuals.
+ * Render a product description that may contain EITHER:
+ *   - legacy markdown image references `![alt](url)` (old products), OR
+ *   - real WYSIWYG HTML produced by the rich text editor (new products:
+ *     <strong>, <em>, <u>, <ul>, <ol>, <li>, <img>, etc.).
+ *
+ * We convert any leftover markdown image references into <img> tags so
+ * the same renderer handles both formats, then render the whole thing
+ * as HTML via dangerouslySetInnerHTML. Browsers paint bold / italic /
+ * underline / bullets / numbered lists natively, so what the vendor /
+ * admin types in the WYSIWYG editor is exactly what is shown here.
  */
 const renderDescriptionWithImages = (text: string): React.ReactNode => {
   if (!text) return null;
-  const imageNodes: React.ReactNode[] = [];
-  let key = 0;
-  const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
-    const resolved = resolveMediaUrl(url);
-    if (resolved) {
-      imageNodes.push(
-        React.createElement('img', {
-          key: `desc-i-${key++}`,
-          src: resolved,
-          alt: alt || 'product image',
-          className: 'admin-product-description-image',
-          loading: 'lazy',
-        }),
-      );
-    }
-    return '';
-  });
-  // Collapse 3+ blank lines (left over from removed images) back down to 2.
-  const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
-  return React.createElement(
-    React.Fragment,
-    null,
-    cleanedText
-      ? React.createElement(
-          'div',
-          { className: 'admin-product-description-text' },
-          cleanedText,
-        )
-      : null,
-    imageNodes.length > 0
-      ? React.createElement(
-          'div',
-          { className: 'admin-product-description-gallery' },
-          ...imageNodes,
-        )
-      : null,
+  let html = text;
+  html = html.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    (_match, alt: string, url: string) => {
+      const resolved = resolveMediaUrl(url);
+      if (!resolved) return '';
+      const safeAlt = String(alt || '').replace(/"/g, '&quot;');
+      return `<img src="${resolved}" alt="${safeAlt}" class="admin-product-description-image" loading="lazy" />`;
+    },
   );
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    html = html.replace(/\n/g, '<br>');
+  }
+  return React.createElement('div', {
+    className: 'admin-product-description',
+    dangerouslySetInnerHTML: { __html: html },
+  });
 };
 
 const ProductDetail: React.FC = () => {

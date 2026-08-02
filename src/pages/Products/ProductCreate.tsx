@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
 import { PriceTierEditor } from './components/PriceTierEditor';
-import { RichTextEditor } from './components/RichTextEditor';
+import { RichTextEditor, RichTextEditorHandle } from './components/RichTextEditor';
 
 // Local mirror of the vendor's variant shape (the vendor's VariantEditor
 // uses its own internal `Variant` type but accepts plain objects with
@@ -78,9 +78,9 @@ const ProductCreate: React.FC = () => {
   const [uploadingImages, setUploadingImages] = useState(false);
 
   // ----- Description image insertion (admin create) -----
-  const descEnInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const descDeInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const descTrInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const descEnRef = useRef<RichTextEditorHandle | null>(null);
+  const descDeRef = useRef<RichTextEditorHandle | null>(null);
+  const descTrRef = useRef<RichTextEditorHandle | null>(null);
   const descEnFileRef = useRef<HTMLInputElement | null>(null);
   const descDeFileRef = useRef<HTMLInputElement | null>(null);
   const descTrFileRef = useRef<HTMLInputElement | null>(null);
@@ -88,61 +88,30 @@ const ProductCreate: React.FC = () => {
   const [uploadingDescDe, setUploadingDescDe] = useState(false);
   const [uploadingDescTr, setUploadingDescTr] = useState(false);
 
-  const insertAtTextareaCursor = (
-    ta: HTMLTextAreaElement | null,
-    value: string,
-    markdown: string,
-    applyValue: (next: string) => void
-  ) => {
-    if (!ta) {
-      applyValue((value || '') + markdown);
-      return;
-    }
-    const start = ta.selectionStart ?? (ta.value || '').length;
-    const end = ta.selectionEnd ?? start;
-    const current = ta.value || '';
-    const next = current.substring(0, start) + markdown + current.substring(end);
-    applyValue(next);
-    requestAnimationFrame(() => {
-      ta.focus();
-      const caret = start + markdown.length;
-      ta.setSelectionRange(caret, caret);
-    });
-  };
-
   const handleDescriptionImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    taRef: React.MutableRefObject<HTMLTextAreaElement | null>,
+    editorRef: React.RefObject<RichTextEditorHandle | null>,
     fileRef: React.MutableRefObject<HTMLInputElement | null>,
     setUploading: (v: boolean) => void,
-    currentValue: string,
-    applyValue: (next: string) => void,
-    lang: 'en' | 'de' | 'tr'
+    _currentValue: string,
+    _applyValue: (next: string) => void,
+    _lang: 'en' | 'de' | 'tr'
   ) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setUploading(true);
     try {
-      // Upload each file sequentially and insert each one at the cursor so
-      // multi-file picks produce a row of inline images in the description.
+      // Upload each file sequentially and drop each one into the rich text
+      // editor at the current cursor position (WYSIWYG <img>).
       let inserted = 0;
-      let latestValue = currentValue;
       for (const f of files) {
         const fd = new FormData();
         fd.append('attachment', f);
         const r = await api.post('/attachments/upload', fd);
         const url: string = r.data.url;
         const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
-        const markdown = `\n![${alt}](${url})\n`;
-        insertAtTextareaCursor(taRef.current, latestValue, markdown, applyValue);
-        // Re-read the live textarea value so the next image inserts AFTER
-        // the one we just placed.
-        latestValue = taRef.current?.value ?? latestValue;
+        editorRef.current?.insertImage(url, alt);
         inserted += 1;
-      }
-      if (lang === 'en') {
-        // English description drives the legacy `description` field too.
-        updateField('description', latestValue);
       }
       alert(
         inserted === 1
@@ -483,7 +452,7 @@ const ProductCreate: React.FC = () => {
                 updateML('descriptionML', 'en', next);
                 updateField('description', next);
               }}
-              textareaRef={descEnInputRef}
+              editorRef={descEnRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -495,7 +464,7 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descEnInputRef,
+                  descEnRef,
                   descEnFileRef,
                   setUploadingDescEn,
                   form.descriptionML.en,
@@ -542,7 +511,7 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.de}
               onChange={(next) => updateML('descriptionML', 'de', next)}
-              textareaRef={descDeInputRef}
+              editorRef={descDeRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -554,7 +523,7 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descDeInputRef,
+                  descDeRef,
                   descDeFileRef,
                   setUploadingDescDe,
                   form.descriptionML.de,
@@ -596,7 +565,7 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.tr}
               onChange={(next) => updateML('descriptionML', 'tr', next)}
-              textareaRef={descTrInputRef}
+              editorRef={descTrRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -608,7 +577,7 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descTrInputRef,
+                  descTrRef,
                   descTrFileRef,
                   setUploadingDescTr,
                   form.descriptionML.tr,

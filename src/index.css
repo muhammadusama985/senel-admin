@@ -118,6 +118,25 @@ a {
   word-break: break-word;
 }
 
+/* Lists produced by the rich text editor. */
+.admin-product-description ul,
+.admin-product-description ol {
+  margin: 0.5rem 0 0.5rem 1.5rem;
+  padding: 0;
+}
+
+.admin-product-description ul {
+  list-style-type: disc;
+}
+
+.admin-product-description ol {
+  list-style-type: decimal;
+}
+
+.admin-product-description li {
+  margin: 0.2rem 0;
+}
+
 /* Text portion of the rendered description (after image extraction). */
 .admin-product-description-text {
   white-space: pre-wrap;
