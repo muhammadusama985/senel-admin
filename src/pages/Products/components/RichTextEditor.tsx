@@ -81,13 +81,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           if (!el) return;
           el.focus();
 
-          // Build the <img> WITHOUT setting src / alt yet. Setting
-          // img.src before the element is attached to a document is a
-          // known browser quirk where the engine inserts the URL as a
-          // text node next to the image. We attach first, then set
-          // attributes so only the visual <img> ends up in the
-          // contentEditable area -- no URL or alt text leaking out.
+          // Build the <img> with src and a generic alt. Setting src on
+          // the detached element is required so the image actually loads
+          // once it is inserted into the contentEditable.
           const img = document.createElement('img');
+          img.src = url;
           img.className = 'rte-embedded-image';
           img.style.maxWidth = '100%';
           img.style.height = 'auto';
@@ -100,14 +98,34 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           // when the image fails to load.
           img.setAttribute('alt', '');
 
+          // Browser quirk: some engines wrap the freshly-assigned src in
+          // a sibling TEXT NODE inside the contentEditable so the URL
+          // appears as visible text right next to the image. We sweep
+          // any such node out AFTER the image is in the DOM so only
+          // the visual <img> remains.
+          const stripUrlTextNode = (sibling: ChildNode | null): ChildNode | null => {
+            let cur = sibling;
+            while (cur && cur.nodeType === Node.TEXT_NODE) {
+              const text = cur.textContent || '';
+              if (text.includes(url)) {
+                const toRemove = cur;
+                cur = cur.nextSibling;
+                toRemove.parentNode?.removeChild(toRemove);
+              } else {
+                break;
+              }
+            }
+            return cur;
+          };
+
           const selection = window.getSelection();
           if (selection && selection.rangeCount > 0) {
             const range = selection.getRangeAt(0);
             if (el.contains(range.commonAncestorContainer)) {
               range.deleteContents();
               range.insertNode(img);
-              // NOW attach src (after the image is in the DOM).
-              img.setAttribute('src', url);
+              stripUrlTextNode(img.nextSibling);
+              stripUrlTextNode(img.previousSibling);
               const br = document.createElement('br');
               img.parentNode?.insertBefore(br, img.nextSibling);
               range.setStartAfter(br);
@@ -119,7 +137,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             }
           }
           el.appendChild(img);
-          img.setAttribute('src', url);
+          stripUrlTextNode(img.nextSibling);
           el.appendChild(document.createElement('br'));
           syncToState();
         },
