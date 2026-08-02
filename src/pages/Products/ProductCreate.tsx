@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
 import { PriceTierEditor } from './components/PriceTierEditor';
+import { RichTextEditor } from './components/RichTextEditor';
 
 // Local mirror of the vendor's variant shape (the vendor's VariantEditor
 // uses its own internal `Variant` type but accepts plain objects with
@@ -473,18 +474,18 @@ const ProductCreate: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={4}
-              maxRows={8}
-              label={t('products.englishDescription')}
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+              {t('products.englishDescription')}
+            </Typography>
+            <RichTextEditor
               value={form.descriptionML.en}
-              inputRef={descEnInputRef}
-              onChange={(e) => {
-                updateML('descriptionML', 'en', e.target.value);
-                updateField('description', e.target.value);
+              onChange={(next) => {
+                updateML('descriptionML', 'en', next);
+                updateField('description', next);
               }}
+              textareaRef={descEnInputRef}
+              minRows={4}
+              maxRows={10}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input
@@ -536,7 +537,16 @@ const ProductCreate: React.FC = () => {
             )}
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.germanDescription')} value={form.descriptionML.de} inputRef={descDeInputRef} onChange={(e) => updateML('descriptionML', 'de', e.target.value)} />
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+              {t('products.germanDescription')}
+            </Typography>
+            <RichTextEditor
+              value={form.descriptionML.de}
+              onChange={(next) => updateML('descriptionML', 'de', next)}
+              textareaRef={descDeInputRef}
+              minRows={4}
+              maxRows={10}
+            />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input
                 ref={descDeFileRef}
@@ -582,7 +592,16 @@ const ProductCreate: React.FC = () => {
             )}
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline minRows={4} maxRows={8} label={t('products.turkishDescription')} value={form.descriptionML.tr} inputRef={descTrInputRef} onChange={(e) => updateML('descriptionML', 'tr', e.target.value)} />
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+              {t('products.turkishDescription')}
+            </Typography>
+            <RichTextEditor
+              value={form.descriptionML.tr}
+              onChange={(next) => updateML('descriptionML', 'tr', next)}
+              textareaRef={descTrInputRef}
+              minRows={4}
+              maxRows={10}
+            />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
               <input
                 ref={descTrFileRef}

@@ -30,6 +30,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
+import { RichTextEditor } from './components/RichTextEditor';
 import { resolveMediaUrl } from '../../utils/media';
 
 // Local mirror of the vendor's variant shape (the new VariantEditor
@@ -627,16 +628,15 @@ const ProductEdit: React.FC = () => {
                       <TextField fullWidth label="Turkish Title" value={form.titleML.tr} onChange={(event) => updateML('titleML', 'tr', event.target.value)} sx={fieldSx} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        fullWidth
-                        multiline
+                      <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                        English Description
+                      </Typography>
+                      <RichTextEditor
+                        value={form.descriptionML.en}
+                        onChange={(next) => updateML('descriptionML', 'en', next)}
+                        textareaRef={descEnInputRef}
                         minRows={4}
                         maxRows={10}
-                        label="English Description"
-                        value={form.descriptionML.en}
-                        inputRef={descEnInputRef}
-                        onChange={(event) => updateML('descriptionML', 'en', event.target.value)}
-                        sx={fieldSx}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input
@@ -706,16 +706,15 @@ const ProductEdit: React.FC = () => {
                       )}
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <TextField
-                        fullWidth
-                        multiline
+                      <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                        German Description
+                      </Typography>
+                      <RichTextEditor
+                        value={form.descriptionML.de}
+                        onChange={(next) => updateML('descriptionML', 'de', next)}
+                        textareaRef={descDeInputRef}
                         minRows={4}
                         maxRows={10}
-                        label="German Description"
-                        value={form.descriptionML.de}
-                        inputRef={descDeInputRef}
-                        onChange={(event) => updateML('descriptionML', 'de', event.target.value)}
-                        sx={fieldSx}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input
@@ -779,16 +778,15 @@ const ProductEdit: React.FC = () => {
                       )}
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
-                      <TextField
-                        fullWidth
-                        multiline
+                      <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+                        Turkish Description
+                      </Typography>
+                      <RichTextEditor
+                        value={form.descriptionML.tr}
+                        onChange={(next) => updateML('descriptionML', 'tr', next)}
+                        textareaRef={descTrInputRef}
                         minRows={4}
                         maxRows={10}
-                        label="Turkish Description"
-                        value={form.descriptionML.tr}
-                        inputRef={descTrInputRef}
-                        onChange={(event) => updateML('descriptionML', 'tr', event.target.value)}
-                        sx={fieldSx}
                       />
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
                         <input
