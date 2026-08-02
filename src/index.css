@@ -54,20 +54,36 @@ a {
   }
 }
 
-/* Live description preview (admin edit form). Each image sits inline with
-   text and never overflows the surrounding preview box. */
+/* Live description preview (admin edit form). The text block renders
+   normally and ALL images extracted from the markdown are pushed to a
+   single side-by-side flex row at the bottom so the copy stays continuous
+   instead of being broken apart by inline photos. */
 .desc-preview-image {
   display: inline-block;
-  max-width: 220px;
-  max-height: 160px;
+  max-width: 180px;
+  max-height: 140px;
   width: auto;
   height: auto;
-  margin: 0.3rem 0.4rem 0.3rem 0;
+  margin: 0;
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background-color: rgba(0, 0, 0, 0.02);
   object-fit: contain;
-  vertical-align: top;
+  flex: 0 0 auto;
+}
+
+.desc-preview-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  align-items: flex-start;
+}
+
+.desc-preview-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: inherit;
 }
 
 /* Static description rendering on the admin product detail page. */
@@ -78,16 +94,32 @@ a {
   word-break: break-word;
 }
 
+/* Text portion of the rendered description (after image extraction). */
+.admin-product-description-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Gallery row: all extracted images sit here, side-by-side, wrapping to a
+   new line if the row gets too wide. */
+.admin-product-description-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  align-items: flex-start;
+}
+
 .admin-product-description-image {
   display: inline-block;
-  max-width: 200px;
-  max-height: 160px;
+  max-width: 180px;
+  max-height: 140px;
   width: auto;
   height: auto;
-  margin: 0.3rem 0.4rem 0.3rem 0;
+  margin: 0;
   border-radius: 6px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background-color: rgba(0, 0, 0, 0.02);
   object-fit: contain;
-  vertical-align: top;
+  flex: 0 0 auto;
 }

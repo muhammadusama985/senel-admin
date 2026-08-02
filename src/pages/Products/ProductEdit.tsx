@@ -261,42 +261,42 @@ const ProductEdit: React.FC = () => {
     return urls;
   };
 
-  // Render a markdown description (with `![alt](url)` image references) into
-  // an array of React nodes so the admin can SEE the actual images they have
-  // embedded, not just tiny thumbnails. Consecutive images are grouped into
-  // a flex row so the layout doesn't break when many images are inserted.
-  const renderDescriptionWithImages = (text: string): React.ReactNode[] => {
-    const nodes: React.ReactNode[] = [];
-    if (!text) return nodes;
-    const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    let lastIndex = 0;
-    let match: RegExpExecArray | null;
+  // Render a markdown description (with `![alt](url)` image references) so
+  // the admin can SEE the actual images they have embedded. All text is
+  // rendered as one continuous block (with the image references stripped),
+  // and ALL extracted images are pushed to a single side-by-side flex row
+  // at the bottom so the copy stays continuous instead of being divided by
+  // inline photos.
+  const renderDescriptionWithImages = (text: string): React.ReactNode => {
+    if (!text) return null;
+    const imageNodes: React.ReactNode[] = [];
     let key = 0;
-    const pushText = (raw: string) => {
-      if (!raw) return;
-      nodes.push(
-        React.createElement('span', { key: `desc-text-${key++}`, className: 'desc-text' }, raw)
-      );
-    };
-    while ((match = regex.exec(text)) !== null) {
-      pushText(text.substring(lastIndex, match.index));
-      const alt = match[1] || 'product image';
-      const resolved = resolveMediaUrl(match[2]);
+    const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
+      const resolved = resolveMediaUrl(url);
       if (resolved) {
-        nodes.push(
+        imageNodes.push(
           React.createElement('img', {
             key: `desc-img-${key++}`,
             src: resolved,
-            alt,
+            alt: alt || 'product image',
             className: 'desc-preview-image',
             loading: 'lazy',
           }),
         );
       }
-      lastIndex = regex.lastIndex;
-    }
-    pushText(text.substring(lastIndex));
-    return nodes;
+      return '';
+    });
+    const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
+    return React.createElement(
+      React.Fragment,
+      null,
+      cleanedText
+        ? React.createElement('div', { className: 'desc-preview-text' }, cleanedText)
+        : null,
+      imageNodes.length > 0
+        ? React.createElement('div', { className: 'desc-preview-gallery' }, ...imageNodes)
+        : null,
+    );
   };
 
   // Remove the first markdown image reference whose URL matches `urlToRemove`.

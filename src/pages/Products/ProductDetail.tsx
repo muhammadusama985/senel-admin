@@ -46,45 +46,55 @@ import { formatMoney } from '../../utils/currency';
 import { resolveMediaUrl } from '../../utils/media';
 
 /**
- * Render a product description that may contain markdown-style image
- * references (e.g. `![alt](https://example.com/image.png)`). Splits the
- * text into segments so each image becomes a real <img> element and the
- * surrounding text keeps its original whitespace and line breaks.
+ * Render a product description with markdown-style image references
+ * (`![alt](url)`) so that:
+ *   1. ALL text segments (with the image references stripped) render at the
+ *      top of the output, in their original order, preserving line breaks.
+ *   2. ALL extracted images render in a SINGLE side-by-side flex row at
+ *      the bottom â never interleaved with the text.
+ * The previous version rendered text and images in document order, which made
+ * the description card "look divided" by the photos; this version keeps the
+ * copy continuous and groups the visuals.
  */
-const renderDescriptionWithImages = (text: string): React.ReactNode[] => {
-  const nodes: React.ReactNode[] = [];
-  if (!text) return nodes;
-  const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
+const renderDescriptionWithImages = (text: string): React.ReactNode => {
+  if (!text) return null;
+  const imageNodes: React.ReactNode[] = [];
   let key = 0;
-  while ((match = regex.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(
-        React.createElement('span', { key: `desc-t-${key++}` }, text.substring(lastIndex, match.index))
-      );
-    }
-    const alt = match[1] || 'product image';
-    const resolved = resolveMediaUrl(match[2]);
+  const textOnly = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_match, alt, url) => {
+    const resolved = resolveMediaUrl(url);
     if (resolved) {
-      nodes.push(
+      imageNodes.push(
         React.createElement('img', {
           key: `desc-i-${key++}`,
           src: resolved,
-          alt,
+          alt: alt || 'product image',
           className: 'admin-product-description-image',
           loading: 'lazy',
         }),
       );
     }
-    lastIndex = regex.lastIndex;
-  }
-  if (lastIndex < text.length) {
-    nodes.push(
-      React.createElement('span', { key: `desc-t-${key++}` }, text.substring(lastIndex))
-    );
-  }
-  return nodes;
+    return '';
+  });
+  // Collapse 3+ blank lines (left over from removed images) back down to 2.
+  const cleanedText = textOnly.replace(/\n{3,}/g, '\n\n').trim();
+  return React.createElement(
+    React.Fragment,
+    null,
+    cleanedText
+      ? React.createElement(
+          'div',
+          { className: 'admin-product-description-text' },
+          cleanedText,
+        )
+      : null,
+    imageNodes.length > 0
+      ? React.createElement(
+          'div',
+          { className: 'admin-product-description-gallery' },
+          ...imageNodes,
+        )
+      : null,
+  );
 };
 
 const ProductDetail: React.FC = () => {
@@ -320,6 +330,12 @@ const ProductDetail: React.FC = () => {
                   color: muiTheme.palette.text.secondary,
                   fontSize: '0.9rem',
                   lineHeight: 1.6,
+                  // Cap the visible area; the description scrolls inside the
+                  // card when it is long instead of pushing the SKU/MOQ grid
+                  // down or breaking the page layout.
+                  maxHeight: 280,
+                  overflowY: 'auto',
+                  pr: 0.5,
                 }}
               >
                 {renderDescriptionWithImages(product.description)}
