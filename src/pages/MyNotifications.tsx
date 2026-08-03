@@ -9,34 +9,11 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../api/client';
 
-// Map a notification's type/data to an admin-side route so clicking the
-// card jumps straight to the matching section. Falls back to /notifications.
-const linkForAdmin = (item: any): string => {
-  const t = String(item?.type || '').toLowerCase();
-  const d = item?.data || {};
-  if (t === 'order' && d.orderId) return `/orders/${d.orderId}`;
-  if (t === 'order') return `/orders`;
-  if (t === 'vendororder' && d.vendorOrderId) return `/orders/vendor-orders`;
-  if (t === 'payout' && d.payoutId) return `/payouts`;
-  if (t === 'payout') return `/payouts`;
-  if (t === 'rfq' && d.rfqId) return `/negotiations/custom-production/${d.rfqId}`;
-  if (t === 'rfq') return `/negotiations/custom-production`;
-  if (t === 'offer' && d.offerId) return `/negotiations/bulk-offers/${d.offerId}`;
-  if (t === 'offer') return `/negotiations/bulk-offers`;
-  if (t === 'support' && d.ticketId) return `/support/tickets`;
-  if (t === 'support') return `/support/tickets`;
-  if (t === 'dispute' && d.disputeId) return `/disputes`;
-  if (t === 'dispute') return `/disputes`;
-  if (t === 'announcement') return `/notifications`;
-  return `/notifications`;
-};
-
 const MyNotifications: React.FC = () => {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'notifications', 'mine'],
     queryFn: async () => {
@@ -45,15 +22,17 @@ const MyNotifications: React.FC = () => {
     },
   });
 
+  // Click a card -> mark it read (no navigation).
   const open = async (item: any) => {
-    try {
-      if (!item.isRead) {
+    if (!item.isRead) {
+      try {
         await api.post(`/notifications/${item._id}/read`);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'notifications', 'mine'] });
+        queryClient.invalidateQueries({ queryKey: ['admin', 'notifications', 'unread-count'] });
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
     }
-    navigate(linkForAdmin(item));
   };
 
   return (
