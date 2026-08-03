@@ -476,6 +476,11 @@ const ProductEdit: React.FC = () => {
           minQty: Number(tier.minQty),
           unitPrice: Number(tier.unitPrice),
         })),
+        // Description images per language MUST be sent on update -- otherwise
+        // the backend falls back to extracting image URLs from the description
+        // HTML and wipes out any images the admin uploaded via the standalone
+        // description upload button.
+        descriptionImagesML: form.descriptionImagesML,
       };
 
       const response = await api.patch(`/products/admin/products/${id}`, payload);
