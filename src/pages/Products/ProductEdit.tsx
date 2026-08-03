@@ -52,6 +52,7 @@ type ProductForm = {
   description: string;
   titleML: { en: string; de: string; tr: string };
   descriptionML: { en: string; de: string; tr: string };
+  descriptionImagesML: { en: string[]; de: string[]; tr: string[] };
   categoryId: string;
   country: string;
   currency: 'EUR' | 'TRY' | 'USD';
@@ -83,6 +84,7 @@ const createInitialForm = (): ProductForm => ({
   description: '',
   titleML: { en: '', de: '', tr: '' },
   descriptionML: { en: '', de: '', tr: '' },
+  descriptionImagesML: { en: [] as string[], de: [] as string[], tr: [] as string[] },
   categoryId: '',
   country: '',
   currency: 'EUR',
@@ -117,6 +119,11 @@ const normalizeProductToForm = (product: any): ProductForm => ({
     en: product?.descriptionML?.en || product?.description || '',
     de: product?.descriptionML?.de || '',
     tr: product?.descriptionML?.tr || '',
+  },
+  descriptionImagesML: {
+    en: Array.isArray(product?.descriptionImagesML?.en) ? product.descriptionImagesML.en : [],
+    de: Array.isArray(product?.descriptionImagesML?.de) ? product.descriptionImagesML.de : [],
+    tr: Array.isArray(product?.descriptionImagesML?.tr) ? product.descriptionImagesML.tr : [],
   },
   categoryId:
     typeof product?.categoryId === 'string'
@@ -636,6 +643,11 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.en}
                         onChange={(next) => updateML('descriptionML', 'en', next)}
+                        images={form.descriptionImagesML.en}
+                        onImagesChange={(next) => setForm((prev) => {
+                          const nextImages = { ...prev.descriptionImagesML, en: next };
+                          return { ...prev, descriptionImagesML: nextImages };
+                        })}
                         editorRef={descEnRef}
                         minRows={4}
                       />
@@ -666,45 +678,6 @@ const ProductEdit: React.FC = () => {
                           markdown. This is NOT a description preview -- it is
                           a tiny management row only. The description itself
                           is edited entirely inside the TextField above. */}
-                      {extractDescriptionImageUrls(form.descriptionML.en).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 0.75,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => {
-                            const chipSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`en-chip-${idx}`}
-                              className="desc-image-chip"
-                            >
-                              <Box
-                                component="img"
-                                src={chipSrc}
-                                alt={`description image ${idx + 1}`}
-                                className="desc-image-chip-thumb"
-                              />
-                              <button
-                                type="button"
-                                aria-label="Remove this image from the description"
-                                className="desc-image-chip-remove"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'en', v),
-                                  form.descriptionML.en,
-                                  url,
-                                )}
-                              >
-                                &#8722;
-                              </button>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
@@ -713,6 +686,11 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.de}
                         onChange={(next) => updateML('descriptionML', 'de', next)}
+                        images={form.descriptionImagesML.de}
+                        onImagesChange={(next) => setForm((prev) => {
+                          const nextImages = { ...prev.descriptionImagesML, de: next };
+                          return { ...prev, descriptionImagesML: nextImages };
+                        })}
                         editorRef={descDeRef}
                         minRows={4}
                       />
@@ -737,45 +715,6 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {extractDescriptionImageUrls(form.descriptionML.de).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 0.75,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => {
-                            const chipSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`de-chip-${idx}`}
-                              className="desc-image-chip"
-                            >
-                              <Box
-                                component="img"
-                                src={chipSrc}
-                                alt={`description image ${idx + 1}`}
-                                className="desc-image-chip-thumb"
-                              />
-                              <button
-                                type="button"
-                                aria-label="Remove this image from the description"
-                                className="desc-image-chip-remove"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'de', v),
-                                  form.descriptionML.de,
-                                  url,
-                                )}
-                              >
-                                &#8722;
-                              </button>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
@@ -784,6 +723,11 @@ const ProductEdit: React.FC = () => {
                       <RichTextEditor
                         value={form.descriptionML.tr}
                         onChange={(next) => updateML('descriptionML', 'tr', next)}
+                        images={form.descriptionImagesML.tr}
+                        onImagesChange={(next) => setForm((prev) => {
+                          const nextImages = { ...prev.descriptionImagesML, tr: next };
+                          return { ...prev, descriptionImagesML: nextImages };
+                        })}
                         editorRef={descTrRef}
                         minRows={4}
                       />
@@ -808,46 +752,7 @@ const ProductEdit: React.FC = () => {
                           {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
                         </Button>
                       </Box>
-                      {extractDescriptionImageUrls(form.descriptionML.tr).length > 0 && (
-                        <Box
-                          sx={{
-                            mt: 0.75,
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                          }}
-                        >
-                          {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => {
-                            const chipSrc = resolveMediaUrl(url) || url;
-                            return (
-                            <Box
-                              key={`tr-chip-${idx}`}
-                              className="desc-image-chip"
-                            >
-                              <Box
-                                component="img"
-                                src={chipSrc}
-                                alt={`description image ${idx + 1}`}
-                                className="desc-image-chip-thumb"
-                              />
-                              <button
-                                type="button"
-                                aria-label="Remove this image from the description"
-                                className="desc-image-chip-remove"
-                                onClick={() => removeDescriptionImage(
-                                  (v) => updateML('descriptionML', 'tr', v),
-                                  form.descriptionML.tr,
-                                  url,
-                                )}
-                              >
-                                &#8722;
-                              </button>
-                            </Box>
-                            );
-                          })}
-                        </Box>
-                      )}
-                    </Grid>
+                  </Grid>
                   </Grid>
                 </Stack>
               </Paper>

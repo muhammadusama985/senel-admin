@@ -162,6 +162,7 @@ const ProductCreate: React.FC = () => {
     requiresManualShipping: false,
     titleML: { en: '', de: '', tr: '' },
     descriptionML: { en: '', de: '', tr: '' },
+    descriptionImagesML: { en: [] as string[], de: [] as string[], tr: [] as string[] },
     priceTiers: [{ ...emptyTier }],
     priceAdjustment: "" as number | "",
     // Combination-pricing system (same as vendor ProductForm):
@@ -452,6 +453,13 @@ const ProductCreate: React.FC = () => {
                 updateML('descriptionML', 'en', next);
                 updateField('description', next);
               }}
+              images={form.descriptionImagesML.en}
+              onImagesChange={(next) => {
+                setForm((prev) => {
+                  const nextImages = { ...prev.descriptionImagesML, en: next };
+                  return { ...prev, descriptionImagesML: nextImages };
+                });
+              }}
               editorRef={descEnRef}
               minRows={4}
             />
@@ -511,6 +519,13 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.de}
               onChange={(next) => updateML('descriptionML', 'de', next)}
+              images={form.descriptionImagesML.de}
+              onImagesChange={(next) => {
+                setForm((prev) => {
+                  const nextImages = { ...prev.descriptionImagesML, de: next };
+                  return { ...prev, descriptionImagesML: nextImages };
+                });
+              }}
               editorRef={descDeRef}
               minRows={4}
             />
@@ -565,6 +580,13 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.tr}
               onChange={(next) => updateML('descriptionML', 'tr', next)}
+              images={form.descriptionImagesML.tr}
+              onImagesChange={(next) => {
+                setForm((prev) => {
+                  const nextImages = { ...prev.descriptionImagesML, tr: next };
+                  return { ...prev, descriptionImagesML: nextImages };
+                });
+              }}
               editorRef={descTrRef}
               minRows={4}
             />

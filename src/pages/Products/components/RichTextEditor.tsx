@@ -20,6 +20,14 @@ export interface RichTextEditorHandle {
 interface RichTextEditorProps {
   value: string;
   onChange: (next: string) => void;
+  /**
+   * Image URLs to display BELOW the editor as a thumbnail strip with a
+   * delete button on each. The contentEditable never holds any image
+   * markup -- so the URL is never written as visible text in the
+   * description field. Pairs with onImagesChange / insertImage.
+   */
+  images?: string[];
+  onImagesChange?: (next: string[]) => void;
   /** Used so the parent's "Insert Image" button can call insertImage(). */
   editorRef?: React.Ref<RichTextEditorHandle>;
   rows?: number;
@@ -44,7 +52,7 @@ interface RichTextEditorProps {
  * 1 -> 2 -> 3 automatically.
  */
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  ({ value, onChange, rows, minRows, placeholder, disabled }, ref) => {
+  ({ value, onChange, rows, minRows, placeholder, disabled, images, onImagesChange }, ref) => {
     const muiTheme = useTheme();
     const contentRef = useRef<HTMLDivElement | null>(null);
     const skipNextSync = useRef(false);
@@ -77,77 +85,23 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
     useImperativeHandle(
       ref,
       (): RichTextEditorHandle => ({
-        insertImage: (url: string, alt?: string) => {
-          const el = contentRef.current;
-          if (!el) return;
-          el.focus();
-
-          // The src must be a FULL absolute URL (not the raw
-          // `/uploads/foo.png` the backend returns), otherwise the browser
-          // tries to load the image from the editor's own origin (e.g. the
-          // admin/vite dev server) and silently 404s -- which looks exactly
-          // like "the image vanished". Resolving with resolveMediaUrl
-          // prepends the backend origin so the picture actually loads.
-          const resolvedSrc = resolveMediaUrl(url) || url;
-          const img = document.createElement('img');
-          img.src = resolvedSrc;
-          img.className = 'rte-embedded-image';
-          img.style.maxWidth = '100%';
-          img.style.height = 'auto';
-          img.style.display = 'block';
-          img.style.margin = '0.5rem 0';
-          img.style.borderRadius = '4px';
-          img.setAttribute('loading', 'lazy');
-          // Empty alt: no URL, no filename shows on hover or when the
-          // image fails to load.
-          img.setAttribute('alt', '');
-
-          // Browser quirk cleanup: some engines wrap the freshly-assigned
-          // src in a sibling TEXT NODE inside the contentEditable, making
-          // the URL appear as visible text right next to the image. We
-          // sweep any such node out AFTER the image is in the DOM so only
-          // the visual <img> remains.
-          const stripUrlTextNode = (sibling: ChildNode | null): ChildNode | null => {
-            let cur = sibling;
-            while (cur && cur.nodeType === Node.TEXT_NODE) {
-              const text = cur.textContent || '';
-              if (text.includes(url) || text.includes(resolvedSrc)) {
-                const toRemove = cur;
-                cur = cur.nextSibling;
-                toRemove.parentNode?.removeChild(toRemove);
-              } else {
-                break;
-              }
-            }
-            return cur;
-          };
-
-          const selection = window.getSelection();
-          if (selection && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            if (el.contains(range.commonAncestorContainer)) {
-              range.deleteContents();
-              range.insertNode(img);
-              stripUrlTextNode(img.nextSibling);
-              stripUrlTextNode(img.previousSibling);
-              const br = document.createElement('br');
-              img.parentNode?.insertBefore(br, img.nextSibling);
-              range.setStartAfter(br);
-              range.collapse(true);
-              selection.removeAllRanges();
-              selection.addRange(range);
-              syncToState();
-              return;
+        insertImage: (url: string) => {
+          if (!url) return;
+          // The image is NOT inserted inline in the contentEditable -- it
+          // is appended to the separate `images` array and rendered as a
+          // thumbnail strip UNDER the description. This keeps the URL out
+          // of the contentEditable entirely, so it never appears as text
+          // in the description.
+          if (onImagesChange) {
+            const current = images ?? [];
+            if (current.indexOf(url) === -1) {
+              onImagesChange([...current, url]);
             }
           }
-          el.appendChild(img);
-          stripUrlTextNode(img.nextSibling);
-          el.appendChild(document.createElement('br'));
-          syncToState();
         },
         focus: () => contentRef.current?.focus(),
       }),
-      [syncToState],
+      [onImagesChange, images],
     );
 
     const exec = (cmd: string) => {
@@ -238,6 +192,40 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           data-placeholder={placeholder}
           style={textareaStyle}
         />
+        {images && images.length > 0 && (
+          <Box sx={{ mt: 0.75, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            {images.map((url, idx) => {
+              const thumbSrc = resolveMediaUrl(url) || url;
+              return (
+                <Box
+                  key={`rte-img-${idx}-${url}`}
+                  className="desc-image-chip"
+                  title={url}
+                >
+                  <Box
+                    component="img"
+                    src={thumbSrc}
+                    alt=""
+                    className="desc-image-chip-thumb"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Remove this image from the description"
+                    className="desc-image-chip-remove"
+                    onClick={() => {
+                      if (disabled) return;
+                      if (onImagesChange) {
+                        onImagesChange((images ?? []).filter((u) => u !== url));
+                      }
+                    }}
+                  >
+                    &#8722;
+                  </button>
+                </Box>
+              );
+            })}
+          </Box>
+        )}
       </Box>
     );
   },

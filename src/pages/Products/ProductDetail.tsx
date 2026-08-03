@@ -320,6 +320,28 @@ const ProductDetail: React.FC = () => {
                 }}
               >
                 {renderDescriptionWithImages(product.description)}
+                {Array.isArray(product?.descriptionImagesML?.[currentLanguage]) &&
+                  (product.descriptionImagesML[currentLanguage] as string[]).length > 0 && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 0.75,
+                      mt: 1,
+                    }}
+                  >
+                    {(product.descriptionImagesML[currentLanguage] as string[]).map((url: string, idx: number) => (
+                      <Box
+                        key={`desc-img-${idx}`}
+                        component="img"
+                        src={resolveMediaUrl(url) || url}
+                        alt=""
+                        className="admin-product-description-image"
+                        loading="lazy"
+                      />
+                    ))}
+                  </Box>
+                )}
               </Box>
 
               <Divider sx={{ my: 2, borderColor: border }} />
