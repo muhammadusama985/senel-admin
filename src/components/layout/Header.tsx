@@ -49,6 +49,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     refetchInterval: 30000,
   });
 
+  // Unread personal-notification count for the bell-icon badge. Uses the
+  // existing /notifications/me endpoint with unreadOnly=true + limit=1 so we
+  // only read the `total` counter (no backend change required). Polled every
+  // 30s so the badge updates as soon as a new notification arrives for this
+  // admin.
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['admin', 'notifications', 'unread-count'],
+    queryFn: async () => {
+      const response = await api.get('/notifications/me', {
+        params: { unreadOnly: 'true', limit: 1 },
+      });
+      return Number(response.data?.total || 0);
+    },
+    refetchInterval: 30000,
+  });
+
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -63,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   const handleNotifications = () => {
-    navigate('/notifications');
+    navigate('/my-notifications');
   };
 
   const handleLogout = () => {
@@ -144,7 +160,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </IconButton>
 
         <IconButton color="inherit" aria-label="notifications" onClick={handleNotifications}>
-          <Badge badgeContent={notificationCount} color="error" invisible={notificationCount === 0}>
+          <Badge
+            badgeContent={unreadCount > 0 ? unreadCount : notificationCount}
+            color="error"
+            invisible={unreadCount === 0 && notificationCount === 0}
+          >
             <NotificationsIcon />
           </Badge>
         </IconButton>
