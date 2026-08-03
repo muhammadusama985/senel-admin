@@ -341,17 +341,9 @@ const AdminCustomProductionDetail: React.FC = () => {
                       background: 'background.default',
                     }}
                   >
-                    {_isImage ? (
-                      <img
-                        src={_url}
-                        alt={a.filename || a.url}
-                        style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
-                      />
-                    ) : (
-                      <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
-                        {a.filename || a.url}
-                      </Box>
-                    )}
+                    <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                      {a.filename || a.url}
+                    </Box>
                   </a>
                 );
               })}
@@ -460,17 +452,9 @@ const AdminCustomProductionDetail: React.FC = () => {
                             background: 'background.default',
                           }}
                         >
-                          {_isImage ? (
-                            <img
-                              src={_url}
-                              alt={a.filename || a.url}
-                              style={{ width: '100%', height: 120, objectFit: 'cover', display: 'block' }}
-                            />
-                          ) : (
-                            <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
-                              {a.filename || a.url}
-                            </Box>
-                          )}
+                          <Box sx={{ p: 1, fontSize: '0.85rem', wordBreak: 'break-all' }}>
+                            {a.filename || a.url}
+                          </Box>
                         </a>
                       );
                     })}
