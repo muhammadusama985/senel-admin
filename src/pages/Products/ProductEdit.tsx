@@ -636,7 +636,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={resolveMediaUrl(url) || url}
                                 alt=""
                                 sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />
@@ -716,7 +716,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={resolveMediaUrl(url) || url}
                                 alt=""
                                 sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />
@@ -790,7 +790,7 @@ const ProductEdit: React.FC = () => {
                             >
                               <Box
                                 component="img"
-                                src={url}
+                                src={resolveMediaUrl(url) || url}
                                 alt=""
                                 sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                               />

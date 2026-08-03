@@ -22,6 +22,7 @@ import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
 import { PriceTierEditor } from './components/PriceTierEditor';
 import { RichTextEditor } from './components/RichTextEditor';
+import { resolveMediaUrl } from '../../utils/media';
 
 // Local mirror of the vendor's variant shape (the vendor's VariantEditor
 // uses its own internal `Variant` type but accepts plain objects with
@@ -496,11 +497,11 @@ const ProductCreate: React.FC = () => {
                     }}
                   >
                     <Box
-                      component="img"
-                      src={url}
-                      alt=""
-                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                          component="img"
+                          src={resolveMediaUrl(url) || url}
+                          alt=""
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                     <IconButton
                       size="small"
                       aria-label="Remove description image"
@@ -570,11 +571,11 @@ const ProductCreate: React.FC = () => {
                     }}
                   >
                     <Box
-                      component="img"
-                      src={url}
-                      alt=""
-                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                          component="img"
+                          src={resolveMediaUrl(url) || url}
+                          alt=""
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                     <IconButton
                       size="small"
                       aria-label="Remove description image"
@@ -644,11 +645,11 @@ const ProductCreate: React.FC = () => {
                     }}
                   >
                     <Box
-                      component="img"
-                      src={url}
-                      alt=""
-                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
+                          component="img"
+                          src={resolveMediaUrl(url) || url}
+                          alt=""
+                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                     <IconButton
                       size="small"
                       aria-label="Remove description image"
