@@ -30,6 +30,7 @@ import Handover from './pages/Shipping/Handover';
 import PayoutList from './pages/Payouts/PayoutList';
 import Coupons from './pages/Marketing/Coupons';
 import Notifications from './pages/Marketing/Notifications';
+import MyNotifications from './pages/MyNotifications';
 import BankTransfers from './pages/Payments/BankTransfers';
 import ReviewModeration from './pages/Reviews/ReviewModeration';
 import Disputes from './pages/Support/Disputes';
@@ -90,6 +91,7 @@ function App() {
               <Route path="/payouts" element={<PrivateRoute><PayoutList /></PrivateRoute>} />
               <Route path="/coupons" element={<PrivateRoute><Coupons /></PrivateRoute>} />
               <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+              <Route path="/my-notifications" element={<PrivateRoute><MyNotifications /></PrivateRoute>} />
               <Route path="/reviews" element={<PrivateRoute><ReviewModeration /></PrivateRoute>} />
               <Route path="/support/tickets" element={<PrivateRoute><SupportTickets /></PrivateRoute>} />
               <Route path="/disputes" element={<PrivateRoute><Disputes /></PrivateRoute>} />

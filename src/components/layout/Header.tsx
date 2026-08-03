@@ -40,11 +40,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const { data: notificationCount = 0 } = useQuery({
-    queryKey: ['admin', 'notification-campaigns', 'count'],
+  // Unread personal-notification count for the bell-icon badge. Polled every
+  // 30s so the badge updates as soon as a new notification is created for
+  // this admin (order, payout, RFQ, support, etc.).
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['admin', 'notifications', 'unread-count'],
     queryFn: async () => {
-      const response = await api.get('/admin/notification-campaigns');
-      return Array.isArray(response.data?.items) ? response.data.items.length : 0;
+      const response = await api.get('/notifications/me/unread-count');
+      return Number(response.data?.unread || 0);
     },
     refetchInterval: 30000,
   });
@@ -63,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   const handleNotifications = () => {
-    navigate('/notifications');
+    navigate('/my-notifications');
   };
 
   const handleLogout = () => {
@@ -144,7 +147,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </IconButton>
 
         <IconButton color="inherit" aria-label="notifications" onClick={handleNotifications}>
-          <Badge badgeContent={notificationCount} color="error" invisible={notificationCount === 0}>
+          <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0}>
             <NotificationsIcon />
           </Badge>
         </IconButton>
