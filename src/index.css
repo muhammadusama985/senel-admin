@@ -54,18 +54,20 @@ a {
   }
 }
 
-/* Compact image-management chip: a SMALL thumbnail of every image
-   that has been inserted into the description, with a - delete button
-   anchored to the top-right corner. The chip itself is NOT a description
-   preview -- it is just a way to see and remove each embedded image.
-   The actual description text is edited entirely inside the TextField,
-   with no preview block below it. Sized down (40x40) so the row stays
-   compact even when the vendor or admin inserts many images. */
+/* Description-image chip: a SMALL thumbnail (48x48) of every image
+   that has been inserted into the description. The images are NOT part
+   of the rich-text editor's contentEditable (the editor is text-only --
+   bold / italic / underline / lists); they live in a separate state
+   and are rendered as a row of small chips BENEATH the editor so the
+   user can see / remove them. They are arranged side-by-side with
+   flex-wrap so the row stays compact and wraps to the next line when
+   the description column runs out of width. Each chip carries a small
+   minus button anchored to the top-right corner. */
 .desc-image-chip {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   line-height: 0;
   border-radius: 5px;
   border: 1px solid rgba(91, 46, 255, 0.25);
@@ -84,8 +86,8 @@ a {
   position: absolute;
   top: -5px;
   right: -5px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -93,7 +95,7 @@ a {
   color: #fff;
   font-size: 12px;
   font-weight: 700;
-  line-height: 16px;
+  line-height: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;

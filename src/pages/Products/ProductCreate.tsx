@@ -113,13 +113,10 @@ const ProductCreate: React.FC = () => {
         editorRef.current?.insertImage(url, alt);
         inserted += 1;
       }
-      alert(
-        inserted === 1
-          ? 'Image inserted into description'
-          : `${inserted} images inserted into description`
-      );
+      // Silent success -- the chip strip under the description is the
+      // visual confirmation. No alert / toast is shown to the user.
     } catch (err: any) {
-      alert(`Image upload failed: ${err.response?.data?.message || err.message}`);
+      console.error('Image upload failed:', err.response?.data?.message || err.message);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = '';
