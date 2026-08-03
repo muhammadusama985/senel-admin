@@ -54,19 +54,20 @@ a {
   }
 }
 
-/* Compact image-management chip: a small thumbnail of every image that
-   has been inserted into the description, with a - delete button anchored
-   to the top-right corner. The chip itself is NOT a description preview
-   -- it is just a way to see and remove each embedded image. The actual
-   description text is edited entirely inside the TextField, with no
-   preview block below it. */
+/* Compact image-management chip: a SMALL thumbnail of every image
+   that has been inserted into the description, with a - delete button
+   anchored to the top-right corner. The chip itself is NOT a description
+   preview -- it is just a way to see and remove each embedded image.
+   The actual description text is edited entirely inside the TextField,
+   with no preview block below it. Sized down (40x40) so the row stays
+   compact even when the vendor or admin inserts many images. */
 .desc-image-chip {
   position: relative;
   display: inline-block;
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   line-height: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid rgba(91, 46, 255, 0.25);
   overflow: hidden;
   background-color: rgba(0, 0, 0, 0.04);
@@ -81,18 +82,18 @@ a {
 
 .desc-image-chip-remove {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
   padding: 0;
   border: none;
   border-radius: 50%;
   background-color: #d32f2f;
   color: #fff;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
