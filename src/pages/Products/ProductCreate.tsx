@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
 import { PriceTierEditor } from './components/PriceTierEditor';
-import { RichTextEditor, RichTextEditorHandle } from './components/RichTextEditor';
+import { RichTextEditor } from './components/RichTextEditor';
 
 // Local mirror of the vendor's variant shape (the vendor's VariantEditor
 // uses its own internal `Variant` type but accepts plain objects with
@@ -77,10 +77,9 @@ const ProductCreate: React.FC = () => {
   const [error, setError] = useState('');
   const [uploadingImages, setUploadingImages] = useState(false);
 
-  // ----- Description image insertion (admin create) -----
-  const descEnRef = useRef<RichTextEditorHandle | null>(null);
-  const descDeRef = useRef<RichTextEditorHandle | null>(null);
-  const descTrRef = useRef<RichTextEditorHandle | null>(null);
+  // ----- Description image upload (admin create) -----
+  // Each language has its own file input ref + uploading flag. The upload
+  // is fully standalone: it does NOT use the rich text editor.
   const descEnFileRef = useRef<HTMLInputElement | null>(null);
   const descDeFileRef = useRef<HTMLInputElement | null>(null);
   const descTrFileRef = useRef<HTMLInputElement | null>(null);
@@ -88,33 +87,45 @@ const ProductCreate: React.FC = () => {
   const [uploadingDescDe, setUploadingDescDe] = useState(false);
   const [uploadingDescTr, setUploadingDescTr] = useState(false);
 
+  const removeDescriptionImage = (lang: 'en' | 'de' | 'tr', url: string) => {
+    setForm((prev) => ({
+      ...prev,
+      descriptionImagesML: {
+        ...prev.descriptionImagesML,
+        [lang]: (prev.descriptionImagesML[lang] ?? []).filter((u) => u !== url),
+      },
+    }));
+  };
+  // Description image upload is standalone: it does NOT use the rich text
+  // editor. Uploaded URLs are pushed into `descriptionImagesML[lang]` so
+  // the preview grid under each language's description can render them.
   const handleDescriptionImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    editorRef: React.RefObject<RichTextEditorHandle | null>,
     fileRef: React.MutableRefObject<HTMLInputElement | null>,
     setUploading: (v: boolean) => void,
-    _currentValue: string,
-    _applyValue: (next: string) => void,
-    _lang: 'en' | 'de' | 'tr'
+    lang: 'en' | 'de' | 'tr'
   ) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     setUploading(true);
     try {
-      // Upload each file sequentially and drop each one into the rich text
-      // editor at the current cursor position (WYSIWYG <img>).
-      let inserted = 0;
+      const uploadedUrls: string[] = [];
       for (const f of files) {
         const fd = new FormData();
         fd.append('attachment', f);
         const r = await api.post('/attachments/upload', fd);
-        const url: string = r.data.url;
-        const alt = (f.name || 'image').replace(/\.[^.]+$/, '');
-        editorRef.current?.insertImage(url, alt);
-        inserted += 1;
+        const url: string = r.data?.url;
+        if (url) uploadedUrls.push(url);
       }
-      // Silent success -- the chip strip under the description is the
-      // visual confirmation. No alert / toast is shown to the user.
+      if (uploadedUrls.length) {
+        setForm((prev) => ({
+          ...prev,
+          descriptionImagesML: {
+            ...prev.descriptionImagesML,
+            [lang]: [...(prev.descriptionImagesML[lang] ?? []), ...uploadedUrls],
+          },
+        }));
+      }
     } catch (err: any) {
       console.error('Image upload failed:', err.response?.data?.message || err.message);
     } finally {
@@ -123,21 +134,9 @@ const ProductCreate: React.FC = () => {
     }
   };
 
-  const insertAtDescriptionMarkdown = (current: string, markdown: string): string => {
-    return (current || '') + markdown;
-  };
 
-  // Extract every image URL embedded in a markdown description so the admin
-  // can preview the images they have inserted so far.
-  const extractDescriptionImageUrls = (text: string): string[] => {
-    const urls: string[] = [];
-    const regex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-    let m: RegExpExecArray | null;
-    while ((m = regex.exec(text || '')) !== null) {
-      urls.push(m[2]);
-    }
-    return urls;
-  };
+
+
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -444,20 +443,14 @@ const ProductCreate: React.FC = () => {
             <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
               {t('products.englishDescription')}
             </Typography>
+            {/* Rich text editor -- ONLY for text formatting. Description
+                images are managed OUTSIDE the rich text editor. */}
             <RichTextEditor
               value={form.descriptionML.en}
               onChange={(next) => {
                 updateML('descriptionML', 'en', next);
                 updateField('description', next);
               }}
-              images={form.descriptionImagesML.en}
-              onImagesChange={(next) => {
-                setForm((prev) => {
-                  const nextImages = { ...prev.descriptionImagesML, en: next };
-                  return { ...prev, descriptionImagesML: nextImages };
-                });
-              }}
-              editorRef={descEnRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -469,11 +462,8 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descEnRef,
                   descEnFileRef,
                   setUploadingDescEn,
-                  form.descriptionML.en,
-                  (v) => updateML('descriptionML', 'en', v),
                   'en',
                 )}
                 disabled={uploadingDescEn}
@@ -484,27 +474,53 @@ const ProductCreate: React.FC = () => {
                 disabled={uploadingDescEn}
                 onClick={() => descEnFileRef.current?.click()}
               >
-                {uploadingDescEn ? 'Uploading...' : '+ Insert Image'}
+                {uploadingDescEn ? 'Uploading...' : '+ Upload Image'}
               </Button>
             </Box>
-            {extractDescriptionImageUrls(form.descriptionML.en).length > 0 && (
-              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {extractDescriptionImageUrls(form.descriptionML.en).map((url, idx) => (
+            {/* Standalone preview grid -- shows which images are attached
+                to the description (read directly from descriptionImagesML.en). */}
+            {(form.descriptionImagesML.en ?? []).length > 0 && (
+              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
+                {(form.descriptionImagesML.en ?? []).map((url, idx) => (
                   <Box
-                    key={`en-prev-${idx}`}
-                    component="img"
-                    src={url}
-                    alt=""
+                    key={`en-prev-${idx}-${url}`}
                     sx={{
-                      width: 64,
-                      height: 64,
-                      objectFit: 'cover',
-                      borderRadius: 1,
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1 / 1',
                       border: '1px solid',
                       borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
                       bgcolor: 'background.default',
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={url}
+                      alt=""
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label="Remove description image"
+                      onClick={() => removeDescriptionImage('en', url)}
+                      sx={{
+                        position: 'absolute',
+                        top: 2,
+                        right: 2,
+                        bgcolor: 'error.main',
+                        color: 'common.white',
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        minWidth: 0,
+                        '&:hover': { bgcolor: 'error.dark' },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Box>
                 ))}
               </Box>
             )}
@@ -516,14 +532,6 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.de}
               onChange={(next) => updateML('descriptionML', 'de', next)}
-              images={form.descriptionImagesML.de}
-              onImagesChange={(next) => {
-                setForm((prev) => {
-                  const nextImages = { ...prev.descriptionImagesML, de: next };
-                  return { ...prev, descriptionImagesML: nextImages };
-                });
-              }}
-              editorRef={descDeRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -535,37 +543,58 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descDeRef,
                   descDeFileRef,
                   setUploadingDescDe,
-                  form.descriptionML.de,
-                  (v) => updateML('descriptionML', 'de', v),
                   'de',
                 )}
                 disabled={uploadingDescDe}
               />
               <Button size="small" variant="outlined" disabled={uploadingDescDe} onClick={() => descDeFileRef.current?.click()}>
-                {uploadingDescDe ? 'Uploading...' : '+ Insert Image'}
+                {uploadingDescDe ? 'Uploading...' : '+ Upload Image'}
               </Button>
             </Box>
-            {extractDescriptionImageUrls(form.descriptionML.de).length > 0 && (
-              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {extractDescriptionImageUrls(form.descriptionML.de).map((url, idx) => (
+            {(form.descriptionImagesML.de ?? []).length > 0 && (
+              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
+                {(form.descriptionImagesML.de ?? []).map((url, idx) => (
                   <Box
-                    key={`de-prev-${idx}`}
-                    component="img"
-                    src={url}
-                    alt=""
+                    key={`de-prev-${idx}-${url}`}
                     sx={{
-                      width: 64,
-                      height: 64,
-                      objectFit: 'cover',
-                      borderRadius: 1,
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1 / 1',
                       border: '1px solid',
                       borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
                       bgcolor: 'background.default',
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={url}
+                      alt=""
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label="Remove description image"
+                      onClick={() => removeDescriptionImage('de', url)}
+                      sx={{
+                        position: 'absolute',
+                        top: 2,
+                        right: 2,
+                        bgcolor: 'error.main',
+                        color: 'common.white',
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        minWidth: 0,
+                        '&:hover': { bgcolor: 'error.dark' },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Box>
                 ))}
               </Box>
             )}
@@ -577,14 +606,6 @@ const ProductCreate: React.FC = () => {
             <RichTextEditor
               value={form.descriptionML.tr}
               onChange={(next) => updateML('descriptionML', 'tr', next)}
-              images={form.descriptionImagesML.tr}
-              onImagesChange={(next) => {
-                setForm((prev) => {
-                  const nextImages = { ...prev.descriptionImagesML, tr: next };
-                  return { ...prev, descriptionImagesML: nextImages };
-                });
-              }}
-              editorRef={descTrRef}
               minRows={4}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
@@ -596,37 +617,58 @@ const ProductCreate: React.FC = () => {
                 multiple
                 onChange={(e) => handleDescriptionImageUpload(
                   e,
-                  descTrRef,
                   descTrFileRef,
                   setUploadingDescTr,
-                  form.descriptionML.tr,
-                  (v) => updateML('descriptionML', 'tr', v),
                   'tr',
                 )}
                 disabled={uploadingDescTr}
               />
               <Button size="small" variant="outlined" disabled={uploadingDescTr} onClick={() => descTrFileRef.current?.click()}>
-                {uploadingDescTr ? 'Uploading...' : '+ Insert Image'}
+                {uploadingDescTr ? 'Uploading...' : '+ Upload Image'}
               </Button>
             </Box>
-            {extractDescriptionImageUrls(form.descriptionML.tr).length > 0 && (
-              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {extractDescriptionImageUrls(form.descriptionML.tr).map((url, idx) => (
+            {(form.descriptionImagesML.tr ?? []).length > 0 && (
+              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
+                {(form.descriptionImagesML.tr ?? []).map((url, idx) => (
                   <Box
-                    key={`tr-prev-${idx}`}
-                    component="img"
-                    src={url}
-                    alt=""
+                    key={`tr-prev-${idx}-${url}`}
                     sx={{
-                      width: 64,
-                      height: 64,
-                      objectFit: 'cover',
-                      borderRadius: 1,
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1 / 1',
                       border: '1px solid',
                       borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
                       bgcolor: 'background.default',
                     }}
-                  />
+                  >
+                    <Box
+                      component="img"
+                      src={url}
+                      alt=""
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label="Remove description image"
+                      onClick={() => removeDescriptionImage('tr', url)}
+                      sx={{
+                        position: 'absolute',
+                        top: 2,
+                        right: 2,
+                        bgcolor: 'error.main',
+                        color: 'common.white',
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        minWidth: 0,
+                        '&:hover': { bgcolor: 'error.dark' },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Box>
                 ))}
               </Box>
             )}
