@@ -859,7 +859,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="MOQ"
                         value={form.moq}
-                        onChange={(event) => updateMOQ(Number(event.target.value))}
+                        onChange={(event) => updateMOQ(event.target.value === '' ? ('' as any) : Math.max(1, Number(event.target.value) || 1))}
                         inputProps={{ min: 1 }}
                         helperText="MOQ must not exceed the smallest tier."
                         sx={fieldSx}
@@ -871,7 +871,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="Stock Quantity"
                         value={form.stockQty}
-                        onChange={(event) => updateField('stockQty', Math.max(0, Number(event.target.value) || 0))}
+                        onChange={(event) => updateField('stockQty', event.target.value === '' ? ('' as any) : (Math.max(0, Number(event.target.value) || 0) as any))}
                         inputProps={{ min: 0 }}
                         sx={fieldSx}
                       />
@@ -882,7 +882,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="Low Stock Threshold"
                         value={form.lowStockThreshold}
-                        onChange={(event) => updateField('lowStockThreshold', Math.max(0, Number(event.target.value) || 0))}
+                        onChange={(event) => updateField('lowStockThreshold', event.target.value === '' ? ('' as any) : (Math.max(0, Number(event.target.value) || 0) as any))}
                         inputProps={{ min: 0 }}
                         sx={fieldSx}
                       />
@@ -893,7 +893,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="Length (cm)"
                         value={form.lengthCm}
-                        onChange={(event) => updateField('lengthCm', Math.max(0, Number(event.target.value) || 0))}
+                        onChange={(event) => updateField('lengthCm', event.target.value === '' ? ('' as any) : (Math.max(0, Number(event.target.value) || 0) as any))}
                         inputProps={{ min: 0, step: 0.01 }}
                         sx={fieldSx}
                       />
@@ -904,7 +904,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="Width (cm)"
                         value={form.widthCm}
-                        onChange={(event) => updateField('widthCm', Math.max(0, Number(event.target.value) || 0))}
+                        onChange={(event) => updateField('widthCm', event.target.value === '' ? ('' as any) : (Math.max(0, Number(event.target.value) || 0) as any))}
                         inputProps={{ min: 0, step: 0.01 }}
                         sx={fieldSx}
                       />
@@ -915,7 +915,7 @@ const ProductEdit: React.FC = () => {
                         type="number"
                         label="Height (cm)"
                         value={form.heightCm}
-                        onChange={(event) => updateField('heightCm', Math.max(0, Number(event.target.value) || 0))}
+                        onChange={(event) => updateField('heightCm', event.target.value === '' ? ('' as any) : (Math.max(0, Number(event.target.value) || 0) as any))}
                         inputProps={{ min: 0, step: 0.01 }}
                         sx={fieldSx}
                       />
@@ -961,7 +961,11 @@ const ProductEdit: React.FC = () => {
                               type="number"
                               label="Minimum Quantity"
                               value={tier.minQty}
-                              onChange={(event) => updateTier(index, 'minQty', Math.max(1, Number(event.target.value) || 1))}
+                              onChange={(event) => {
+                                const v = event.target.value;
+                                if (v === '') { updateTier(index, 'minQty', '' as any); return; }
+                                updateTier(index, 'minQty', Math.max(1, Number(v) || 1) as any);
+                              }}
                               inputProps={{ min: 1 }}
                               sx={fieldSx}
                             />
@@ -972,7 +976,11 @@ const ProductEdit: React.FC = () => {
                               type="number"
                               label="Unit Price"
                               value={tier.unitPrice}
-                              onChange={(event) => updateTier(index, 'unitPrice', Math.max(0, Number(event.target.value) || 0))}
+                              onChange={(event) => {
+                                const v = event.target.value;
+                                if (v === '') { updateTier(index, 'unitPrice', '' as any); return; }
+                                updateTier(index, 'unitPrice', Math.max(0, Number(v) || 0) as any);
+                              }}
                               inputProps={{ min: 0, step: 0.01 }}
                               sx={fieldSx}
                             />
