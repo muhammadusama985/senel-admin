@@ -37,6 +37,7 @@ const MyNotifications: React.FC = () => {
 
   return (
     <Stack spacing={3}>
+      {/* Notification popup alert is rendered globally by the Header. */}
       <Paper sx={{ p: 3 }}>
         <Typography variant="h5">My Notifications</Typography>
         <Typography variant="body2" color="text.secondary">
