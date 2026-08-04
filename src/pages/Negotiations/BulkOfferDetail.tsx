@@ -341,7 +341,7 @@ const AdminBulkOfferDetail: React.FC = () => {
                     {m.attachments.map((a: any, idx: number) => {
                       const _url = resolveMediaUrl(a.url);
                       if (!_url) return null;
-                      const _isImage = (a.mimeType ? a.mimeType.startsWith('image/') : true) && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                      const _isImage = (a.mimeType ? a.mimeType.startsWith('image/') : true) && /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|heif|avif|apng|jxl|ico)(\?|#|$)/i.test(_url);
                       return (
                         <a
                           key={idx}
@@ -453,7 +453,7 @@ const AdminBulkOfferDetail: React.FC = () => {
                 {counterAttachmentUrls.map((u) => {
                   const _url = resolveMediaUrl(u);
                   if (!_url) return null;
-                  const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                  const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|heif|avif|apng|jxl|ico)(\?|#|$)/i.test(_url);
                   return (
                     <Box
                       key={u}
@@ -596,7 +596,7 @@ const AdminBulkOfferDetail: React.FC = () => {
               {messageAttachmentUrls.map((u) => {
                 const _url = resolveMediaUrl(u);
                 if (!_url) return null;
-                const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?|$)/i.test(_url);
+                const _isImage = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|heif|avif|apng|jxl|ico)(\?|#|$)/i.test(_url);
                 return (
                   <Box
                     key={u}
