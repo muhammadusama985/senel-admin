@@ -789,7 +789,7 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: colorMode ? '1.2fr 110px 70px 1fr auto' : '1.6fr 1fr auto',
+                        gridTemplateColumns: colorMode ? '1.2fr 110px 70px 1fr auto' : '1.6fr 1fr',
                         gap: '0.75rem',
                         alignItems: 'end',
                         marginBottom: '0.9rem',
@@ -882,33 +882,35 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
                       </div>
 
 
-                      <label
-                        style={{
-                          background: colors.buttonGradient,
-                          color: '#ffffff',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          fontSize: '0.85rem',
-                          padding: '0.65rem 0.8rem',
-                          textAlign: 'center',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {t('attachments', 'Upload Images')}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          hidden
-                          onChange={(e) => {
-                            void handleOptionImages(variantIndex, e.target.files);
-                            e.currentTarget.value = '';
+                      {colorMode ? (
+                        <label
+                          style={{
+                            background: colors.buttonGradient,
+                            color: '#ffffff',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            padding: '0.65rem 0.8rem',
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
                           }}
-                        />
-                      </label>
+                        >
+                          {t('attachments', 'Upload Images')}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            hidden
+                            onChange={(e) => {
+                              void handleOptionImages(variantIndex, e.target.files);
+                              e.currentTarget.value = '';
+                            }}
+                          />
+                        </label>
+                      ) : null}
                     </div>
 
-                    {(option.imageUrls || []).length > 0 ? (
+                    {colorMode && (option.imageUrls || []).length > 0 ? (
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: '0.75rem' }}>
                         {(option.imageUrls || []).map((imageUrl) => (
                           <div key={imageUrl} style={{ position: 'relative' }}>
@@ -938,9 +940,9 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
                           </div>
                         ))}
                       </div>
-                    ) : (
+                    ) : colorMode ? (
                       <span style={{ color: colors.textMuted, fontStyle: 'italic' }}>{t('noImagesForOption', 'No images added for this option')}</span>
-                    )}
+                    ) : null}
                   </div>
                 );
               })}
