@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CategoryIcon from '@mui/icons-material/Category';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -123,7 +124,12 @@ const ProductCreate: React.FC = () => {
           ...prev,
           descriptionImagesML: {
             ...prev.descriptionImagesML,
-            [lang]: [...(prev.descriptionImagesML[lang] ?? []), ...uploadedUrls],
+            // The single upload button writes into ALL THREE language arrays
+            // so the same image becomes available to the English, German and
+            // Turkish description preview grids.
+            en: [...(prev.descriptionImagesML.en ?? []), ...uploadedUrls],
+            de: [...(prev.descriptionImagesML.de ?? []), ...uploadedUrls],
+            tr: [...(prev.descriptionImagesML.tr ?? []), ...uploadedUrls],
           },
         }));
       }
@@ -420,7 +426,7 @@ const ProductCreate: React.FC = () => {
         {variantValidationError && <Alert severity="warning">{variantValidationError}</Alert>}
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 12 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               multiline
@@ -432,6 +438,12 @@ const ProductCreate: React.FC = () => {
                 updateField('title', e.target.value);
               }}
             />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth multiline maxRows={2} label={t('products.germanTitle')} value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField fullWidth multiline maxRows={2} label={t('products.turkishTitle')} value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -522,13 +534,176 @@ const ProductCreate: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 12, md: 3 }}>
-            <TextField select fullWidth label={t('products.category')} value={form.categoryId} onChange={(e) => updateField('categoryId', e.target.value)}>
-              {categories.map((category: Category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+              {t('products.germanDescription')}
+            </Typography>
+            <RichTextEditor
+              value={form.descriptionML.de}
+              onChange={(next) => updateML('descriptionML', 'de', next)}
+              minRows={4}
+            />
+            {(form.descriptionImagesML.de ?? []).length > 0 && (
+              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
+                {(form.descriptionImagesML.de ?? []).map((url, idx) => (
+                  <Box
+                    key={`de-prev-${idx}-${url}`}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      bgcolor: 'background.default',
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={resolveMediaUrl(url) || url}
+                      alt=""
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label="Remove description image"
+                      onClick={() => removeDescriptionImage('de', url)}
+                      sx={{
+                        position: 'absolute',
+                        top: 2,
+                        right: 2,
+                        bgcolor: 'error.main',
+                        color: 'common.white',
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        minWidth: 0,
+                        '&:hover': { bgcolor: 'error.dark' },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
+              {t('products.turkishDescription')}
+            </Typography>
+            <RichTextEditor
+              value={form.descriptionML.tr}
+              onChange={(next) => updateML('descriptionML', 'tr', next)}
+              minRows={4}
+            />
+            {(form.descriptionImagesML.tr ?? []).length > 0 && (
+              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
+                {(form.descriptionImagesML.tr ?? []).map((url, idx) => (
+                  <Box
+                    key={`tr-prev-${idx}-${url}`}
+                    sx={{
+                      position: 'relative',
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      bgcolor: 'background.default',
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={resolveMediaUrl(url) || url}
+                      alt=""
+                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      size="small"
+                      aria-label="Remove description image"
+                      onClick={() => removeDescriptionImage('tr', url)}
+                      sx={{
+                        position: 'absolute',
+                        top: 2,
+                        right: 2,
+                        bgcolor: 'error.main',
+                        color: 'common.white',
+                        width: 20,
+                        height: 20,
+                        padding: 0,
+                        minWidth: 0,
+                        '&:hover': { bgcolor: 'error.dark' },
+                      }}
+                    >
+                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 12 }}>
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
+                borderColor: 'primary.light',
+                backgroundColor: (theme) =>
+                  theme.palette.mode === 'light'
+                    ? 'rgba(91, 46, 255, 0.03)'
+                    : 'rgba(91, 46, 255, 0.08)',
+              }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    borderRadius: 1,
+                    backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
+                  }}
+                >
+                  <CategoryIcon fontSize="small" />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    {t('products.category')}
+                    <Typography component="span" sx={{ color: 'error.main', ml: 0.5 }}>
+                      *
+                    </Typography>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t('products.categoryHelp', 'Choose the category this product belongs to. It controls where the product is shown on the storefront.')}
+                  </Typography>
+                </Box>
+              </Stack>
+              <TextField
+                select
+                required
+                fullWidth
+                label={t('products.category')}
+                value={form.categoryId}
+                onChange={(e) => updateField('categoryId', e.target.value)}
+              >
+                {categories.length === 0 ? (
+                  <MenuItem value="" disabled>
+                    {t('products.noCategories', 'No categories available')}
+                  </MenuItem>
+                ) : (
+                  categories.map((category: Category) => (
+                    <MenuItem key={category._id} value={category._id}>
+                      {category.name}
+                    </MenuItem>
+                  ))
+                )}
+              </TextField>
+            </Paper>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField select fullWidth label={t('products.vendorOptional')} value={form.vendorId} onChange={(e) => updateField('vendorId', e.target.value)}>
