@@ -825,8 +825,12 @@ const OrderDetail: React.FC = () => {
                                       </Box>
                                     </TableCell>
                                     <TableCell align="right" sx={bodyCellSx}>{item.qty}</TableCell>
-                                    <TableCell align="right" sx={bodyCellSx}>€{item.unitPrice?.toFixed(2)}</TableCell>
-                                    <TableCell align="right" sx={bodyCellSx}>€{item.lineTotal?.toFixed(2)}</TableCell>
+                                    <TableCell align="right" sx={bodyCellSx}>
+                                      {formatMoney(Number(item.unitPrice || 0), item.currency || orderCurrency)}
+                                    </TableCell>
+                                    <TableCell align="right" sx={bodyCellSx}>
+                                      {formatMoney(Number(item.lineTotal || 0), item.currency || orderCurrency)}
+                                    </TableCell>
                                   </TableRow>
                                 ))}
                             </TableBody>
