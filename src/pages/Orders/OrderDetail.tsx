@@ -382,7 +382,11 @@ const OrderDetail: React.FC = () => {
     }
   };
 
-  const orderCurrency = order.order?.currency || order.items?.[0]?.currency || 'EUR';
+  // Mirror the simple `order.currency` pattern used by OrderList and
+  // VendorOrderList. The previous fallback to the first line item's
+  // currency caused the detail page to display amounts under a different
+  // currency than the list (line items can carry a per-vendor currency).
+  const orderCurrency = order.order?.currency || 'EUR';
   const refundRequest = order.order?.refundRequest;
   const allVendorOrdersDelivered =
     order.vendorOrders?.length > 0 &&
