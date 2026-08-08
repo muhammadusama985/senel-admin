@@ -420,7 +420,7 @@ const ProductCreate: React.FC = () => {
         {variantValidationError && <Alert severity="warning">{variantValidationError}</Alert>}
 
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 12 }}>
             <TextField
               fullWidth
               multiline
@@ -432,12 +432,6 @@ const ProductCreate: React.FC = () => {
                 updateField('title', e.target.value);
               }}
             />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline maxRows={2} label={t('products.germanTitle')} value={form.titleML.de} onChange={(e) => updateML('titleML', 'de', e.target.value)} />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField fullWidth multiline maxRows={2} label={t('products.turkishTitle')} value={form.titleML.tr} onChange={(e) => updateML('titleML', 'tr', e.target.value)} />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -506,154 +500,6 @@ const ProductCreate: React.FC = () => {
                       size="small"
                       aria-label="Remove description image"
                       onClick={() => removeDescriptionImage('en', url)}
-                      sx={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 2,
-                        bgcolor: 'error.main',
-                        color: 'common.white',
-                        width: 20,
-                        height: 20,
-                        padding: 0,
-                        minWidth: 0,
-                        '&:hover': { bgcolor: 'error.dark' },
-                      }}
-                    >
-                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
-              {t('products.germanDescription')}
-            </Typography>
-            <RichTextEditor
-              value={form.descriptionML.de}
-              onChange={(next) => updateML('descriptionML', 'de', next)}
-              minRows={4}
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
-              <input
-                ref={descDeFileRef}
-                type="file"
-                accept="image/*"
-                hidden
-                multiple
-                onChange={(e) => handleDescriptionImageUpload(
-                  e,
-                  descDeFileRef,
-                  setUploadingDescDe,
-                  'de',
-                )}
-                disabled={uploadingDescDe}
-              />
-              <Button size="small" variant="outlined" disabled={uploadingDescDe} onClick={() => descDeFileRef.current?.click()}>
-                {uploadingDescDe ? 'Uploading...' : '+ Upload Image'}
-              </Button>
-            </Box>
-            {(form.descriptionImagesML.de ?? []).length > 0 && (
-              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
-                {(form.descriptionImagesML.de ?? []).map((url, idx) => (
-                  <Box
-                    key={`de-prev-${idx}-${url}`}
-                    sx={{
-                      position: 'relative',
-                      width: '100%',
-                      aspectRatio: '1 / 1',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                      bgcolor: 'background.default',
-                    }}
-                  >
-                    <Box
-                          component="img"
-                          src={resolveMediaUrl(url) || url}
-                          alt=""
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    <IconButton
-                      size="small"
-                      aria-label="Remove description image"
-                      onClick={() => removeDescriptionImage('de', url)}
-                      sx={{
-                        position: 'absolute',
-                        top: 2,
-                        right: 2,
-                        bgcolor: 'error.main',
-                        color: 'common.white',
-                        width: 20,
-                        height: 20,
-                        padding: 0,
-                        minWidth: 0,
-                        '&:hover': { bgcolor: 'error.dark' },
-                      }}
-                    >
-                      <DeleteOutlineIcon sx={{ fontSize: 14 }} />
-                    </IconButton>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <Typography variant="body2" sx={{ mb: 0.5, color: 'text.secondary' }}>
-              {t('products.turkishDescription')}
-            </Typography>
-            <RichTextEditor
-              value={form.descriptionML.tr}
-              onChange={(next) => updateML('descriptionML', 'tr', next)}
-              minRows={4}
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
-              <input
-                ref={descTrFileRef}
-                type="file"
-                accept="image/*"
-                hidden
-                multiple
-                onChange={(e) => handleDescriptionImageUpload(
-                  e,
-                  descTrFileRef,
-                  setUploadingDescTr,
-                  'tr',
-                )}
-                disabled={uploadingDescTr}
-              />
-              <Button size="small" variant="outlined" disabled={uploadingDescTr} onClick={() => descTrFileRef.current?.click()}>
-                {uploadingDescTr ? 'Uploading...' : '+ Upload Image'}
-              </Button>
-            </Box>
-            {(form.descriptionImagesML.tr ?? []).length > 0 && (
-              <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 0.75 }}>
-                {(form.descriptionImagesML.tr ?? []).map((url, idx) => (
-                  <Box
-                    key={`tr-prev-${idx}-${url}`}
-                    sx={{
-                      position: 'relative',
-                      width: '100%',
-                      aspectRatio: '1 / 1',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 1,
-                      overflow: 'hidden',
-                      bgcolor: 'background.default',
-                    }}
-                  >
-                    <Box
-                          component="img"
-                          src={resolveMediaUrl(url) || url}
-                          alt=""
-                          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    <IconButton
-                      size="small"
-                      aria-label="Remove description image"
-                      onClick={() => removeDescriptionImage('tr', url)}
                       sx={{
                         position: 'absolute',
                         top: 2,
