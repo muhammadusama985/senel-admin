@@ -29,6 +29,7 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../api/client';
+import { Country } from 'country-state-city';
 import { VariantEditor } from './components/VariantEditor';
 import { RichTextEditor } from './components/RichTextEditor';
 import { resolveMediaUrl } from '../../utils/media';
@@ -76,6 +77,10 @@ type ProductForm = {
   imageUrls: string[];
   priceTiers: PriceTier[];
 };
+
+// Sorted list of countries for the country dropdown (same source as the
+// vendor product form / admin product create form).
+const countryOptions = Country.getAllCountries();
 
 const emptyTier: PriceTier = { minQty: 1, unitPrice: 0 };
 
@@ -691,7 +696,14 @@ const ProductEdit: React.FC = () => {
                       </FormControl>
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                      <TextField fullWidth label="Country" value={form.country} onChange={(event) => updateField('country', event.target.value)} sx={fieldSx} />
+                      <TextField select fullWidth label="Country" value={form.country} onChange={(event) => updateField('country', event.target.value)} sx={fieldSx}>
+                        <MenuItem value="">Select country</MenuItem>
+                        {countryOptions.map((c) => (
+                          <MenuItem key={c.isoCode} value={c.name}>
+                            {c.name}
+                          </MenuItem>
+                        ))}
+                      </TextField>
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                       <TextField select fullWidth label="Currency" value={form.currency} onChange={(event) => updateField('currency', event.target.value as ProductForm['currency'])} sx={fieldSx}>
