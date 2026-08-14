@@ -19,6 +19,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Country } from 'country-state-city';
 import api from '../../api/client';
 import { VariantEditor } from './components/VariantEditor';
 import { PriceTierEditor } from './components/PriceTierEditor';
@@ -46,6 +47,10 @@ interface Vendor {
 }
 
 const emptyTier = { minQty: 1, unitPrice: 0 };
+
+// Sorted list of countries for the country dropdown (same source as the
+// vendor product form). Sorted alphabetically for a predictable UX.
+const countryOptions = Country.getAllCountries();
 
 const normalizeVendors = (payload: any): Vendor[] => {
   if (Array.isArray(payload)) {
@@ -626,7 +631,16 @@ const ProductCreate: React.FC = () => {
             </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <TextField fullWidth label={t('products.country')} value={form.country} onChange={(e) => updateField('country', e.target.value)} />
+            <TextField select fullWidth label={t('products.country')} value={form.country} onChange={(e) => updateField('country', e.target.value)}>
+              <MenuItem value="">
+                {t('products.selectCountry', 'Select country')}
+              </MenuItem>
+              {countryOptions.map((c) => (
+                <MenuItem key={c.isoCode} value={c.name}>
+                  {c.name}
+                </MenuItem>
+              ))}
+            </TextField>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField select fullWidth label={t('products.currency')} value={form.currency} onChange={(e) => updateField('currency', e.target.value)}>
