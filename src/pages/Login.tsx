@@ -112,8 +112,10 @@ const Login: React.FC = () => {
       console.log('Response status:', err.response?.status);
       console.log('Response data:', err.response?.data);
       
-      if (err.response?.status === 401) {
-        setError(t('login.invalidCredentials'));
+      if (err.response?.status === 404) {
+        setError(err.response?.data?.message || t('login.emailNotFound'));
+      } else if (err.response?.status === 401) {
+        setError(err.response?.data?.message || t('login.incorrectPassword'));
       } else if (err.response?.status === 403) {
         setError(t('login.accessDeniedAdmin'));
       } else if (err.code === 'ECONNREFUSED' || err.message?.includes('Network Error')) {

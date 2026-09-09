@@ -60,6 +60,8 @@ const resources = {
       'login.passwordMin': 'Password must be at least 6 characters',
       'login.accessDeniedAdmin': 'Access denied. Admin only.',
       'login.invalidCredentials': 'Invalid email or password',
+      'login.emailNotFound': 'Email not registered',
+      'login.incorrectPassword': 'Incorrect password',
       'login.cannotConnect': 'Cannot connect to server. Make sure backend is running.',
       'login.failed': 'Login failed',
 
@@ -916,6 +918,8 @@ const resources = {
       'login.passwordMin': 'Das Passwort muss mindestens 6 Zeichen haben',
       'login.accessDeniedAdmin': 'Zugriff verweigert. Nur Admins.',
       'login.invalidCredentials': 'Ungueltige E-Mail oder falsches Passwort',
+      'login.emailNotFound': 'E-Mail nicht registriert',
+      'login.incorrectPassword': 'Falsches Passwort',
       'login.cannotConnect': 'Keine Verbindung zum Server. Stellen Sie sicher, dass das Backend laeuft.',
       'login.failed': 'Anmeldung fehlgeschlagen',
 
@@ -1772,6 +1776,8 @@ const resources = {
       'login.passwordMin': 'Sifre en az 6 karakter olmali',
       'login.accessDeniedAdmin': 'Erisim reddedildi. Sadece admin.',
       'login.invalidCredentials': 'Gecersiz e-posta veya sifre',
+      'login.emailNotFound': 'E-posta kayitli degil',
+      'login.incorrectPassword': 'Yanlis sifre',
       'login.cannotConnect': 'Sunucuya baglanilamiyor. Backend calisiyor olmali.',
       'login.failed': 'Giris basarisiz',
 
