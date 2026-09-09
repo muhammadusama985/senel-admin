@@ -36,9 +36,14 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
         maxSize: 5 * 1024 * 1024 // 5MB
     });
 
-    const getImageSource = (imagePath: string): string => {
+const getImageSource = (imagePath: string): string => {
         if (!imagePath) return '';
-        return resolveMediaUrl(imagePath);
+        // Blob (and data) URLs are local previews — must not be rewritten by
+        // resolveMediaUrl or they become invalid and the image fails to load.
+        if (imagePath.startsWith('blob:') || imagePath.startsWith('data:')) {
+            return imagePath;
+        }
+        return resolveMediaUrl(imagePath) || '';
     };
 
     return (
