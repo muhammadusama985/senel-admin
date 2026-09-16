@@ -133,6 +133,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   const handleLogout = () => {
     handleClose();
+    if (!window.confirm(t('header.logoutConfirm', 'Are you sure you want to logout?'))) return;
     logout();
     navigate('/login', { replace: true });
   };

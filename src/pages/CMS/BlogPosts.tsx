@@ -136,7 +136,7 @@ const BlogPosts: React.FC = () => {
   };
 
   const getFullImageUrl = (imagePath: string | undefined): string => {
-    return resolveMediaUrl(imagePath);
+    return resolveMediaUrl(imagePath) || '';
   };
 
   const { data: posts, isLoading, error } = useQuery({

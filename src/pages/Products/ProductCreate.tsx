@@ -318,10 +318,22 @@ const ProductCreate: React.FC = () => {
     return '';
   }, [form.hasVariants, form.variants, t]);
 
+  const requiredFieldsError = useMemo(() => {
+    const missing: string[] = [];
+    if (!(form.titleML.en || form.title).trim()) missing.push(t('products.englishTitle'));
+    if (!form.categoryId) missing.push(t('products.category'));
+    if (form.moq === '' || Number(form.moq) < 1) missing.push('MOQ');
+    if (form.imageUrls.length === 0) missing.push(t('products.images', 'Product Images'));
+    return missing.length > 0
+      ? `${t('products.missingFields', 'Missing required field(s)')}: ${missing.join(', ')}`
+      : '';
+  }, [form.titleML.en, form.title, form.categoryId, form.moq, form.imageUrls, t]);
+
   const canSubmit = useMemo(() => {
     return (
       form.title.trim().length >= 2 &&
       form.categoryId &&
+      form.imageUrls.length > 0 &&
       form.priceTiers.length > 0 &&
       form.priceTiers.every((tier) => tier.minQty > 0 && tier.unitPrice >= 0) &&
       !tierValidationError &&
@@ -427,6 +439,7 @@ const ProductCreate: React.FC = () => {
         </Box>
 
         {error && <Alert severity="error">{error}</Alert>}
+        {requiredFieldsError && <Alert severity="error">{requiredFieldsError}</Alert>}
         {tierValidationError && <Alert severity="warning">{tierValidationError}</Alert>}
         {variantValidationError && <Alert severity="warning">{variantValidationError}</Alert>}
 

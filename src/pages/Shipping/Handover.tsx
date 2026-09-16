@@ -248,6 +248,7 @@ const Handover: React.FC = () => {
                 nextStatusOptions[(selectedOrder.handoverStatus || 'ready_for_pickup') as HandoverStatus].map((option) => (
                   <MenuItem key={option} value={option}>
                     {{
+                      ready_for_pickup: t('shipping.readyForPickup'),
                       picked_up: t('shipping.pickedUp'),
                       in_transit: t('shipping.inTransit'),
                       delivered: t('shipping.delivered'),

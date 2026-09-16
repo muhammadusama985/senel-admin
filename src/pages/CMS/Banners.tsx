@@ -126,7 +126,7 @@ const Banners: React.FC = () => {
   };
 
   const getFullImageUrl = (imagePath: string | undefined): string => {
-    return resolveMediaUrl(imagePath);
+    return resolveMediaUrl(imagePath) || '';
   };
 
   const formatDateForBackend = (dateString: string): string | null => {
