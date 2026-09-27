@@ -34,6 +34,17 @@ type AttributeGroup = {
   indexes: number[];
 };
 
+/** Attribute titles offered as ready-made choices in the "Attribute Title" dropdown. */
+const PRESET_ATTRIBUTE_TITLES = ['Size', 'Color', 'Material'];
+
+/** Sentinel dropdown value that reveals the free-text attribute title input. */
+const OTHER_ATTRIBUTE_VALUE = '__other__';
+
+/** Maps an existing attribute title onto its dropdown value (preset name, or "Other"). */
+const resolveAttributePresetValue = (title: string) =>
+  PRESET_ATTRIBUTE_TITLES.find((preset) => preset.toLowerCase() === title.trim().toLowerCase()) ??
+  OTHER_ATTRIBUTE_VALUE;
+
 const COLOR_NAME_BY_HEX: Record<string, string> = {
   '#000000': 'Black',
   '#ffffff': 'White',
@@ -243,6 +254,9 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [draftAttributeTitles, setDraftAttributeTitles] = useState<Record<string, string>>({});
+  /** Dropdown choice per attribute group. Kept separately from the title itself so
+   *  "Other" can stay selected even when the group title matches a preset. */
+  const [presetAttributeSelections, setPresetAttributeSelections] = useState<Record<string, string>>({});
 
   // The "Attributes & Options" section must only show the per-option entries
   // the vendor created (each with exactly one attribute title + value +
@@ -309,6 +323,23 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
     setDraftAttributeTitles((prev) => {
       const next = { ...prev };
       delete next[title];
+      return next;
+    });
+    setPresetAttributeSelections((prev) => {
+      const next = { ...prev };
+      delete next[title];
+      return next;
+    });
+  };
+
+  const handlePresetAttributeChange = (title: string, value: string) => {
+    setPresetAttributeSelections((prev) => ({ ...prev, [title]: value }));
+    if (value === OTHER_ATTRIBUTE_VALUE) return;
+    renameAttributeGroup(title, value);
+    setDraftAttributeTitles((prev) => {
+      const next = { ...prev };
+      delete next[title];
+      next[value] = value;
       return next;
     });
   };
@@ -670,6 +701,7 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
 
       {attributeGroups.map((group) => {
         const titleDraft = draftAttributeTitles[group.title] ?? group.title;
+        const presetSelection = presetAttributeSelections[group.title] ?? resolveAttributePresetValue(group.title);
         const colorMode = isColorAttribute(group.title);
 
         return (
@@ -686,28 +718,9 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
               <div style={{ flex: 1 }}>
                 <label style={{ display: 'block', marginBottom: '0.25rem', color: colors.textMuted, fontSize: '0.9rem' }}>{t('attributeTitle', 'Attribute Title')}</label>
-                <input
-                  type="text"
-                  value={titleDraft}
-                  placeholder="e.g. Color, Size"
-                  onChange={(e) =>
-                    setDraftAttributeTitles((prev) => ({
-                      ...prev,
-                      [group.title]: e.target.value,
-                    }))
-                  }
-                  onBlur={() => {
-                    const nextTitle = (draftAttributeTitles[group.title] ?? group.title).trim() || group.title;
-                    renameAttributeGroup(group.title, nextTitle);
-                    setDraftAttributeTitles((prev) => {
-                      const next = { ...prev };
-                      delete next[group.title];
-                      if (nextTitle !== group.title) {
-                        next[nextTitle] = nextTitle;
-                      }
-                      return next;
-                    });
-                  }}
+                <select
+                  value={presetSelection}
+                  onChange={(e) => handlePresetAttributeChange(group.title, e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.6rem',
@@ -715,8 +728,52 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
                     borderRadius: '6px',
                     backgroundColor: colors.inputBg,
                     color: colors.text,
+                    cursor: 'pointer',
                   }}
-                />
+                >
+                  {PRESET_ATTRIBUTE_TITLES.map((preset) => (
+                    <option key={preset} value={preset} style={{ backgroundColor: colors.inputBg, color: colors.text }}>
+                      {preset}
+                    </option>
+                  ))}
+                  <option value={OTHER_ATTRIBUTE_VALUE} style={{ backgroundColor: colors.inputBg, color: colors.text }}>
+                    {t('attributeOther', 'Other')}
+                  </option>
+                </select>
+                {presetSelection === OTHER_ATTRIBUTE_VALUE && (
+                  <input
+                    type="text"
+                    value={titleDraft}
+                    placeholder={t('attributeTitlePlaceholder', 'Enter attribute name')}
+                    onChange={(e) =>
+                      setDraftAttributeTitles((prev) => ({
+                        ...prev,
+                        [group.title]: e.target.value,
+                      }))
+                    }
+                    onBlur={() => {
+                      const nextTitle = (draftAttributeTitles[group.title] ?? group.title).trim() || group.title;
+                      renameAttributeGroup(group.title, nextTitle);
+                      setDraftAttributeTitles((prev) => {
+                        const next = { ...prev };
+                        delete next[group.title];
+                        if (nextTitle !== group.title) {
+                          next[nextTitle] = nextTitle;
+                        }
+                        return next;
+                      });
+                    }}
+                    style={{
+                      width: '100%',
+                      marginTop: '0.5rem',
+                      padding: '0.6rem',
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '6px',
+                      backgroundColor: colors.inputBg,
+                      color: colors.text,
+                    }}
+                  />
+                )}
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-end' }}>
                 <button
