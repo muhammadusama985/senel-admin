@@ -333,7 +333,7 @@ const ProductEdit: React.FC = () => {
     const hasInvalidAttributes = form.variants.some((variant) =>
       Object.entries(variant.attributes || {}).some(([key, value]) => !String(key || '').trim() || !String(value || '').trim())
     );
-    if (hasInvalidAttributes) return 'Each variant attribute must include both a name and a value.';
+    if (hasInvalidAttributes) return 'Please enter all values.';
     return '';
   }, [form.hasVariants, form.variants]);
 

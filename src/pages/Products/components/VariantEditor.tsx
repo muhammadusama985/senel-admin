@@ -37,13 +37,19 @@ type AttributeGroup = {
 /** Attribute titles offered as ready-made choices in the "Attribute Title" dropdown. */
 const PRESET_ATTRIBUTE_TITLES = ['Size', 'Color', 'Material'];
 
+/** Sentinel dropdown value for "nothing chosen yet" — the free-text input stays hidden. */
+const NO_ATTRIBUTE_SELECTION = '__select__';
+
 /** Sentinel dropdown value that reveals the free-text attribute title input. */
 const OTHER_ATTRIBUTE_VALUE = '__other__';
 
-/** Maps an existing attribute title onto its dropdown value (preset name, or "Other"). */
+/** Maps an existing attribute title onto its dropdown value (preset name, or none chosen). */
 const resolveAttributePresetValue = (title: string) =>
   PRESET_ATTRIBUTE_TITLES.find((preset) => preset.toLowerCase() === title.trim().toLowerCase()) ??
-  OTHER_ATTRIBUTE_VALUE;
+  NO_ATTRIBUTE_SELECTION;
+
+/** Single message for every "a required value was left empty" guard. */
+const ENTER_ALL_VALUES_MESSAGE = 'Please enter all values.';
 
 const COLOR_NAME_BY_HEX: Record<string, string> = {
   '#000000': 'Black',
@@ -334,7 +340,7 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
 
   const handlePresetAttributeChange = (title: string, value: string) => {
     setPresetAttributeSelections((prev) => ({ ...prev, [title]: value }));
-    if (value === OTHER_ATTRIBUTE_VALUE) return;
+    if (value === OTHER_ATTRIBUTE_VALUE || value === NO_ATTRIBUTE_SELECTION) return;
     renameAttributeGroup(title, value);
     setDraftAttributeTitles((prev) => {
       const next = { ...prev };
@@ -601,8 +607,19 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
   const handleSaveCombination = () => {
     // Every attribute must have a selection.
     for (const title of allAttributeTitles) {
-      if (!composerSelection[title]) return;
+      if (!composerSelection[title]) {
+        alert(ENTER_ALL_VALUES_MESSAGE);
+        return;
+      }
     }
+    // Stock must actually be typed in. A blank or malformed value is
+    // rejected instead of being silently treated as 0.
+    const stockNum = parseInt(sanitizeNumberInput(composerStock), 10);
+    if (!Number.isFinite(stockNum) || stockNum < 0) {
+      alert(ENTER_ALL_VALUES_MESSAGE);
+      return;
+    }
+    const safeStock = stockNum;
     const titles = Object.keys(composerSelection).sort();
     const key = titles.map((t) => composerSelection[t]).join('|');
     const cleaned = sanitizeNumberInput(composerOffset);
@@ -617,7 +634,10 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
       onBaseCombinationChange?.(key);
       delete nextOffsets[key]; // base has implicit offset 0
     } else {
-      if (cleaned === '' || !validation.valid) return;
+      if (cleaned === '' || !validation.valid) {
+        alert(ENTER_ALL_VALUES_MESSAGE);
+        return;
+      }
       const num = parseFloat(cleaned);
       nextOffsets[key] = num;
       if (baseCombination === key) onBaseCombinationChange?.('');
@@ -627,9 +647,7 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
     // Persist the per-combination stock as a real variant entry so the
     // customer side (variant lookup, cart validation, order checkout)
     // can match the combination by its full attribute set and read its
-    // stockQty. Blank stock → 0.
-    const stockNum = parseInt(sanitizeNumberInput(composerStock), 10);
-    const safeStock = Number.isFinite(stockNum) && stockNum >= 0 ? stockNum : 0;
+    // stockQty.
     onChange(upsertCombinationVariant(composerSelection, { stockQty: safeStock }));
 
     if (editingKey !== key) {
@@ -731,6 +749,9 @@ export const VariantEditor: React.FC<VariantEditorProps> = ({
                     cursor: 'pointer',
                   }}
                 >
+                  <option value={NO_ATTRIBUTE_SELECTION} disabled style={{ backgroundColor: colors.inputBg, color: colors.text }}>
+                    {t('attributeSelectPlaceholder', 'Select Attribute')}
+                  </option>
                   {PRESET_ATTRIBUTE_TITLES.map((preset) => (
                     <option key={preset} value={preset} style={{ backgroundColor: colors.inputBg, color: colors.text }}>
                       {preset}

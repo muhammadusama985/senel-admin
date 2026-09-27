@@ -314,7 +314,7 @@ const ProductCreate: React.FC = () => {
     const hasInvalidAttributes = form.variants.some((variant) =>
       Object.entries(variant.attributes || {}).some(([key, value]) => !String(key || '').trim() || !String(value || '').trim())
     );
-    if (hasInvalidAttributes) return t('products.variantAttributesRequired');
+    if (hasInvalidAttributes) return t('pleaseEnterAllValues', 'Please enter all values.');
     return '';
   }, [form.hasVariants, form.variants, t]);
 
